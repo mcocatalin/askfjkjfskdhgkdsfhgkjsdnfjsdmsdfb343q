@@ -1,7 +1,7 @@
 package Controlling;
 
 import GEngine.graphicEngine;
-import GEngine.requestHandler;
+import GEngine.actingHandler;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
@@ -21,7 +21,8 @@ public class VehicleController extends Agent{
                {
                    if(mesaj_receptionat.getContent()=="accelerate") {
                    }
-                        graphicEngine.request.add(0,new requestHandler("vehicleMovement","","","",0,0,0,0,0,0,0,0,0,400));
+                        graphicEngine.request.add(0,new actingHandler("vehicleMovement","","","",0,0,0,0,0,0,0,0,0,400));
+
                    }
            }
        });

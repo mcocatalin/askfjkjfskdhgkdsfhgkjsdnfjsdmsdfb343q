@@ -1,5 +1,7 @@
 package GEngine;
 
+import Utility.IntersectionItem;
+import Utility.IntersectionState;
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.plugins.ZipLocator;
 import com.jme3.bounding.BoundingBox;
@@ -30,7 +32,6 @@ import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.jme3.scene.control.Control;
 import com.jme3.shadow.SpotLightShadowFilter;
 import com.jme3.shadow.SpotLightShadowRenderer;
 import com.jme3.util.SkyFactory;
@@ -41,16 +42,11 @@ import de.lessvoid.nifty.builder.PanelBuilder;
 import de.lessvoid.nifty.builder.ScreenBuilder;
 import de.lessvoid.nifty.controls.*;
 import de.lessvoid.nifty.controls.button.builder.ButtonBuilder;
-import de.lessvoid.nifty.controls.checkbox.builder.CheckboxBuilder;
 import de.lessvoid.nifty.controls.slider.builder.SliderBuilder;
 import de.lessvoid.nifty.screen.DefaultScreenController;
-import jme3tools.optimize.GeometryBatchFactory;
 import org.bushe.swing.event.EventTopicSubscriber;
-import sun.plugin2.util.ColorUtil;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static jade.tools.sniffer.Message.offset;
 
@@ -75,7 +71,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public float accelerationValue = 0;
     public float decelerationValue = 0;
     public Node carNode;
-    public Node trafficLight;
+    public Node[] trafficLights;
 
     public LinkedList<BoundingSphere> bounds = new LinkedList<BoundingSphere>();
 
@@ -85,13 +81,20 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     public Vector3f trafficLightLocations[] =
             {
-                    new Vector3f(33f, 18.257574f, -97f),
+                    new Vector3f(33f, 18.257574f, -97f), // first intersection
                     new Vector3f(50f, 18.257574f, -97f),
                     new Vector3f(50f, 18.257574f, -114f),
                     new Vector3f(33f, 18.257574f, -114f),
                     new Vector3f(33f, 18.257574f, -97f),
+
+                    new Vector3f(63f, 18.257574f, -97f), // second intersection
+                    new Vector3f(50f, 48.257574f, -97f),
+                    new Vector3f(50f, 18.257574f, -84f),
+                    new Vector3f(93f, 18.257574f, -114f),
+                    new Vector3f(33f, 18.257574f, -97f),
             };
 
+    private static int indexTrafficLight = 0;
 
     // Engine const variables
     final String[] modelPaths = {"Models/Ferrari/Car.scene", "src/assets/Models/Ford.zip"};
@@ -116,13 +119,10 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             new Matrix3f(0, 1, 0, -1, 0, 0, 0, 0, 1)
     };
 
-    final Vector3f[] trafficLightsLocation = {
-            new Vector3f(0, 10, -64)
-    };
-
+    public LinkedList<IntersectionItem> Semafoare;
 
     // Communication members
-    public static List<requestHandler> request = new ArrayList<requestHandler>();
+    public static List<actingHandler> request = new ArrayList<actingHandler>();
 
     // Test Motion Path
     private MotionPath path;
@@ -145,6 +145,40 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     }
 
+    public int GetIntersectionLocationDensity(Vector3f Location){
+        // !!!!!!!!!!!!!!!!!! Check number of cars in range!!!
+        return 0;
+    }
+
+    private IntersectionState SetIntersectionState(IntersectionItem intersectionItem){
+        return new IntersectionState(
+                GetIntersectionLocationDensity(intersectionItem.getUpperLocation()),
+                GetIntersectionLocationDensity(intersectionItem.getLowerLocation()),
+                GetIntersectionLocationDensity(intersectionItem.getLeftLocation()) ,
+                GetIntersectionLocationDensity(intersectionItem.getRightLocation())
+                );
+    }
+
+    public void SetSemafoare(){
+        int index = 0;
+        Semafoare = new LinkedList<IntersectionItem>();
+        Semafoare.add(new IntersectionItem(  trafficLightLocations[index++],  // UP
+                                             trafficLightLocations[index++],  // DOWN
+                                             trafficLightLocations[index++],  // RIGHT
+                                             trafficLightLocations[index++]));// LEFT
+
+        Semafoare.add(new IntersectionItem(  trafficLightLocations[index++],  // UP
+                                             trafficLightLocations[index++],  // DOWN
+                                             trafficLightLocations[index++],  // RIGHT
+                                             trafficLightLocations[index++]));// LEFT
+
+        trafficLights = new Node[trafficLightLocations.length];
+
+        for(int i = 0; i<trafficLightLocations.length; i++){
+            Load_traffic_lights(trafficLightLocations[i],valideRotations[i%4], trafficLights[i] );
+        }
+    }
+
     @Override
     public void simpleInitApp() {
 
@@ -158,7 +192,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         setSun();
         load_sky();
         buildVehicle(modelPaths[0], valideLocations[5], valideRotations[3]);
-        Load_traffic_lights();
+        //Load_traffic_lights();
 
         flyCam.setEnabled(true);
         setDisplayFps(false);
@@ -169,10 +203,9 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         cameraSetup();
         load_player();
 
-        //SetTrafficLights(1);
+        SetSemafoare();
 
         setUpKeys();
-
 
 
     }
@@ -184,21 +217,21 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         rootNode.setShadowMode(RenderQueue.ShadowMode.Off);
     }
 
-    private void Load_traffic_lights() {
+    private void Load_traffic_lights(Vector3f Location, Matrix3f Rotation, Node trafficLight) {
 
         assetManager.registerLocator("src\\assets\\Models\\semafor.zip", ZipLocator.class);
         trafficLight = (Node) assetManager.loadModel("semafor_v7.mesh.j3o");
-        trafficLight.setLocalTranslation(trafficLightLocations[0]);
+        trafficLight.setLocalTranslation(Location);
 
-        //Geometry chasis = findGeom(trafficLight, "trafficLight");
+        //Geometry chasis = findGeom(trafficLights, "trafficLights");
        // BoundingBox box = (BoundingBox) chasis.getModelBound();
 //Create a hull collision shape for the chassis
         //CollisionShape trafficLightHull = CollisionShapeFactory.createDynamicMeshShape(chasis); !!! Cannot find geometry - LOSS!!!S
         traffic_light = new RigidBodyControl( 0);
 
         trafficLight.addControl(traffic_light);
-        traffic_light.setPhysicsLocation(trafficLightLocations[0]); //new Vector3f(199,10,-64));
-        traffic_light.setPhysicsRotation(valideRotations[0]);// new Matrix3f(0,0,1,0,1,0,-1,0,0)); // rotate with 270 degrees on Y
+        traffic_light.setPhysicsLocation(Location); //new Vector3f(199,10,-64));
+        traffic_light.setPhysicsRotation(Rotation);// new Matrix3f(0,0,1,0,1,0,-1,0,0)); // rotate with 270 degrees on Y
 
         getPhysicsSpace().add(traffic_light);
 
@@ -315,7 +348,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         }
 
         if(!request.isEmpty()){
-            requestHandler x = request.get(0);
+            actingHandler x = request.get(0);
             if(x.type == "vehicleMovement"){
                 vehicle.accelerate(40);
             }
