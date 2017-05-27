@@ -1,5 +1,6 @@
 package GEngine;
 
+import Controlling.VehicleController;
 import Utility.IntersectionItem;
 import Utility.IntersectionState;
 import com.jme3.app.SimpleApplication;
@@ -137,9 +138,16 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     static final Quaternion ROTATE_RIGHT = new Quaternion().fromAngleAxis(FastMath.HALF_PI, Vector3f.UNIT_Y);
     private Plane plane = new Plane();
 
-    private float speed = 800f;
+    private float speed = -800f;
 
     Spatial map;
+
+    VehicleController vc;
+
+    private Vector3f posDir = new Vector3f();
+    private Vector3f upDirVehicle = new Vector3f();
+    private Vector3f dir = new Vector3f();
+    private Vector3f targetPosDir = new Vector3f();
 
     public static void main(String[] args) {
 
@@ -207,6 +215,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         setUpKeys();
 
+        vc = new VehicleController();
+        vc.getAID();
 
     }
 
@@ -261,7 +271,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             float dot = 1 - vector3.dot(vector2);
             float angle = vector3.angleBetween(vector2);
 
-            float anglemult = 1;//FastMath.PI / 4.0f;
+            float anglemult = FastMath.PI / 4.0f;
             float speedmult = 0.3f;//0.3f;
 
             if (angle > FastMath.QUARTER_PI) {
@@ -277,49 +287,76 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                 anglemult *= -1;
             }
             vehicle.steer(angle * anglemult);
-            vehicle.accelerate(speed * speedmult);
+            vehicle.accelerate(-speed * speedmult);
             vehicle.brake(0);
         }
     }
 
     public void CarGoTo(Vector3f destination) {
 
-        vehicle.getPhysicsLocation(vector1);
-        vehicle.getForwardVector(vector3);
-        vector2.set(destination);
-        float distance = vector1.distance(destination);
-        float checkRadius = 10;
-//        if (distance <= checkRadius) {
-//            //moving = false;
-//            vehicle.accelerate(0);
-//            vehicle.brake(100);
-//        } else {
-            System.out.println("Rotatie :" + vehicle.getPhysicsRotationMatrix());
-            System.out.println("Locatie :" + vehicle.getPhysicsLocation());
-            plane.setOriginNormal(destination, vector1);
-            // plane.setOriginNormal(map.getWorldTranslation(), vector4);
-            float dot = 1 - vector3.dot(vector2);
-            float angle = vector3.angleBetween(destination);
-            if (angle > FastMath.QUARTER_PI) {
-                angle = FastMath.QUARTER_PI;
-            }
-            float anglemult = 1;//FastMath.PI / 4.0f;
-            float speedmult = 0.3f;//0.3f;
-            ROTATE_RIGHT.multLocal(vector3);
-            if (plane.whichSide(vector3) == Plane.Side.Negative) {
-                anglemult *= -1;
-            }
-
-            if (dot > 1) {
-                speedmult *= -1;
-                anglemult *= -1;
-            }
-
-            vehicle.steer(angle * anglemult);
-            vehicle.accelerate(speed * speedmult);
-            vehicle.brake(0);
+//        vehicle.getPhysicsLocation(vector1);
+//        vehicle.getForwardVector(vector3);
+//        vector2.set(destination);
+//        float distance = vector1.distance(destination);
+//        float checkRadius = 10;
+////        if (distance <= checkRadius) {
+////            //moving = false;
+////            vehicle.accelerate(0);
+////            vehicle.brake(100);
+////        } else {
+//            System.out.println("Rotatie :" + vehicle.getPhysicsRotationMatrix());
+//            System.out.println("Locatie :" + vehicle.getPhysicsLocation());
+//            plane.setOriginNormal(destination, vector1);
+//            // plane.setOriginNormal(map.getWorldTranslation(), vector4);
+//            float dot = 1 - vector3.dot(vector2);
+//            float angle = vector3.angleBetween(destination);
+//            if (angle > FastMath.QUARTER_PI) {
+//                angle = FastMath.QUARTER_PI;
+//            }
+//            float anglemult = 1;//FastMath.PI / 4.0f;
+//            float speedmult = 0.3f;//0.3f;
+//            ROTATE_RIGHT.multLocal(vector3);
+//            if (plane.whichSide(vector3) == Plane.Side.Negative) {
+//                anglemult *= -1;
+//            }
+//
+//            if (dot > 1) {
+//                speedmult *= -1;
+//                anglemult *= -1;
+//            }
+//
+//            vehicle.steer(angle * anglemult);
+//            vehicle.accelerate(speed * speedmult);
+//            vehicle.brake(0);
 
         //}
+
+        vehicle.getPhysicsLocation(vector1);
+        vector2.set(destination);
+        vector2.subtractLocal(vector1);
+
+
+        vector2.normalizeLocal();
+
+        posDir.set(vehicle.getPhysicsLocation());
+        upDirVehicle.set(new Vector3f(0,1,0));
+        dir.set(vector2);
+        targetPosDir.set(destination);
+
+
+
+        Vector3f left = upDirVehicle.cross(dir);  // might be dir.cross(upDirVehicle)
+
+        Vector3f targetRelative = targetPosDir.subtract(posDir).normalizeLocal();
+
+        float steer = left.dot(targetRelative);
+        float forward = dir.dot(targetRelative);
+
+        if( forward < 0 ) steer *= -1;
+
+        vehicle.steer(-200 * steer);
+        vehicle.accelerate(-200 * forward);
+
     }
 
     @Override
@@ -354,10 +391,14 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             }
         }
 
+        CarGoTo(valideLocations[5]);
+
 
         Vector3f destination = valideLocations[8];
         //CarGoTo(destination);
         //CarMoveAt(destination);
+
+
 
     }
 
@@ -1018,11 +1059,11 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                 panel(new PanelBuilder("onlines") {
                     {
                         childLayoutVertical(); // panel properties, add more...
-                        width("120px");
+                        width("200px");
                         style("nifty-panel-no-shadow");
                         height("400px");
-                        alignCenter();
                         valignBottom();
+                        alignRight();
                         control(new ButtonBuilder("Online", "Online") {{
                             width("100%");
                             height("40px");
@@ -1035,7 +1076,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                                 width("90%");
                                 height("25%");
 
-                                control(new ButtonBuilder("output", "Nr. oameni sector C") {{
+                                control(new ButtonBuilder("output", "Output") {{
                                     alignLeft();
                                     height("40%");
                                     width("90%");
@@ -1044,14 +1085,14 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                                 }});
 
 
-                                control(new SliderBuilder("sectorC", false) {{
+                                control(new SliderBuilder("Numar de masini", false) {{
                                     alignLeft();
                                     this.focusable(false);
                                     width("90%");
                                     height("30%");
                                     buttonStepSize(1f);
                                     min(1);
-                                    max(99);
+                                    max(30);
                                 }});
                             }
                         });
