@@ -53,6 +53,8 @@ public class GlobalNucleus extends Agent {
                 Profile p = new ProfileImpl();
                 home= runtime.createMainContainer(p);// acum ruleaza JADE pe calculatorul curent
 //porneste interfata de la JADE (merge si fara asta)
+
+                // Start number of vehicles # to continue!
                 try {
                     AgentController rma = home.createNewAgent("GEngine.Vehicle1",
                             "GEngine.Vehicle", new Object[0]);
@@ -62,6 +64,9 @@ public class GlobalNucleus extends Agent {
                     e.printStackTrace();
                 }// termina de pornit interfata de la JADE
 
+
+
+                // Start number of Intersections # to continue!
                 try {
                     AgentController rma1 = home.createNewAgent("Controlling.VehicleController1",
                             "Controlling.VehicleController", new Object[0]);

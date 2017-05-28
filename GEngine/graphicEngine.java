@@ -781,8 +781,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     }
 
     public void setMap() {
-        assetManager.registerLocator("src/assets/Models/simpleMap_v7.zip", ZipLocator.class);
-        map = assetManager.loadModel("simpleMap_v7.mesh.j3o");
+        assetManager.registerLocator("src/assets/Models/simpleMapFinal.zip", ZipLocator.class);
+        map = assetManager.loadModel("simpleMapFinal.mesh.j3o");
         map.center();
         RigidBodyControl map_PhysX = new RigidBodyControl(0);
         map.addControl(map_PhysX);
