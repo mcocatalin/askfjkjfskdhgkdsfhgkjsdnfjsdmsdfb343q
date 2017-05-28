@@ -21,7 +21,7 @@ public class VehicleController extends Agent{
                {
                    if(mesaj_receptionat.getContent()=="accelerate") {
                    }
-                        graphicEngine.request.add(0,new actingHandler("vehicleMovement","","","",0,0,0,0,0,0,0,0,0,400));
+                        graphicEngine.request.add(0,new actingHandler("Vehicle",0,null));
 
                    }
            }
