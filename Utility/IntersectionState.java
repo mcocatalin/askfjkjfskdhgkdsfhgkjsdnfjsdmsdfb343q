@@ -15,4 +15,7 @@ public class IntersectionState {
         LeftDensity = leftDensity;
         RightDensity = rightDensity;
     }
+
+    public IntersectionState() {
+    }
 }

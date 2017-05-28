@@ -1,10 +1,10 @@
 package GEngine;
 
 import Controlling.VehicleController;
+import Nucleus.GlobalNucleus;
 import Utility.IntersectionItem;
 import Utility.IntersectionState;
 import com.jme3.app.SimpleApplication;
-import com.jme3.asset.plugins.FileLocator;
 import com.jme3.asset.plugins.ZipLocator;
 import com.jme3.bounding.BoundingBox;
 import com.jme3.bounding.BoundingSphere;
@@ -36,30 +36,26 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.shadow.SpotLightShadowFilter;
 import com.jme3.shadow.SpotLightShadowRenderer;
-import com.jme3.texture.plugins.AWTLoader;
 import com.jme3.util.SkyFactory;
 import de.lessvoid.nifty.Nifty;
 import de.lessvoid.nifty.builder.*;
 import de.lessvoid.nifty.controls.*;
 import de.lessvoid.nifty.controls.button.builder.ButtonBuilder;
 import de.lessvoid.nifty.controls.checkbox.builder.CheckboxBuilder;
-import de.lessvoid.nifty.controls.console.builder.ConsoleBuilder;
 import de.lessvoid.nifty.controls.slider.builder.SliderBuilder;
-import de.lessvoid.nifty.controls.window.builder.WindowBuilder;
 import de.lessvoid.nifty.screen.DefaultScreenController;
 import org.bushe.swing.event.EventTopicSubscriber;
 
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowStateListener;
 import java.util.*;
 
 import static jade.tools.sniffer.Message.offset;
 
 public class graphicEngine extends SimpleApplication implements ActionListener {
 
+    // Graphic UI members
     public static boolean startApplication = false;
     public static int numberOfCars;
-
+    private boolean gui=false;
 
     public BitmapText hudText;
     public CharacterControl player;
@@ -103,7 +99,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                     new Vector3f(33f, 18.257574f, -97f),
             };
 
-    private static int indexTrafficLight = 0;
+    // Intersection members
+    public static int noOfIntersections = 2;
 
     // Engine const variables
     final String[] modelPaths = {"Models/Ferrari/Car.scene", "src/assets/Models/Ford.zip"};
@@ -128,7 +125,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             new Matrix3f(0, 1, 0, -1, 0, 0, 0, 0, 1)
     };
 
-    public LinkedList<IntersectionItem> Semafoare;
+    public LinkedList<IntersectionItem> Intersections;
 
     // Communication members
     public static List<actingHandler> request = new ArrayList<actingHandler>();
@@ -147,7 +144,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     static final Quaternion ROTATE_RIGHT = new Quaternion().fromAngleAxis(FastMath.HALF_PI, Vector3f.UNIT_Y);
     private Plane plane = new Plane();
 
-    private float speed = -800f;
+    private float speed = 800f;
 
     Spatial map;
 
@@ -167,7 +164,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         return 0;
     }
 
-    private IntersectionState SetIntersectionState(IntersectionItem intersectionItem) {
+    private IntersectionState GetIntersectionState(IntersectionItem intersectionItem) {
         return new IntersectionState(
                 GetIntersectionLocationDensity(intersectionItem.getUpperLocation()),
                 GetIntersectionLocationDensity(intersectionItem.getLowerLocation()),
@@ -178,23 +175,20 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
 
 
-    public void SetSemafoare() {
+    public void SetIntersections() {
         int index = 0;
-        Semafoare = new LinkedList<IntersectionItem>();
-        Semafoare.add(new IntersectionItem(trafficLightLocations[index++],  // UP
-                trafficLightLocations[index++],  // DOWN
-                trafficLightLocations[index++],  // RIGHT
-                trafficLightLocations[index++]));// LEFT
+        Intersections = new LinkedList<IntersectionItem>();
+        for(int i = 0; i<noOfIntersections;i++) {
+            Intersections.add(new IntersectionItem(trafficLightLocations[index++],  // UP
+                    trafficLightLocations[index++],  // DOWN
+                    trafficLightLocations[index++],  // RIGHT
+                    trafficLightLocations[index++]));// LEFT
+        }
 
-        Semafoare.add(new IntersectionItem(trafficLightLocations[index++],  // UP
-                trafficLightLocations[index++],  // DOWN
-                trafficLightLocations[index++],  // RIGHT
-                trafficLightLocations[index++]));// LEFT
-
-        trafficLights = new Node[trafficLightLocations.length];
+        trafficLights = new Node[trafficLightLocations.length]; // numar de semafoare
 
         for (int i = 0; i < trafficLightLocations.length; i++) {
-            Load_traffic_lights(trafficLightLocations[i], valideRotations[i % 4], trafficLights[i]);
+            LoadIntersectionlights(trafficLightLocations[i], valideRotations[i % 4], trafficLights[i]);
         }
     }
 
@@ -210,8 +204,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         setHudText();
         setSun();
         load_sky();
-        buildVehicle(modelPaths[0], valideLocations[5], valideRotations[3]);
-        //Load_traffic_lights();
+        buildVehicle(modelPaths[0], valideLocations[0], valideRotations[3]);
+        //LoadIntersectionlights();
 
         flyCam.setEnabled(true);
         setDisplayFps(false);
@@ -221,7 +215,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         cameraSetup();
         load_player();
 
-        SetSemafoare();
+        SetIntersections();
 
         setUpKeys();
 
@@ -234,7 +228,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         rootNode.setShadowMode(RenderQueue.ShadowMode.Off);
     }
 
-    private void Load_traffic_lights(Vector3f Location, Matrix3f Rotation, Node trafficLight) {
+    private void LoadIntersectionlights(Vector3f Location, Matrix3f Rotation, Node trafficLight) {
 
         assetManager.registerLocator("src\\assets\\Models\\semafor.zip", ZipLocator.class);
         trafficLight = (Node) assetManager.loadModel("semafor_v7.mesh.j3o");
@@ -282,7 +276,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                 float speedmult = 0.3f;//0.3f;
 
                 if (angle > FastMath.QUARTER_PI) {
-                    angle = FastMath.QUARTER_PI;
+                    angle = FastMath.QUARTER_PI/2;
                 }
                 //left or right
                 if (plane.whichSide(targetLocation) == Plane.Side.Negative) {
@@ -290,80 +284,91 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                 }
                 //backwards
                 if (dot > 1) {
-                    speedmult *= -1;
+                    dot *= -1;
                     anglemult *= -1;
+                    speedmult *=-1;
                 }
-                vehicle.steer(angle * anglemult);
+                vehicle.steer(angle * anglemult );
                 vehicle.accelerate(-speed * speedmult);
                 vehicle.brake(0);
             }
     }
 
     public void CarGoTo(Vector3f destination) {
+         Vector3f targetLocation = new Vector3f();
+         Vector3f vector1 = new Vector3f();
+         Vector3f vector2 = new Vector3f();
+         Vector3f vector3 = new Vector3f();
+         Vector3f vector4 = new Vector3f();
+
+         Vector3f pos = new Vector3f();
+         Vector3f up = new Vector3f();
+         Vector3f dir = new Vector3f();
+         Vector3f targetPos = new Vector3f();
+
+//        vehicle.getPhysicsLocation(vector1);
+//        vehicle.getForwardVector(vector3);
+//        vector2.set(destination);
+//        float distance = vector1.distance(destination);
+//        float checkRadius = 10;
+////        if (distance <= checkRadius) {
+////            //moving = false;
+////            vehicle.accelerate(0);
+////            vehicle.brake(100);
+////        } else {
+//        System.out.println("Rotatie :" + vehicle.getPhysicsRotationMatrix());
+//        System.out.println("Locatie :" + vehicle.getPhysicsLocation());
+//        plane.setOriginNormal(destination, vector1);
+//        // plane.setOriginNormal(map.getWorldTranslation(), vector4);
+//        float dot = 1 - vector3.dot(vector2);
+//        float angle = vector3.angleBetween(destination);
+//        if (angle > FastMath.QUARTER_PI) {
+//            angle = FastMath.QUARTER_PI;
+//        }
+//        float anglemult = 1;//FastMath.PI / 4.0f;
+//        float speedmult = 0.3f;//0.3f;
+//        ROTATE_RIGHT.multLocal(vector3);
+//        if (plane.whichSide(vector3) == Plane.Side.Negative) {
+//            anglemult *= -1;
+//        }
+//
+//        if (dot > 1) {
+//            speedmult *= -1;
+//            anglemult *= -1;
+//        }
+//
+//        vehicle.steer(angle * anglemult);
+//        vehicle.accelerate(speed * speedmult);
+//        vehicle.brake(0);
+
 
         vehicle.getPhysicsLocation(vector1);
-        vehicle.getForwardVector(vector3);
-        vector2.set(destination);
-        float distance = vector1.distance(destination);
-        float checkRadius = 10;
-//        if (distance <= checkRadius) {
-//            //moving = false;
-//            vehicle.accelerate(0);
-//            vehicle.brake(100);
-//        } else {
-            System.out.println("Rotatie :" + vehicle.getPhysicsRotationMatrix());
-            System.out.println("Locatie :" + vehicle.getPhysicsLocation());
-            plane.setOriginNormal(destination, vector1);
-            // plane.setOriginNormal(map.getWorldTranslation(), vector4);
-            float dot = 1 - vector3.dot(vector2);
-            float angle = vector3.angleBetween(destination);
-            if (angle > FastMath.QUARTER_PI) {
-                angle = FastMath.QUARTER_PI;
-            }
-            float anglemult = 1;//FastMath.PI / 4.0f;
-            float speedmult = 0.3f;//0.3f;
-            ROTATE_RIGHT.multLocal(vector3);
-            if (plane.whichSide(vector3) == Plane.Side.Negative) {
-                anglemult *= -1;
-            }
-
-            if (dot > 1) {
-                speedmult *= -1;
-                anglemult *= -1;
-            }
-
-            vehicle.steer(angle * anglemult);
-            vehicle.accelerate(speed * speedmult);
-            vehicle.brake(0);
-
-        }
-//
-//        vehicle.getPhysicsLocation(vector1);
-//        vector2.set(destination);
-//        vector2.subtractLocal(vector1);
-//
-//
-//        vector2.normalizeLocal();
-//
-//        posDir.set(vehicle.getPhysicsLocation());
-//        upDirVehicle.set(new Vector3f(0, 1, 0));
-//        dir.set(vector2);
-//        targetPosDir.set(destination);
-//
-//
-//        Vector3f left = upDirVehicle.cross(dir);  // might be dir.cross(upDirVehicle)
-//
-//        Vector3f targetRelative = targetPosDir.subtract(posDir).normalizeLocal();
-//
-//        float steer = left.dot(targetRelative);
-//        float forward = dir.dot(targetRelative);
-//
-//        if (forward < 0) steer *= -1;
-//
-//        vehicle.steer(-200 * steer);
-//        vehicle.accelerate(-200 * forward);
+        vector2.set(targetLocation);
+        vector2.subtractLocal(vector1);
 
 
+        vector2.normalizeLocal();
+
+        pos.set(vehicle.getPhysicsLocation());
+        up.set(new Vector3f(0,1,0));
+        dir.set(vector2);
+        targetPos.set(targetLocation);
+
+
+
+        Vector3f left = up.cross(dir);  // might be dir.cross(up)
+
+        Vector3f targetRelative = targetPos.subtract(pos).normalizeLocal();
+
+        float steer = left.dot(targetRelative);
+        float forward = dir.dot(targetRelative);
+
+        if( forward < 0 ) steer *= -1;
+
+        vehicle.steer(-200 * steer);
+        vehicle.accelerate(200 * forward);
+
+    }
 
     @Override
     public void simpleUpdate(float tpf) {
@@ -386,10 +391,22 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             if (down) {
                 walkDirection.addLocal(camDir.negate());
             }
+            if(gui)
+            {
+                flyCam.setDragToRotate(true);
+            }
+            else
+            {
+                flyCam.setDragToRotate(false);
+            }
             player.setWalkDirection(walkDirection);
             cam.setLocation(new Vector3f(player.getPhysicsLocation().getX(), player.getPhysicsLocation().getY() - 4, player.getPhysicsLocation().getZ()));
         }
 
+        ///!!! Sensing on the Graphic Engine !!!
+        UpdateIntersectionState();
+
+        ///!!! Acting on the Graphic Engine !!!
         if (!request.isEmpty()) {
             actingHandler x = request.get(0);
             if (x.getType() == "vehicleMovement") {
@@ -398,14 +415,26 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         }
 
-        CarMoveAt(valideLocations[6]);
+//        CarMoveAt(vehicle.getPhysicsLocation().add(0,0,50));
 
 
-        Vector3f destination = valideLocations[8];
+        Vector3f destination = valideLocations[2];
         //CarGoTo(destination);
-        //CarMoveAt(destination);
+        CarMoveAt(destination);
 
 
+    }
+
+    private void UpdateIntersectionState(){
+        for ( IntersectionItem intersectionItem: Intersections )
+        {
+            int index = 0;
+            IntersectionState intersectionState;
+            intersectionState = GetIntersectionState(intersectionItem);
+            sensingHandler currentResponse = new sensingHandler("Intersection", index, intersectionState);
+            if(!response.contains(currentResponse))
+                response.add(currentResponse);
+        }
     }
 
     private void load_interfata() {
@@ -457,7 +486,26 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                                         childLayoutVertical();
                                         alignCenter();
                                         width("90%");
-                                        height("20%");
+                                        height("40%");
+
+                                        control(new ButtonBuilder("referintaLabel", "Referinta Nucleu Global:") {{
+                                            alignCenter();
+                                            height("30px");
+                                            width("100%");
+                                            this.onActiveEffect(new EffectBuilder("nimic"));
+                                            this.focusable(false);
+                                        }});
+
+                                        control(new SliderBuilder("referintaValue", false) {{
+                                            alignCenter();
+                                            this.focusable(false);
+                                            width("90%");
+                                            height("40px");
+                                            buttonStepSize(1f);
+                                            min(1);
+                                            max(5);
+                                        }});
+
 
                                         control(new ButtonBuilder("nrMasiniLabel", "Numar total de masini:") {{
                                             alignCenter();
@@ -668,19 +716,21 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         }}.build(nifty));
 
-        nifty.subscribe(nifty.getCurrentScreen(), "GoOnline", CheckBoxStateChangedEvent.class, eventHandler1);
+        nifty.subscribe(nifty.getCurrentScreen(), "GoOnline", ButtonClickedEvent.class, eventHandler1);
         nifty.subscribe(nifty.getCurrentScreen(), "nrMasiniValue", SliderChangedEvent.class, eventHandler2);
         nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor1Value", SliderChangedEvent.class, eventHandler3);
         nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor2Value", SliderChangedEvent.class, eventHandler4);
         nifty.subscribe(nifty.getCurrentScreen(), "addRecklessCarValue", SliderChangedEvent.class, eventHandler5);
+        nifty.subscribe(nifty.getCurrentScreen(), "referintaValue", SliderChangedEvent.class, eventHandler6);
 
         nifty.gotoScreen("test");
 
     }
 
-    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler1 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
+    EventTopicSubscriber<ButtonClickedEvent> eventHandler1 = new EventTopicSubscriber<ButtonClickedEvent>() {
         @Override
-        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
+        public void onEvent(String s, ButtonClickedEvent checkBoxStateChangedEvent) {
+
             startApplication = true;
         }
     };
@@ -697,14 +747,14 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     EventTopicSubscriber<SliderChangedEvent> eventHandler3 = new EventTopicSubscriber<SliderChangedEvent>() {
         @Override
         public void onEvent(final String topic, final SliderChangedEvent event) {
-            disableTrafficSystemIndex = 1;
+            disableTrafficSystemIndex = 0;
         }
     };
 
     EventTopicSubscriber<SliderChangedEvent> eventHandler4 = new EventTopicSubscriber<SliderChangedEvent>() {
         @Override
         public void onEvent(final String topic, final SliderChangedEvent event) {
-
+            disableTrafficSystemIndex = 1;
         }
     };
 
@@ -712,6 +762,15 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         @Override
         public void onEvent(final String topic, final SliderChangedEvent event) {
             buildVehicle(modelPaths[0],valideLocations[0], valideRotations[0]);
+        }
+    };
+
+    EventTopicSubscriber<SliderChangedEvent> eventHandler6 = new EventTopicSubscriber<SliderChangedEvent>() {
+        @Override
+        public void onEvent(final String topic, final SliderChangedEvent event) {
+            GlobalNucleus.GlobalNucleusSetPoint = (int) nifty.getCurrentScreen().findNiftyControl("referintaValue", Slider.class).getValue();
+            String value = String.valueOf(GlobalNucleus.GlobalNucleusSetPoint);
+            nifty.getCurrentScreen().findNiftyControl("referintaLabel", Button.class).setText("Referinta Nucleu Global: " + GlobalNucleus.GlobalNucleusSetPoint);
         }
     };
 
@@ -843,6 +902,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         inputManager.addListener(this, "Downs");
         inputManager.addListener(this, "Space");
         inputManager.addListener(this, "Reset");
+        inputManager.addListener(this, "gui");
     }
 
     public void attachChildNodes(Node node) {
@@ -911,6 +971,11 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         } else if (binding.equals("Jump")) {
             if (isPressed) {
                 player.jump();
+            }
+        }
+        else if (binding.equals("gui")) {
+            if (isPressed) {
+                gui=!gui;
             }
         }
     }

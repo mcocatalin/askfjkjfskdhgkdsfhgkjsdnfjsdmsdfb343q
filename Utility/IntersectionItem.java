@@ -19,6 +19,9 @@ public class IntersectionItem {
         LeftLocation = leftLocation;
     }
 
+    public IntersectionItem() {
+    }
+
 
     public Vector3f getUpperLocation() {
         return UpperLocation;

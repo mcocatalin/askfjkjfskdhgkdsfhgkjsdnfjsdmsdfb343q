@@ -66,6 +66,7 @@ public class Vehicle extends Agent {
                 mesaj_ventilatie.addReceiver(r);
                 mesaj_ventilatie.setContent("accelerate");
                 // StringUtils.substringBetween(mesaj_ventilatie.getContent(), "(", ")");
+                myAgent.send(mesaj_ventilatie);
 
             }
 

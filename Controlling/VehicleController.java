@@ -16,7 +16,7 @@ public class VehicleController extends Agent{
        addBehaviour(new CyclicBehaviour() {
            @Override
            public void action() {
-               ACLMessage mesaj_receptionat = this.getAgent().receive();
+               ACLMessage mesaj_receptionat = myAgent.receive();
                if(mesaj_receptionat!=null)
                {
                    if(mesaj_receptionat.getContent()=="accelerate") {
