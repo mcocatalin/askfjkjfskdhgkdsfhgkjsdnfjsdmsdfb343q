@@ -3,7 +3,7 @@ package GEngine;
 import Controlling.VehicleController;
 import Nucleus.GlobalNucleus;
 import Utility.IntersectionItem;
-import Utility.IntersectionState;
+import Utility.IntersectionLaneValues;
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.plugins.ZipLocator;
 import com.jme3.bounding.BoundingBox;
@@ -100,7 +100,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             };
 
     // Intersection members
-    public static int noOfIntersections = 2;
+    public static int numberOfIntersections = 2;
 
     // Engine const variables
     final String[] modelPaths = {"Models/Ferrari/Car.scene", "src/assets/Models/Ford.zip"};
@@ -148,7 +148,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     Spatial map;
 
-    VehicleController vc;
+    //VehicleController vc;
 
     private Vector3f posDir = new Vector3f();
     private Vector3f upDirVehicle = new Vector3f();
@@ -164,8 +164,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         return 0;
     }
 
-    private IntersectionState GetIntersectionState(IntersectionItem intersectionItem) {
-        return new IntersectionState(
+    private IntersectionLaneValues GetIntersectionState(IntersectionItem intersectionItem) {
+        return new IntersectionLaneValues(
                 GetIntersectionLocationDensity(intersectionItem.getUpperLocation()),
                 GetIntersectionLocationDensity(intersectionItem.getLowerLocation()),
                 GetIntersectionLocationDensity(intersectionItem.getLeftLocation()),
@@ -178,7 +178,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public void SetIntersections() {
         int index = 0;
         Intersections = new LinkedList<IntersectionItem>();
-        for(int i = 0; i<noOfIntersections;i++) {
+        for(int i = 0; i< numberOfIntersections; i++) {
             Intersections.add(new IntersectionItem(trafficLightLocations[index++],  // UP
                     trafficLightLocations[index++],  // DOWN
                     trafficLightLocations[index++],  // RIGHT
@@ -218,6 +218,9 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         SetIntersections();
 
         setUpKeys();
+
+        // DEBUG
+        //response.add(new sensingHandler("Intersection", index, intersectionLaneValues));
 
     }
 
@@ -426,13 +429,18 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     }
 
     private void UpdateIntersectionState(){
+        int index = 0;
         for ( IntersectionItem intersectionItem: Intersections )
         {
-            int index = 0;
-            IntersectionState intersectionState;
-            intersectionState = GetIntersectionState(intersectionItem);
-            sensingHandler currentResponse = new sensingHandler("Intersection", index, intersectionState);
-            if(!response.contains(currentResponse))
+
+            IntersectionLaneValues intersectionLaneValues;
+            intersectionLaneValues = GetIntersectionState(intersectionItem);
+            sensingHandler currentResponse = new sensingHandler("Intersection", index++, intersectionLaneValues);
+            if(response.size()>0) {
+               if(!response.contains(currentResponse))
+                   response.add(currentResponse);
+            }
+            else
                 response.add(currentResponse);
         }
     }
@@ -781,8 +789,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     }
 
     public void setMap() {
-        assetManager.registerLocator("src/assets/Models/simpleMapFinal.zip", ZipLocator.class);
-        map = assetManager.loadModel("simpleMapFinal.mesh.j3o");
+        assetManager.registerLocator("src/assets/Models/simpleMap_v7.zip", ZipLocator.class);
+        map = assetManager.loadModel("simpleMap_v7.mesh.j3o");
         map.center();
         RigidBodyControl map_PhysX = new RigidBodyControl(0);
         map.addControl(map_PhysX);

@@ -2,6 +2,7 @@ package Sensing;
 
 import GEngine.graphicEngine;
 import GEngine.actingHandler;
+import GEngine.sensingHandler;
 import Utility.Helper;
 import jade.core.AID;
 import jade.core.Agent;
@@ -10,7 +11,11 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.util.leap.Iterator;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.LinkedList;
+
+import static GEngine.graphicEngine.response;
 
 /**
  * Created by Catalin on 5/1/2017.
@@ -46,19 +51,33 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
     public void setup(){
         addBehaviour(new CyclicBehaviour() {
             @Override
-            public void action() {
-//                Iterator it = getAID().getAllAddresses();
-//                String adresa = (String) it.next();
-//                String platforma = getAID().getName().split("@")[1];
-//
-//                ACLMessage mesaj_ventilatie = new ACLMessage(ACLMessage.REQUEST);
-//                AID r = new AID( getAIDName() + "@" + platforma, AID.ISGUID);
-//                r.addAddresses(adresa);
-//                mesaj_ventilatie.setConversationId("Sensing");
-//                mesaj_ventilatie.addReceiver(r);
-//                mesaj_ventilatie.setContent("accelerate");
-//                myAgent.send(mesaj_ventilatie);
-//                //System.out.println("Message sent to" + " " + adresa + " " + mesaj_ventilatie.getContent());
+            public void action()
+            { // Send Message to Controller
+
+                if(!response.isEmpty()) {
+
+                    sensingHandler toHandle = response.remove(0);
+                    if (this.myAgent.getAID().getName() == toHandle.getType() + "Sensing" + toHandle.getComponentID()) {
+
+                        Iterator it = getAID().getAllAddresses();
+                        String adresa = (String) it.next();
+                        String platforma = getAID().getName().split("@")[1];
+
+                        ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                        AID r = new AID(toHandle.getType() + "Controller" + toHandle.getComponentID() + "@" + platforma, AID.ISGUID);
+                        r.addAddresses(adresa);
+                        messageToSend.setContent("Sensing");
+                        messageToSend.setConversationId(toHandle.getType());
+                        messageToSend.addReceiver(r);
+
+                        try {
+                            messageToSend.setContentObject(toHandle.getObjToHandle());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        myAgent.send(messageToSend);
+                    }
+                }
             }
         });
 
@@ -80,18 +99,6 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
             }
         });
 
-        addBehaviour(new CyclicBehaviour() {
-            @Override
-            public void action() {
-//                ACLMessage mesaj_receptionat = myAgent.receive();
-//                if(mesaj_receptionat!=null)
-//                {
-//                    if(mesaj_receptionat.getContent()=="accelerate") {
-//                    graphicEngine.request.add(0,new actingHandler("vehicleMovement","","","",0,0,0,0,0,0,0,0,0,400));
-//                    }
-//                }
-            }
-        });
     }
 
     @Override

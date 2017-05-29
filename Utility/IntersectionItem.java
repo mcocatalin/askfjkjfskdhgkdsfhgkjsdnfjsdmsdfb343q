@@ -11,12 +11,20 @@ public class IntersectionItem {
     Vector3f RightLocation;
     Vector3f LeftLocation;
 
+    boolean UpperState;
+    boolean LowerState;
+    boolean RightState;
+    boolean LeftState;
 
     public IntersectionItem(Vector3f upperLocation, Vector3f lowerLocation, Vector3f rightLocation, Vector3f leftLocation) {
         UpperLocation = upperLocation;
         LowerLocation = lowerLocation;
         RightLocation = rightLocation;
         LeftLocation = leftLocation;
+        UpperState = false;
+        LowerState = false;
+        RightState = false;
+        LeftState = false;
     }
 
     public IntersectionItem() {
@@ -53,5 +61,37 @@ public class IntersectionItem {
 
     public void setLeftLocation(Vector3f leftLocation) {
         LeftLocation = leftLocation;
+    }
+
+    public boolean isUpperState() {
+        return UpperState;
+    }
+
+    public void setUpperState(boolean upperState) {
+        UpperState = upperState;
+    }
+
+    public boolean isLowerState() {
+        return LowerState;
+    }
+
+    public void setLowerState(boolean lowerState) {
+        LowerState = lowerState;
+    }
+
+    public boolean isRightState() {
+        return RightState;
+    }
+
+    public void setRightState(boolean rightState) {
+        RightState = rightState;
+    }
+
+    public boolean isLeftState() {
+        return LeftState;
+    }
+
+    public void setLeftState(boolean leftState) {
+        LeftState = leftState;
     }
 }
