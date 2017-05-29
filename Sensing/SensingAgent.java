@@ -1,7 +1,5 @@
 package Sensing;
 
-import GEngine.graphicEngine;
-import GEngine.actingHandler;
 import GEngine.sensingHandler;
 import Utility.Helper;
 import jade.core.AID;
@@ -12,7 +10,6 @@ import jade.lang.acl.ACLMessage;
 import jade.util.leap.Iterator;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.LinkedList;
 
 import static GEngine.graphicEngine.response;
@@ -57,7 +54,7 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                 if(!response.isEmpty()) {
 
                     sensingHandler toHandle = response.remove(0);
-                    if (this.myAgent.getAID().getName() == toHandle.getType() + "Sensing" + toHandle.getComponentID()) {
+                    if (this.myAgent.getAID().getLocalName().contains(toHandle.getType() + "Sensing" + toHandle.getComponentID())) {
 
                         Iterator it = getAID().getAllAddresses();
                         String adresa = (String) it.next();
@@ -66,8 +63,8 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                         ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                         AID r = new AID(toHandle.getType() + "Controller" + toHandle.getComponentID() + "@" + platforma, AID.ISGUID);
                         r.addAddresses(adresa);
-                        messageToSend.setContent("Sensing");
-                        messageToSend.setConversationId(toHandle.getType());
+                        //messageToSend.setContent("Sensing");
+                        messageToSend.setConversationId("Sensing");
                         messageToSend.addReceiver(r);
 
                         try {

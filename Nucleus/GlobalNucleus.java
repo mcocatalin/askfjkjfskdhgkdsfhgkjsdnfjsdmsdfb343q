@@ -87,17 +87,39 @@ public class GlobalNucleus extends Agent {
                 }
 
 
-//                for(int i = 0; i< graphicEngine.numberOfIntersections; i++) {
-//                    // Start number of Intersections # to continue!
-//                    try {
-//                        AgentController rma1 = home.createNewAgent("Controlling.VehicleController" + i,
-//                                "Controlling.VehicleController", new Object[0]);
-//                        rma1.start();
-//                        // to print in console!!!
-//                    } catch (StaleProxyException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
+                for(int i = 0; i< graphicEngine.numberOfIntersections; i++) {
+                    // Start number of Intersections # to continue!
+
+                    // Sensing Agents
+                    try {
+                        AgentController rma = home.createNewAgent("IntersectionSensing" + i,
+                                "Sensing.SensingAgent", new Object[0]);
+                        rma.start();
+                        // to print in console!!!
+                    } catch (StaleProxyException e) {
+                        e.printStackTrace();
+                    }
+
+                    // Controlling Agents
+                    try {
+                        AgentController rma = home.createNewAgent("IntersectionController" + i,
+                                "Controlling.IntersectionController", new Object[0]);
+                        rma.start();
+                        // to print in console!!!
+                    } catch (StaleProxyException e) {
+                        e.printStackTrace();
+                    }
+
+                    // Acting Agents
+                    try {
+                        AgentController rma = home.createNewAgent("IntersectionActing" + i,
+                                "Acting.ActingAgent", new Object[0]);
+                        rma.start();
+                        // to print in console!!!
+                    } catch (StaleProxyException e) {
+                        e.printStackTrace();
+                    }
+                }
                 done = true;
             }
 
