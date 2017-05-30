@@ -1,0 +1,116 @@
+material 1494522014_1_Concrete_Block_8x8_Gray
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.0 0.0 0.0
+      diffuse 0.615686274509804 0.619607843137255 0.603921568627451
+      specular 0.0 0.0 0.0 0.0
+      emissive 0.0 0.0 0.0
+      // texture size: 48.0, 48.0
+      texture_unit
+      {
+        texture 1494522014_5_Concrete_Block_8x8_Gray.jpg
+      }
+    }
+  }
+}
+material 1494522014_2_Color_D01
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.0 0.0 0.0
+      diffuse 1.0 0.749019607843137 0.0
+      specular 0.0 0.0 0.0 0.0
+      emissive 0.0 0.0 0.0
+    }
+  }
+}
+material 1494522014_3_Concrete_Aggregate_Smoke
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.0 0.0 0.0
+      diffuse 0.603921568627451 0.588235294117647 0.580392156862745
+      specular 0.0 0.0 0.0 0.0
+      emissive 0.0 0.0 0.0
+      // texture size: 12.0, 12.0
+      texture_unit
+      {
+        texture 1494522014_2_Concrete_Aggregate_Smoke.jpg
+      }
+    }
+  }
+}
+material 1494522014_4_[Asphalt_Stamped_Brick]1
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.0 0.0 0.0
+      diffuse 0.584313725490196 0.52156862745098 0.525490196078431
+      specular 0.0 0.0 0.0 0.0
+      emissive 0.0 0.0 0.0
+      // texture size: 8.0, 16.0
+      texture_unit
+      {
+        texture 1494522014_4_Asphalt_Stamped_Brick.jpg
+      }
+    }
+  }
+}
+material 1494522014_5_Water_Dark_Blue
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.0 0.0 0.0
+      diffuse 0.0823529411764706 0.564705882352941 0.733333333333333
+      specular 0.0 0.0 0.0 0.0
+      emissive 0.0 0.0 0.0
+      // texture size: 72.0, 40.464
+      texture_unit
+      {
+        texture 1494522014_3_Water_Dark_Blue.jpg
+      }
+    }
+  }
+}
+material 1494522014_6_Asphalt_New
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.0 0.0 0.0
+      diffuse 0.262745098039216 0.235294117647059 0.243137254901961
+      specular 0.0 0.0 0.0 0.0
+      emissive 0.0 0.0 0.0
+      // texture size: 12.0, 12.0
+      texture_unit
+      {
+        texture 1494522014_1_Asphalt_New.jpg
+      }
+    }
+  }
+}
+material 1494522014_SketchupDefault
+{
+  technique
+  {
+    pass
+    {
+      ambient 0.0 0.0 0.0
+      diffuse 1.0 1.0 1.0
+      specular 0.0 0.0 0.0 0.0
+      emissive 0.0 0.0 0.0
+    }
+  }
+}
