@@ -4,9 +4,9 @@ package GEngine;
  * Created by Catalin on 3/19/2017.
  */
 public class actingHandler {
-    private String type = "None";
-    private int componentID;
-    private Object objToHandle;
+    public String type = "None";
+    public int componentID;
+    public Object objToHandle;
     //Properties
 
     public actingHandler() {

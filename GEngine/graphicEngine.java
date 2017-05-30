@@ -2,7 +2,6 @@ package GEngine;
 
 import Controlling.VehicleController;
 import Utility.IntersectionItem;
-import Utility.IntersectionState;
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.plugins.ZipLocator;
 import com.jme3.bounding.BoundingBox;
@@ -156,15 +155,6 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public int GetIntersectionLocationDensity(Vector3f Location){
         // !!!!!!!!!!!!!!!!!! Check number of cars in range!!!
         return 0;
-    }
-
-    private IntersectionState SetIntersectionState(IntersectionItem intersectionItem){
-        return new IntersectionState(
-                GetIntersectionLocationDensity(intersectionItem.getUpperLocation()),
-                GetIntersectionLocationDensity(intersectionItem.getLowerLocation()),
-                GetIntersectionLocationDensity(intersectionItem.getLeftLocation()) ,
-                GetIntersectionLocationDensity(intersectionItem.getRightLocation())
-                );
     }
 
 
