@@ -60,13 +60,12 @@ public class Vehicle extends Agent {
                 String platforma = getAID().getName().split("@")[1];
 
                 ACLMessage mesaj_ventilatie = new ACLMessage(ACLMessage.REQUEST);
-                AID r = new AID("Controlling.VehicleController1"+ "@" + platforma, AID.ISGUID);
+                AID r = new AID("Controlling.VehicleController1" + "@" + platforma, AID.ISGUID);
                 r.addAddresses(adresa);
                 mesaj_ventilatie.setConversationId("Controlling.VehicleController");
                 mesaj_ventilatie.addReceiver(r);
                 mesaj_ventilatie.setContent("accelerate");
                 // StringUtils.substringBetween(mesaj_ventilatie.getContent(), "(", ")");
-                myAgent.send(mesaj_ventilatie);
 
             }
 
