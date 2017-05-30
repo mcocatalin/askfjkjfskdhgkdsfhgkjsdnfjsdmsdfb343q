@@ -4,10 +4,13 @@ import Utility.Helper;
 import com.sun.deploy.util.StringUtils;
 import jade.core.AID;
 import jade.core.Agent;
+import jade.core.Profile;
+import jade.core.ProfileImpl;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.util.leap.Iterator;
+import jade.wrapper.AgentController;
 import jme3tools.navigation.StringUtil;
 
 import java.util.LinkedList;
@@ -27,20 +30,23 @@ public class Vehicle extends Agent {
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
-                ACLMessage mesaj_receptionat = myAgent.receive();
-                if(mesaj_receptionat!=null) {
-//                    myAgent.receive();
-//                    if (mesaj_receptionat.getConversationId() == "stropitori") {
-//                        stropitori = Boolean.parseBoolean(mesaj_receptionat.getContent());
-//                        environment.sprinkler=stropitori;
-//                    }
+//                ACLMessage mesaj_receptionat = myAgent.receive();
+//                if(mesaj_receptionat!=null) {
+////                    myAgent.receive();
+////                    if (mesaj_receptionat.getConversationId() == "stropitori") {
+////                        stropitori = Boolean.parseBoolean(mesaj_receptionat.getContent());
+////                        environment.sprinkler=stropitori;
+////                    }
+//
+//                }
+//                try {
+//                    Thread.sleep(50);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
 
-                }
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                // Get a hold on JADE runtime
+
             }
         });
 
@@ -54,7 +60,7 @@ public class Vehicle extends Agent {
                 String platforma = getAID().getName().split("@")[1];
 
                 ACLMessage mesaj_ventilatie = new ACLMessage(ACLMessage.REQUEST);
-                AID r = new AID("Controlling.VehicleController@" + platforma, AID.ISGUID);
+                AID r = new AID("Controlling.VehicleController1" + "@" + platforma, AID.ISGUID);
                 r.addAddresses(adresa);
                 mesaj_ventilatie.setConversationId("Controlling.VehicleController");
                 mesaj_ventilatie.addReceiver(r);

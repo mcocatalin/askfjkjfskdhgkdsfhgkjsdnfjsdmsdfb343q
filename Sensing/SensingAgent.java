@@ -47,18 +47,18 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
-                Iterator it = getAID().getAllAddresses();
-                String adresa = (String) it.next();
-                String platforma = getAID().getName().split("@")[1];
-
-                ACLMessage mesaj_ventilatie = new ACLMessage(ACLMessage.REQUEST);
-                AID r = new AID( getAIDName() + "@" + platforma, AID.ISGUID);
-                r.addAddresses(adresa);
-                mesaj_ventilatie.setConversationId("Sensing");
-                mesaj_ventilatie.addReceiver(r);
-                mesaj_ventilatie.setContent("accelerate");
-                myAgent.send(mesaj_ventilatie);
-                //System.out.println("Message sent to" + " " + adresa + " " + mesaj_ventilatie.getContent());
+//                Iterator it = getAID().getAllAddresses();
+//                String adresa = (String) it.next();
+//                String platforma = getAID().getName().split("@")[1];
+//
+//                ACLMessage mesaj_ventilatie = new ACLMessage(ACLMessage.REQUEST);
+//                AID r = new AID( getAIDName() + "@" + platforma, AID.ISGUID);
+//                r.addAddresses(adresa);
+//                mesaj_ventilatie.setConversationId("Sensing");
+//                mesaj_ventilatie.addReceiver(r);
+//                mesaj_ventilatie.setContent("accelerate");
+//                myAgent.send(mesaj_ventilatie);
+//                //System.out.println("Message sent to" + " " + adresa + " " + mesaj_ventilatie.getContent());
             }
         });
 
@@ -83,13 +83,13 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
-                ACLMessage mesaj_receptionat = myAgent.receive();
-                if(mesaj_receptionat!=null)
-                {
-                    if(mesaj_receptionat.getContent()=="accelerate") {
-                    graphicEngine.request.add(0,new actingHandler("vehicleMovement","","","",0,0,0,0,0,0,0,0,0,400));
-                    }
-                }
+//                ACLMessage mesaj_receptionat = myAgent.receive();
+//                if(mesaj_receptionat!=null)
+//                {
+//                    if(mesaj_receptionat.getContent()=="accelerate") {
+//                    graphicEngine.request.add(0,new actingHandler("vehicleMovement","","","",0,0,0,0,0,0,0,0,0,400));
+//                    }
+//                }
             }
         });
     }
