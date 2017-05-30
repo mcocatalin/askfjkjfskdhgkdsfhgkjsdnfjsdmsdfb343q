@@ -1,10 +1,13 @@
 package Nucleus;
 
+import Utility.IntersectionSensing;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.ThreadedBehaviourFactory;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.UnreadableException;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -20,6 +23,7 @@ public class Nucleus extends Agent {
     public String localaddress = "";
     public List<String> online_cells = new ArrayList<>();
     private String locatie = "Hol"; // unnecessary?
+    IntersectionSensing intersectionSensing;
 
     @Override
     public void setup() {
@@ -68,7 +72,26 @@ public class Nucleus extends Agent {
             }
         };
 
-        addBehaviour(tbf.wrap(discovery));
+        //addBehaviour(tbf.wrap(discovery));
+
+        addBehaviour(new CyclicBehaviour() { // Disabled intersection
+            @Override
+            public void action() { // Receive controller world status
+                ACLMessage mesaj_receptionat = myAgent.receive();
+                if(mesaj_receptionat!=null)
+                {
+                    if(mesaj_receptionat.getConversationId()=="StatusUpdate") {
+                        try {
+                            intersectionSensing = (IntersectionSensing) mesaj_receptionat.getContentObject();
+                            int a;
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                }
+            }
+        });
 
     }
 }

@@ -16,7 +16,7 @@ import jade.wrapper.StaleProxyException;
 public class GlobalNucleus extends Agent {
 
     public static int GlobalNucleusSetPoint;
-
+    public static boolean[] disableTrafficSystemIndex = new boolean[graphicEngine.numberOfIntersections];
 
 //    public static void createAgents(){
 //        jade.core.Runtime runtime = jade.core.Runtime.instance();
@@ -54,70 +54,84 @@ public class GlobalNucleus extends Agent {
 //porneste interfata de la JADE (merge si fara asta)
 
                 // Start number of vehicles # to continue!
-                for( int i=0; i< graphicEngine.numberOfCars; i++) {
-                    // Sensing Agents
-                    try {
-                        AgentController rma = home.createNewAgent("VehicleSensing" + i,
-                                "Sensing.SensingAgent", new Object[0]);
-                        rma.start();
-                        // to print in console!!!
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
-                    }
+                if(graphicEngine.numberOfCars >0) {
+                    for (int i = 0; i < graphicEngine.numberOfCars; i++) {
+                        // Sensing Agents
+                        try {
+                            AgentController rma = home.createNewAgent("VehicleSensing" + i,
+                                    "Sensing.SensingAgent", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
 
-                    // Controlling Agents
-                    try {
-                        AgentController rma = home.createNewAgent("VehicleController" + i,
-                                "Controlling.VehicleController", new Object[0]);
-                        rma.start();
-                        // to print in console!!!
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
-                    }
+                        // Controlling Agents
+                        try {
+                            AgentController rma = home.createNewAgent("VehicleController" + i,
+                                    "Controlling.VehicleController", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
 
-                    // Acting Agents
-                    try {
-                        AgentController rma = home.createNewAgent("VehicleActing" + i,
-                                "Acting.ActingAgent", new Object[0]);
-                        rma.start();
-                        // to print in console!!!
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
+                        // Acting Agents
+                        try {
+                            AgentController rma = home.createNewAgent("VehicleActing" + i,
+                                    "Acting.ActingAgent", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
 
+                if(graphicEngine.numberOfIntersections>0) {
 
-                for(int i = 0; i< graphicEngine.numberOfIntersections; i++) {
-                    // Start number of Intersections # to continue!
+                    for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
+                        // Start number of Intersections # to continue!
 
-                    // Sensing Agents
-                    try {
-                        AgentController rma = home.createNewAgent("IntersectionSensing" + i,
-                                "Sensing.SensingAgent", new Object[0]);
-                        rma.start();
-                        // to print in console!!!
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
-                    }
+                        // Sensing Agents
+                        try {
+                            AgentController rma = home.createNewAgent("IntersectionSensing" + i,
+                                    "Sensing.SensingAgent", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
 
-                    // Controlling Agents
-                    try {
-                        AgentController rma = home.createNewAgent("IntersectionController" + i,
-                                "Controlling.IntersectionController", new Object[0]);
-                        rma.start();
-                        // to print in console!!!
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
-                    }
+                        // Controlling Agents
+                        try {
+                            AgentController rma = home.createNewAgent("IntersectionController" + i,
+                                    "Controlling.IntersectionController", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
 
-                    // Acting Agents
-                    try {
-                        AgentController rma = home.createNewAgent("IntersectionActing" + i,
-                                "Acting.ActingAgent", new Object[0]);
-                        rma.start();
-                        // to print in console!!!
-                    } catch (StaleProxyException e) {
-                        e.printStackTrace();
+                        // Acting Agents
+                        try {
+                            AgentController rma = home.createNewAgent("IntersectionActing" + i,
+                                    "Acting.ActingAgent", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Nucleus Agents
+                        try {
+                            AgentController rma = home.createNewAgent("IntersectionNucleus" + i,
+                                    "Nucleus.Nucleus", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
                 done = true;

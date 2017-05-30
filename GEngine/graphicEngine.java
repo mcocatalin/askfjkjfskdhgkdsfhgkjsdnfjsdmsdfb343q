@@ -1,9 +1,8 @@
 package GEngine;
 
-import Controlling.VehicleController;
 import Nucleus.GlobalNucleus;
 import Utility.IntersectionItem;
-import Utility.IntersectionLaneValues;
+import Utility.IntersectionSensing;
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.plugins.ZipLocator;
 import com.jme3.bounding.BoundingBox;
@@ -38,15 +37,23 @@ import com.jme3.shadow.SpotLightShadowFilter;
 import com.jme3.shadow.SpotLightShadowRenderer;
 import com.jme3.util.SkyFactory;
 import de.lessvoid.nifty.Nifty;
-import de.lessvoid.nifty.builder.*;
-import de.lessvoid.nifty.controls.*;
+import de.lessvoid.nifty.builder.EffectBuilder;
+import de.lessvoid.nifty.builder.LayerBuilder;
+import de.lessvoid.nifty.builder.PanelBuilder;
+import de.lessvoid.nifty.builder.ScreenBuilder;
+import de.lessvoid.nifty.controls.Button;
+import de.lessvoid.nifty.controls.ButtonClickedEvent;
+import de.lessvoid.nifty.controls.Slider;
+import de.lessvoid.nifty.controls.SliderChangedEvent;
 import de.lessvoid.nifty.controls.button.builder.ButtonBuilder;
 import de.lessvoid.nifty.controls.checkbox.builder.CheckboxBuilder;
 import de.lessvoid.nifty.controls.slider.builder.SliderBuilder;
 import de.lessvoid.nifty.screen.DefaultScreenController;
 import org.bushe.swing.event.EventTopicSubscriber;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import static jade.tools.sniffer.Message.offset;
 
@@ -77,8 +84,6 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public float decelerationValue = 0;
     public Node carNode;
     public Node[] trafficLights;
-
-    public static int disableTrafficSystemIndex = 0;
 
     public LinkedList<BoundingSphere> bounds = new LinkedList<BoundingSphere>();
 
@@ -164,8 +169,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         return 0;
     }
 
-    private IntersectionLaneValues GetIntersectionState(IntersectionItem intersectionItem) {
-        return new IntersectionLaneValues(
+    private IntersectionSensing GetIntersectionState(IntersectionItem intersectionItem) {
+        return new IntersectionSensing(
                 GetIntersectionLocationDensity(intersectionItem.getUpperLocation()),
                 GetIntersectionLocationDensity(intersectionItem.getLowerLocation()),
                 GetIntersectionLocationDensity(intersectionItem.getLeftLocation()),
@@ -430,15 +435,28 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     private void UpdateIntersectionState(){
         int index = 0;
+        boolean contains = false;
         for ( IntersectionItem intersectionItem: Intersections )
         {
 
-            IntersectionLaneValues intersectionLaneValues;
+            IntersectionSensing intersectionLaneValues;
             intersectionLaneValues = GetIntersectionState(intersectionItem);
             sensingHandler currentResponse = new sensingHandler("Intersection", index++, intersectionLaneValues);
             if(response.size()>0) {
-               if(!response.contains(currentResponse))
-                   response.add(currentResponse);
+
+//               if(response.contains(currentResponse))
+//                   //response.add(currentResponse);
+//                   break;
+//               else
+//                   response.add(currentResponse);
+           // synchronized (response) {
+                for (int i = 0; i < response.size(); i++) {
+                    if (response.get(i).equals(currentResponse))
+                        contains = true;
+                }
+                if (!contains)
+                    response.add(currentResponse);
+           // }
             }
             else
                 response.add(currentResponse);
@@ -755,14 +773,14 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     EventTopicSubscriber<SliderChangedEvent> eventHandler3 = new EventTopicSubscriber<SliderChangedEvent>() {
         @Override
         public void onEvent(final String topic, final SliderChangedEvent event) {
-            disableTrafficSystemIndex = 0;
+            GlobalNucleus.disableTrafficSystemIndex[0] = true;
         }
     };
 
     EventTopicSubscriber<SliderChangedEvent> eventHandler4 = new EventTopicSubscriber<SliderChangedEvent>() {
         @Override
         public void onEvent(final String topic, final SliderChangedEvent event) {
-            disableTrafficSystemIndex = 1;
+            GlobalNucleus.disableTrafficSystemIndex[0] = true;
         }
     };
 
@@ -845,7 +863,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         bounds.add(bs);
 
         rays.add(new Ray(new Vector3f(), player.getPhysicsLocation()));
-        rays.get(numberOfCars++).setLimit(20);
+        //rays.get(numberOfCars++).setLimit(20);
     }
 
     public void SetTrafficLights(int state) {
@@ -1067,7 +1085,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         bounds.add(bs);
 
         rays.add(new Ray(new Vector3f(), vehicle.getPhysicsLocation()));
-        rays.get(numberOfCars++).setLimit(20);
+        //rays.get(numberOfCars++).setLimit(20);
 
     }
 

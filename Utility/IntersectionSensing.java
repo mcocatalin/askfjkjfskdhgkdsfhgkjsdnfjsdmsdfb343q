@@ -5,13 +5,13 @@ import java.io.Serializable;
 /**
  * Created by Catalin on 5/22/2017.
  */
-public class IntersectionLaneValues implements Serializable {
+public class IntersectionSensing implements Serializable {
     int UpperDensity;
     int LowerDensity;
     int LeftDensity;
     int RightDensity;
 
-    public boolean equals(IntersectionLaneValues obj) {
+    public boolean equals(IntersectionSensing obj) {
         return ((this.UpperDensity == obj.UpperDensity) && (this.LowerDensity == obj.LowerDensity) && (this.RightDensity == obj.RightDensity) && (this.LeftDensity == obj.LeftDensity));
     }
 
@@ -20,7 +20,7 @@ public class IntersectionLaneValues implements Serializable {
         return "UpperDensity="+UpperDensity+"LowerDensity="+LowerDensity+"LeftDensity= "+LeftDensity+"RightDensity= "+RightDensity;
     }
 
-    public IntersectionLaneValues(int upperDensity, int lowerDensity, int leftDensity, int rightDensity) {
+    public IntersectionSensing(int upperDensity, int lowerDensity, int leftDensity, int rightDensity) {
         UpperDensity = upperDensity;
         LowerDensity = lowerDensity;
         LeftDensity = leftDensity;
@@ -39,6 +39,6 @@ public class IntersectionLaneValues implements Serializable {
         return maxValue;
     }
 
-    public IntersectionLaneValues() {
+    public IntersectionSensing() {
     }
 }

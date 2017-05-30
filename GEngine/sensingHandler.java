@@ -1,15 +1,17 @@
 package GEngine;
 
-import Utility.IntersectionLaneValues;
+import Utility.IntersectionSensing;
+
+import java.io.Serializable;
 
 /**
  * Created by Catalin on 5/22/2017.
  */
-public class sensingHandler {
+public class sensingHandler implements Serializable{
 
     private String type;
     private int componentID;
-    private IntersectionLaneValues objToHandle;
+    private IntersectionSensing objToHandle;
 
 
     public sensingHandler() {
@@ -25,7 +27,7 @@ public class sensingHandler {
         return ((this.type == obj.type) && (this.componentID == obj.componentID) && (this.objToHandle.equals(obj.objToHandle)));
     }
 
-    public sensingHandler(String type, int componentID, IntersectionLaneValues objToHandle) {
+    public sensingHandler(String type, int componentID, IntersectionSensing objToHandle) {
 
         this.type = type;
         this.componentID = componentID;
@@ -48,11 +50,11 @@ public class sensingHandler {
         this.componentID = componentID;
     }
 
-    public IntersectionLaneValues getObjToHandle() {
+    public IntersectionSensing getObjToHandle() {
         return objToHandle;
     }
 
-    public void setObjToHandle(IntersectionLaneValues objToHandle) {
+    public void setObjToHandle(IntersectionSensing objToHandle) {
         this.objToHandle = objToHandle;
     }
 

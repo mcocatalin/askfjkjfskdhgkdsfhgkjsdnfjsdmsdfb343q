@@ -50,29 +50,30 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
             @Override
             public void action()
             { // Send Message to Controller
+                synchronized (response) { // Thread access at the same time
+                      if(response.size()>0) {
 
-                if(!response.isEmpty()) {
+                        sensingHandler toHandle = response.remove(0);
+                        if (this.myAgent.getAID().getLocalName().contains(toHandle.getType() + "Sensing" + toHandle.getComponentID())) {
 
-                    sensingHandler toHandle = response.remove(0);
-                    if (this.myAgent.getAID().getLocalName().contains(toHandle.getType() + "Sensing" + toHandle.getComponentID())) {
+                            Iterator it = getAID().getAllAddresses();
+                            String adresa = (String) it.next();
+                            String platforma = getAID().getName().split("@")[1];
 
-                        Iterator it = getAID().getAllAddresses();
-                        String adresa = (String) it.next();
-                        String platforma = getAID().getName().split("@")[1];
+                            ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                            AID r = new AID(toHandle.getType() + "Controller" + toHandle.getComponentID() + "@" + platforma, AID.ISGUID);
+                            r.addAddresses(adresa);
+                            //messageToSend.setContent("Sensing");
+                            messageToSend.setConversationId("Sensing");
+                            messageToSend.addReceiver(r);
 
-                        ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                        AID r = new AID(toHandle.getType() + "Controller" + toHandle.getComponentID() + "@" + platforma, AID.ISGUID);
-                        r.addAddresses(adresa);
-                        //messageToSend.setContent("Sensing");
-                        messageToSend.setConversationId("Sensing");
-                        messageToSend.addReceiver(r);
-
-                        try {
-                            messageToSend.setContentObject(toHandle.getObjToHandle());
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                            try {
+                                messageToSend.setContentObject(toHandle.getObjToHandle());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            myAgent.send(messageToSend);
                         }
-                        myAgent.send(messageToSend);
                     }
                 }
             }
