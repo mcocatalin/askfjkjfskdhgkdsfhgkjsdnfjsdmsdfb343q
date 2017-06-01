@@ -6,52 +6,35 @@ import java.io.Serializable;
  * Created by Catalin on 5/30/2017.
  */
 public class IntersectionActing implements Serializable {
-    private boolean UpperState;
-    private boolean LowerState;
-    private boolean RightState;
-    private boolean LeftState;
-
-    public boolean isUpperState() {
-        return UpperState;
-    }
-
-    public void setUpperState(boolean upperState) {
-        UpperState = upperState;
-    }
-
-    public boolean isLowerState() {
-        return LowerState;
-    }
-
-    public void setLowerState(boolean lowerState) {
-        LowerState = lowerState;
-    }
-
-    public boolean isRightState() {
-        return RightState;
-    }
-
-    public void setRightState(boolean rightState) {
-        RightState = rightState;
-    }
-
-    public boolean isLeftState() {
-        return LeftState;
-    }
-
-    public void setLeftState(boolean leftState) {
-        LeftState = leftState;
-    }
+    boolean intersectionState[];
 
     public IntersectionActing() {
-
+        intersectionState = new boolean[4];
+        for(int i =0; i<4; i++){
+            intersectionState[i] = false;
+        }
     }
 
-    public IntersectionActing(boolean upperState, boolean lowerState, boolean rightState, boolean leftState) {
+    public void setLaneDirection(boolean UpDown, boolean RightLeft){
+        if(UpDown){
+            intersectionState[0] = true;
+            intersectionState[1] = false;
+            intersectionState[2] = true;
+            intersectionState[3] = false;
+        }
 
-        UpperState = upperState;
-        LowerState = lowerState;
-        RightState = rightState;
-        LeftState = leftState;
+        if(RightLeft){
+            intersectionState[0] = false;
+            intersectionState[1] = true;
+            intersectionState[2] = false;
+            intersectionState[3] = true;
+        }
+    }
+
+    public void setIntersectionState(boolean Up, boolean Right, boolean Down, boolean Left){
+        intersectionState[0] = Up;
+        intersectionState[1] = Right;
+        intersectionState[2] = Down;
+        intersectionState[3] = Left;
     }
 }

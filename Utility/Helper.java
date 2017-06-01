@@ -1,16 +1,12 @@
 package Utility;
 
-import com.jme3.bounding.Intersection;
 import com.jme3.math.Vector3f;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +22,27 @@ public class Helper {
         put("LeftPoint",4);
     }};
 
-
+//    public boolean ElapsedTime(int timePeriod){
+//        TimerTask tmtsk = new TimerTask() {
+//
+//            @Override
+//            public void run() {
+//                Calendar dateTime = Calendar.getInstance();
+//                System.out.println("\nPrint task");
+//                try {
+//                    Thread.sleep(1001);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                Calendar dateTimeFinal = Calendar.getInstance();
+//                long time = dateTimeFinal.getTimeInMillis()
+//                        - dateTime.getTimeInMillis();
+//                System.out.println("\nExecution time: " + time);
+//            }
+//        };
+//        Timer tm = new Timer();
+//        tm.scheduleAtFixedRate(tmtsk, 0, 1000);
+//    }
 
 
     public static boolean IsInFront(Vector3f center){

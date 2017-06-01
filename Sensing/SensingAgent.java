@@ -43,7 +43,6 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
         this.triggered = triggered;
     }
 
-
     @Override
     public void setup(){
         addBehaviour(new CyclicBehaviour() {
@@ -53,28 +52,30 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                 synchronized (response) { // Thread access at the same time
                       if(response.size()>0) {
 
-                        sensingHandler toHandle = response.remove(0);
-                        if (this.myAgent.getAID().getLocalName().contains(toHandle.getType() + "Sensing" + toHandle.getComponentID())) {
+                          sensingHandler toHandle = response.remove(0);
+                          if (toHandle != null) {
+                              if (this.myAgent.getAID().getLocalName().contains(toHandle.getType() + "Sensing" + toHandle.getComponentID())) {
 
-                            Iterator it = getAID().getAllAddresses();
-                            String adresa = (String) it.next();
-                            String platforma = getAID().getName().split("@")[1];
+                                  Iterator it = getAID().getAllAddresses();
+                                  String adresa = (String) it.next();
+                                  String platforma = getAID().getName().split("@")[1];
 
-                            ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                            AID r = new AID(toHandle.getType() + "Controller" + toHandle.getComponentID() + "@" + platforma, AID.ISGUID);
-                            r.addAddresses(adresa);
-                            //messageToSend.setContent("Sensing");
-                            messageToSend.setConversationId("Sensing");
-                            messageToSend.addReceiver(r);
+                                  ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                                  AID r = new AID(toHandle.getType() + "Controller" + toHandle.getComponentID() + "@" + platforma, AID.ISGUID);
+                                  r.addAddresses(adresa);
+                                  //messageToSend.setContent("Sensing");
+                                  messageToSend.setConversationId("Sensing");
+                                  messageToSend.addReceiver(r);
 
-                            try {
-                                messageToSend.setContentObject(toHandle.getObjToHandle());
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            myAgent.send(messageToSend);
-                        }
-                    }
+                                  try {
+                                      messageToSend.setContentObject(toHandle.getObjToHandle());
+                                  } catch (IOException e) {
+                                      e.printStackTrace();
+                                  }
+                                  myAgent.send(messageToSend);
+                              }
+                          }
+                      }
                 }
             }
         });

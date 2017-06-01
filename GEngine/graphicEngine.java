@@ -41,10 +41,7 @@ import de.lessvoid.nifty.builder.EffectBuilder;
 import de.lessvoid.nifty.builder.LayerBuilder;
 import de.lessvoid.nifty.builder.PanelBuilder;
 import de.lessvoid.nifty.builder.ScreenBuilder;
-import de.lessvoid.nifty.controls.Button;
-import de.lessvoid.nifty.controls.ButtonClickedEvent;
-import de.lessvoid.nifty.controls.Slider;
-import de.lessvoid.nifty.controls.SliderChangedEvent;
+import de.lessvoid.nifty.controls.*;
 import de.lessvoid.nifty.controls.button.builder.ButtonBuilder;
 import de.lessvoid.nifty.controls.checkbox.builder.CheckboxBuilder;
 import de.lessvoid.nifty.controls.slider.builder.SliderBuilder;
@@ -59,10 +56,15 @@ import static jade.tools.sniffer.Message.offset;
 
 public class graphicEngine extends SimpleApplication implements ActionListener {
 
+
+    // Intersection members
+    public static int numberOfIntersections = 2;
+
     // Graphic UI members
     public static boolean startApplication = false;
     public static int numberOfCars;
     private boolean gui=false;
+    public static boolean[] disableTrafficSystemIndex = new boolean[numberOfIntersections];
 
     public BitmapText hudText;
     public CharacterControl player;
@@ -103,9 +105,6 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                     new Vector3f(93f, 18.257574f, -114f),
                     new Vector3f(33f, 18.257574f, -97f),
             };
-
-    // Intersection members
-    public static int numberOfIntersections = 2;
 
     // Engine const variables
     final String[] modelPaths = {"Models/Ferrari/Car.scene", "src/assets/Models/Ford.zip"};
@@ -168,14 +167,16 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         // !!!!!!!!!!!!!!!!!! Check number of cars in range!!!
         return 0;
     }
-
+    static int indexIntesection = 0;
     private IntersectionSensing GetIntersectionState(IntersectionItem intersectionItem) {
+        indexIntesection = indexIntesection%2;
         return new IntersectionSensing(
-                GetIntersectionLocationDensity(intersectionItem.getUpperLocation()),
-                GetIntersectionLocationDensity(intersectionItem.getLowerLocation()),
-                GetIntersectionLocationDensity(intersectionItem.getLeftLocation()),
-                GetIntersectionLocationDensity(intersectionItem.getRightLocation())
+                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[0]) + indexIntesection,
+                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[1]) + indexIntesection,
+                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[2]) + indexIntesection,
+                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[3]) + indexIntesection
         );
+
     }
 
 
@@ -441,24 +442,27 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
             IntersectionSensing intersectionLaneValues;
             intersectionLaneValues = GetIntersectionState(intersectionItem);
-            sensingHandler currentResponse = new sensingHandler("Intersection", index++, intersectionLaneValues);
-            if(response.size()>0) {
+            // to delete increment after creating GetIntersectionState method!!!
+            indexIntesection ++;
 
-//               if(response.contains(currentResponse))
-//                   //response.add(currentResponse);
-//                   break;
-//               else
-//                   response.add(currentResponse);
-           // synchronized (response) {
-                for (int i = 0; i < response.size(); i++) {
-                    if (response.get(i).equals(currentResponse))
-                        contains = true;
-                }
-                if (!contains)
-                    response.add(currentResponse);
-           // }
-            }
-            else
+            sensingHandler currentResponse = new sensingHandler("Intersection", index++, intersectionLaneValues);
+//            if(response.size()>0) {  // !!! To check if time per frame is very low, then the agent behaviour time-outs!
+//
+////               if(response.contains(currentResponse))
+////                   //response.add(currentResponse);
+////                   break;
+////               else
+////                   response.add(currentResponse);
+//           // synchronized (response) {
+//                for (int i = 0; i < response.size(); i++) {
+//                    if (response.get(i).equals(currentResponse))
+//                        contains = true;
+//                }
+//                if (!contains)
+//                    response.add(currentResponse);
+//           // }
+//            }
+//            else
                 response.add(currentResponse);
         }
     }
@@ -585,6 +589,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                                                     width("60%");
                                                     this.onActiveEffect(new EffectBuilder("nimic"));
                                                     this.focusable(false);
+
                                                 }});
 
                                                 panel(new PanelBuilder("goll"){{
@@ -744,8 +749,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         nifty.subscribe(nifty.getCurrentScreen(), "GoOnline", ButtonClickedEvent.class, eventHandler1);
         nifty.subscribe(nifty.getCurrentScreen(), "nrMasiniValue", SliderChangedEvent.class, eventHandler2);
-        nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor1Value", SliderChangedEvent.class, eventHandler3);
-        nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor2Value", SliderChangedEvent.class, eventHandler4);
+        nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor1Value", CheckBoxStateChangedEvent.class, eventHandler3);
+        nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor2Value", CheckBoxStateChangedEvent.class, eventHandler4);
         nifty.subscribe(nifty.getCurrentScreen(), "addRecklessCarValue", SliderChangedEvent.class, eventHandler5);
         nifty.subscribe(nifty.getCurrentScreen(), "referintaValue", SliderChangedEvent.class, eventHandler6);
 
@@ -770,17 +775,17 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         }
     };
 
-    EventTopicSubscriber<SliderChangedEvent> eventHandler3 = new EventTopicSubscriber<SliderChangedEvent>() {
+    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler3 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
-        public void onEvent(final String topic, final SliderChangedEvent event) {
-            GlobalNucleus.disableTrafficSystemIndex[0] = true;
+        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
+            disableTrafficSystemIndex[0] = true;
         }
     };
 
-    EventTopicSubscriber<SliderChangedEvent> eventHandler4 = new EventTopicSubscriber<SliderChangedEvent>() {
+    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler4 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
-        public void onEvent(final String topic, final SliderChangedEvent event) {
-            GlobalNucleus.disableTrafficSystemIndex[0] = true;
+        public void onEvent(final String topic, final CheckBoxStateChangedEvent event) {
+            disableTrafficSystemIndex[1] = true;
         }
     };
 

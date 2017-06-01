@@ -6,92 +6,53 @@ import com.jme3.math.Vector3f;
  * Created by Catalin on 5/23/2017.
  */
 public class IntersectionItem {
-    Vector3f UpperLocation;
-    Vector3f LowerLocation;
-    Vector3f RightLocation;
-    Vector3f LeftLocation;
 
-    boolean UpperState;
-    boolean LowerState;
-    boolean RightState;
-    boolean LeftState;
+    Vector3f itemLocation[]; // Item locations in clockwise direction, starting from Upper.
+    boolean itemState[]; // Item state in clockwise direction, starting from Upper.
 
-    public IntersectionItem(Vector3f upperLocation, Vector3f lowerLocation, Vector3f rightLocation, Vector3f leftLocation) {
-        UpperLocation = upperLocation;
-        LowerLocation = lowerLocation;
-        RightLocation = rightLocation;
-        LeftLocation = leftLocation;
-        UpperState = false;
-        LowerState = false;
-        RightState = false;
-        LeftState = false;
+    public Vector3f[] getItemLocation() {
+        return itemLocation;
     }
+
+    public void setItemLocation(Vector3f[] itemLocation) {
+        this.itemLocation = itemLocation;
+    }
+
+    public boolean[] getItemState() {
+        return itemState;
+    }
+
+    public void setItemState(boolean[] itemState) {
+        this.itemState = itemState;
+    }
+
+
+
+//    public IntersectionItem(Vector3f upperLocation, Vector3f lowerLocation, Vector3f rightLocation, Vector3f leftLocation) {
+//        UpperLocation = upperLocation;
+//        LowerLocation = lowerLocation;
+//        RightLocation = rightLocation;
+//        LeftLocation = leftLocation;
+//        UpperState = false;
+//        LowerState = false;
+//        RightState = false;
+//        LeftState = false;
+//    }
 
     public IntersectionItem() {
+        itemLocation = new Vector3f[4];
+        itemState = new boolean[4];
     }
 
+    public IntersectionItem(Vector3f up, Vector3f right, Vector3f down, Vector3f left) {
+        itemLocation = new Vector3f[4];
+        itemState = new boolean[4];
 
-    public Vector3f getUpperLocation() {
-        return UpperLocation;
+        itemLocation[0] = up;
+        itemLocation[1] = right;
+        itemLocation[2] = down;
+        itemLocation[3] = left;
+
     }
 
-    public void setUpperLocation(Vector3f upperLocation) {
-        UpperLocation = upperLocation;
-    }
-
-    public Vector3f getLowerLocation() {
-        return LowerLocation;
-    }
-
-    public void setLowerLocation(Vector3f lowerLocation) {
-        LowerLocation = lowerLocation;
-    }
-
-    public Vector3f getRightLocation() {
-        return RightLocation;
-    }
-
-    public void setRightLocation(Vector3f rightLocation) {
-        RightLocation = rightLocation;
-    }
-
-    public Vector3f getLeftLocation() {
-        return LeftLocation;
-    }
-
-    public void setLeftLocation(Vector3f leftLocation) {
-        LeftLocation = leftLocation;
-    }
-
-    public boolean isUpperState() {
-        return UpperState;
-    }
-
-    public void setUpperState(boolean upperState) {
-        UpperState = upperState;
-    }
-
-    public boolean isLowerState() {
-        return LowerState;
-    }
-
-    public void setLowerState(boolean lowerState) {
-        LowerState = lowerState;
-    }
-
-    public boolean isRightState() {
-        return RightState;
-    }
-
-    public void setRightState(boolean rightState) {
-        RightState = rightState;
-    }
-
-    public boolean isLeftState() {
-        return LeftState;
-    }
-
-    public void setLeftState(boolean leftState) {
-        LeftState = leftState;
-    }
 }
