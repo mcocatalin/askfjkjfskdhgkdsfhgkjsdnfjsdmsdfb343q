@@ -1,10 +1,14 @@
 package Nucleus;
 
 import GEngine.graphicEngine;
-import jade.core.*;
-import jade.core.Runtime;
+import Utility.Helper;
+import jade.core.AID;
+import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.domain.AMSService;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import jade.util.leap.Iterator;
@@ -25,25 +29,31 @@ public class GlobalNucleus extends Agent {
     public static LinkedList<AID> disabledControllers;
     private int NucleusIndex;
     private boolean DoneCreatingAgents;
+    private boolean doneInitBehaviour;
+    private boolean requestedServiceController;
+    ContainerController home = null;
 
-//    public static void createAgents(){
-//        jade.core.Runtime runtime = jade.core.Runtime.instance();
-//        home = null;
-//        Profile p = new ProfileImpl();
-//        home = runtime.createMainContainer(p);
-//        for(int i = 0; i < 2; i++) {
-//
-//            try {
-//                Object[] args = new Object[1];
-//                args[0]= (Integer) i;
-//                AgentController a = home.createNewAgent(String.valueOf(i), Human.class.getName(), args);
-//                a.start();  //acum va porni metoda setup() a agentului pe un thread separat
-//            } catch (StaleProxyException e1) {
-//                e1.printStackTrace();
-//            }
-//
-//        }
-//    }
+    public static AgentController rma; // Same as GlobalNucleus seted in iniBehaviour
+
+    Behaviour discoverAgents = new Behaviour() {
+        @Override
+        public void action() { // To descover all agents in current container from Agent Management System AMS
+            AMSAgentDescription[] agents = null;
+
+            try {
+                SearchConstraints c = new SearchConstraints();
+                c.setMaxResults ( new Long(-1) );
+                agents = AMSService.search( myAgent, new AMSAgentDescription (), c );
+                //AMSService.
+            }
+            catch (Exception e) {  }
+        }
+
+        @Override
+        public boolean done() {
+            return true;
+        }
+    };
 
     Behaviour initBehaviour = new Behaviour() {
         @Override
@@ -52,7 +62,14 @@ public class GlobalNucleus extends Agent {
             NucleusIndex = 0;
             DoneCreatingAgents = false;
             disabledControllers = new LinkedList<AID>();
+            requestedServiceController = false;
 
+            home = this.myAgent.getContainerController();
+
+            Helper.GlobaNucleusAID = this.myAgent.getAID();
+            //doneInitBehaviour = true;
+
+            //AgentCreator ac = new AgentCreator();
         }
 
         @Override
@@ -83,6 +100,12 @@ public class GlobalNucleus extends Agent {
                 }
                 myAgent.send(messageToSend);
                 NucleusIndex++;
+
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     };
@@ -96,19 +119,17 @@ public class GlobalNucleus extends Agent {
                 String adresa = (String) it.next();
                 String platforma = getAID().getName().split("@")[1];
 
-                Runtime runtime = jade.core.Runtime.instance();
-                ContainerController home = null;
-                Profile p = new ProfileImpl();
-                home= runtime.createMainContainer(p);
 
-                // Maximum 9 vehicles, method to parse ID is checking only the last character of the Agent Local Name.
+
+                // Maximum 9 vehicles, method to parse ID is checking only the last character of the Agent Local Name. To be revised!!!
 
                 // Start number of vehicles # to continue!
                 if(graphicEngine.numberOfCars >0) {
                     for (int i = 0; i < graphicEngine.numberOfCars; i++) {
                         // Sensing Agents
+                        //if(AMSService.)
                         try {
-                            AgentController rma = home.createNewAgent("VehicleSensing" + i,
+                            rma = home.createNewAgent("VehicleSensing" + i,
                                     "Sensing.SensingAgent", new Object[0]);
                             rma.start();
                             // to print in console!!!
@@ -118,7 +139,7 @@ public class GlobalNucleus extends Agent {
 
                         // Controlling Agents
                         try {
-                            AgentController rma = home.createNewAgent("VehicleController" + i,
+                            rma = home.createNewAgent("VehicleController" + i,
                                     "Controlling.VehicleController", new Object[0]);
                             rma.start();
                             // to print in console!!!
@@ -128,7 +149,7 @@ public class GlobalNucleus extends Agent {
 
                         // Acting Agents
                         try {
-                            AgentController rma = home.createNewAgent("VehicleActing" + i,
+                            rma = home.createNewAgent("VehicleActing" + i,
                                     "Acting.ActingAgent", new Object[0]);
                             rma.start();
                             // to print in console!!!
@@ -173,11 +194,13 @@ public class GlobalNucleus extends Agent {
             if(mesaj_receptionat!=null) {
                 if (mesaj_receptionat.getConversationId() == "Defect") {
                     try {
-                        int ID = (int) mesaj_receptionat.getContentObject();
-                        disabledControllers.add(new AID("IntersectionNucleus" + ID + "@" + platforma, AID.ISGUID));
+                        AID defectedAID =  (AID) mesaj_receptionat.getContentObject();
+                        disabledControllers.add(defectedAID);
                     } catch (UnreadableException e) {
                         e.printStackTrace();
                     }
+
+                    requestedServiceController = true;
                 }
             }
         }
@@ -186,7 +209,7 @@ public class GlobalNucleus extends Agent {
     Behaviour setServiceController = new CyclicBehaviour() {
         @Override
         public void action() { // To defected ones.
-            if (disabledControllers.size()> 0 && availableControllers.size() > 0) {
+            if (disabledControllers.size()> 0 && availableControllers.size() > 0 && requestedServiceController) {
                 for (int i=0; i<disabledControllers.size(); i++) {
 
                     Iterator it = getAID().getAllAddresses();
@@ -205,7 +228,13 @@ public class GlobalNucleus extends Agent {
                         e.printStackTrace();
                     }
                     myAgent.send(messageToSend);
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
+                requestedServiceController = false;
             }
         }
     };
@@ -218,6 +247,8 @@ public class GlobalNucleus extends Agent {
         addBehaviour(updateSetPoint);
 
         addBehaviour(createAgents);
+
+        addBehaviour(discoverAgents);
 
         addBehaviour(getDefectedControllers);
 

@@ -166,11 +166,11 @@ public class IntersectionController extends Agent implements IController {
                             }
                         } else {
                             messageToSend.setConversationId("Defect");
-                            try {
-                                messageToSend.setContentObject(intersectionSensing);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+//                            try {
+//                                messageToSend.setContentObject(true);
+//                            } catch (IOException e) {
+//                                e.printStackTrace();
+//                            }
                         }
 
                         messageToSend.addReceiver(r);
@@ -179,13 +179,13 @@ public class IntersectionController extends Agent implements IController {
                 }
             });
 
-
-            addBehaviour(new CyclicBehaviour() { // Set IntersectionActing object to be handled by Acting agent.
-                @Override
-                public void action() {
-
-                }
-            });
+//
+//            addBehaviour(new CyclicBehaviour() { // Set IntersectionActing object to be handled by Acting agent.
+//                @Override
+//                public void action() {
+//
+//                }
+//            });
 
         }
     }

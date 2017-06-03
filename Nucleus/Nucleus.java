@@ -1,15 +1,20 @@
 package Nucleus;
 
 import GEngine.graphicEngine;
-import jade.core.*;
-import jade.core.Runtime;
+import Utility.Helper;
+import jade.core.AID;
+import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.CyclicBehaviour;
+import jade.domain.AMSService;
+import jade.domain.FIPAAgentManagement.AMSAgentDescription;
+import jade.domain.FIPAAgentManagement.SearchConstraints;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 import jade.util.leap.Iterator;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
+import jade.wrapper.ControllerException;
 import jade.wrapper.StaleProxyException;
 
 import java.io.IOException;
@@ -21,40 +26,63 @@ import static GEngine.graphicEngine.disableTrafficSystemIndex;
  */
 public class Nucleus extends Agent {
 
-    public String localaddress = "";
-//    public List<String> online_cells = new ArrayList<>();
-//    private String locatie = "Hol"; // unnecessary?
     //IntersectionSensing intersectionSensing;
     private boolean receivedNewState = false;
     private int setPoint;
     private int[] maxDensity; // Info about lane direction density
     private boolean inRange; // Check setpoint
     private AID serviceController;
+    private boolean defectRequest;
+
+    ContainerController home;
+    private AgentController rmaNucleus;
+
+    Behaviour discoverAgents = new Behaviour() {
+        @Override
+        public void action() { // To descover all agents in current ContainerController
+            AMSAgentDescription[] agents = null;
+
+            try {
+                SearchConstraints c = new SearchConstraints();
+                c.setMaxResults ( new Long(-1) );
+                agents = AMSService.search( myAgent, new AMSAgentDescription (), c );
+            }
+            catch (Exception e) {  }
+        }
+
+        @Override
+        public boolean done() {
+            return true;
+        }
+    };
 
     Behaviour initBehaviour = new Behaviour() {
         @Override
         public void action() {
             serviceController = null;
-            Runtime runtime = jade.core.Runtime.instance();
-            ContainerController home = null;
-            Profile p = new ProfileImpl();
-            home = runtime.createMainContainer(p);
+            defectRequest = false;
+
+            home = this.myAgent.getContainerController();
+
             for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
                 // Sensing Agents
                 try {
-                    AgentController rma = home.createNewAgent("IntersectionSensing" + i,
+                   // home.getAgent("IntersectionSensing" + i);
+                    rmaNucleus = home.createNewAgent("IntersectionSensing" + i,
                             "Sensing.SensingAgent", new Object[0]);
-                    rma.start();
+                    rmaNucleus.start();
                     // to print in console!!!
                 } catch (StaleProxyException e) {
+                    e.printStackTrace();
+                } catch (ControllerException e) {
                     e.printStackTrace();
                 }
 
                 // Controlling Agents
                 try {
-                    AgentController rma = home.createNewAgent("IntersectionController" + i,
+                    rmaNucleus = home.createNewAgent("IntersectionController" + i,
                             "Controlling.IntersectionController", new Object[0]);
-                    rma.start();
+                    rmaNucleus.start();
                     // to print in console!!!
                 } catch (StaleProxyException e) {
                     e.printStackTrace();
@@ -62,9 +90,9 @@ public class Nucleus extends Agent {
 
                 // Acting Agents
                 try {
-                    AgentController rma = home.createNewAgent("IntersectionActing" + i,
+                    rmaNucleus = home.createNewAgent("IntersectionActing" + i,
                             "Acting.ActingAgent", new Object[0]);
-                    rma.start();
+                    rmaNucleus.start();
                     // to print in console!!!
                 } catch (StaleProxyException e) {
                     e.printStackTrace();
@@ -80,6 +108,8 @@ public class Nucleus extends Agent {
 
     @Override
     public void setup() {
+
+        addBehaviour(discoverAgents); // Debug use only
 
         addBehaviour(initBehaviour);
 
@@ -109,6 +139,15 @@ public class Nucleus extends Agent {
                         }
                     }
 
+                    if(mesaj_receptionat.getConversationId()=="Defect") {
+//                        try {
+//                            defectRequest = (boolean) mesaj_receptionat.getContentObject();
+//                        } catch (UnreadableException e) {
+//                            e.printStackTrace();
+//                        }
+                        defectRequest = true;
+                    }
+
                     if(mesaj_receptionat.getConversationId()=="DefectSolver") {
                         try {
                             serviceController = (AID) mesaj_receptionat.getContentObject();
@@ -133,15 +172,15 @@ public class Nucleus extends Agent {
                 r.addAddresses(adresa);
                 if(maxDensity != null) {
                     if (!disableTrafficSystemIndex[thisID]) {
-                        messageToSend.setConversationId("StatusUpdate");
-                        try {
-                            messageToSend.setContentObject(inRange);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+//                        messageToSend.setConversationId("StatusUpdate");
+//                        try {
+//                            messageToSend.setContentObject(inRange);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
                     }
                     else {
-                        if(serviceController != null) {
+                        if(defectRequest && serviceController != null) {
                             messageToSend.setConversationId("DefectSolver");
                             try {
                                 messageToSend.setContentObject(serviceController);
@@ -159,24 +198,27 @@ public class Nucleus extends Agent {
         addBehaviour(new CyclicBehaviour() { // Send data to GlobalNucleus to check setpoint
             @Override
             public void action() {
-                int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1));
-                Iterator it = getAID().getAllAddresses();
-                String adresa = (String) it.next();
-                String platforma = getAID().getName().split("@")[1];
+                if (defectRequest) {
+                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
+                    Iterator it = getAID().getAllAddresses();
+                    String adresa = (String) it.next();
+                    String platforma = getAID().getName().split("@")[1];
 
-                ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                AID r = new AID("GlobalNucleus"+ "@" + platforma, AID.ISGUID);
-                r.addAddresses(adresa);
-                //messageToSend.setContent("Sensing");
-                messageToSend.setConversationId("Defect");
-                messageToSend.addReceiver(r);
+                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                    //AID r = new AID("GlobalNucleus" + "@" + platforma, AID.ISGUID);
+                    //Helper.GlobaNucleusAID.addAddresses(adresa);
+                    //messageToSend.setContent("Sensing");
+                    messageToSend.setConversationId("Defect");
 
-                try {
-                    messageToSend.setContentObject(thisID); // send index ID of Defect Controller
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    try {
+                        AID defectedAID = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
+                        messageToSend.setContentObject(defectedAID); // send index ID of Defect Controller
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    messageToSend.addReceiver(Helper.GlobaNucleusAID);
+                    myAgent.send(messageToSend);
                 }
-                myAgent.send(messageToSend);
             }
         });
 

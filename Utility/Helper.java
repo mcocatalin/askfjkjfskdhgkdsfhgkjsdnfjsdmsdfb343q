@@ -1,6 +1,7 @@
 package Utility;
 
 import com.jme3.math.Vector3f;
+import jade.core.AID;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -14,6 +15,8 @@ import java.util.regex.Pattern;
  * Created by Catalin on 5/9/2017.
  */
 public class Helper {
+
+    public static AID GlobaNucleusAID;
 
     public static HashMap< String, Integer > IntersectionPoint = new HashMap< String, Integer >(){{
         put("UpperPoint",1);
