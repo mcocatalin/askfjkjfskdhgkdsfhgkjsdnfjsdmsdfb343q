@@ -3,6 +3,7 @@ package GEngine;
 import Nucleus.GlobalNucleus;
 import Utility.IntersectionItem;
 import Utility.IntersectionSensing;
+import Utility.WorldDetector;
 import com.jme3.app.SimpleApplication;
 import com.jme3.asset.plugins.ZipLocator;
 import com.jme3.bounding.BoundingBox;
@@ -37,13 +38,13 @@ import com.jme3.shadow.SpotLightShadowFilter;
 import com.jme3.shadow.SpotLightShadowRenderer;
 import com.jme3.util.SkyFactory;
 import de.lessvoid.nifty.Nifty;
-import de.lessvoid.nifty.builder.EffectBuilder;
-import de.lessvoid.nifty.builder.LayerBuilder;
-import de.lessvoid.nifty.builder.PanelBuilder;
-import de.lessvoid.nifty.builder.ScreenBuilder;
+import de.lessvoid.nifty.builder.*;
 import de.lessvoid.nifty.controls.*;
 import de.lessvoid.nifty.controls.button.builder.ButtonBuilder;
 import de.lessvoid.nifty.controls.checkbox.builder.CheckboxBuilder;
+import de.lessvoid.nifty.controls.console.builder.ConsoleBuilder;
+import de.lessvoid.nifty.controls.listbox.builder.ListBoxBuilder;
+import de.lessvoid.nifty.controls.scrollpanel.builder.ScrollPanelBuilder;
 import de.lessvoid.nifty.controls.slider.builder.SliderBuilder;
 import de.lessvoid.nifty.screen.DefaultScreenController;
 import org.bushe.swing.event.EventTopicSubscriber;
@@ -52,6 +53,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.jme3.math.ColorRGBA.Green;
+import static com.jme3.math.ColorRGBA.Red;
 import static jade.tools.sniffer.Message.offset;
 
 public class graphicEngine extends SimpleApplication implements ActionListener {
@@ -90,6 +93,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public LinkedList<BoundingSphere> bounds = new LinkedList<BoundingSphere>();
 
     public LinkedList<Ray> rays = new LinkedList<Ray>();
+
+    public static LinkedList<WorldDetector> worldDetectors = new LinkedList<WorldDetector>();
 
     public Vector3f trafficLightLocations[] =
             {
@@ -167,6 +172,94 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         // !!!!!!!!!!!!!!!!!! Check number of cars in range!!!
         return 0;
     }
+
+    public static TextBuilder consoleWindowText = new TextBuilder("myTextBuilder") {{
+        text("qwe");
+        style("base-font");
+        color("#eeef");
+        textHAlign(Align.Left);
+        width("100%");
+    }};
+
+    public static ScrollPanelBuilder consoleWindow = new ScrollPanelBuilder("myScrollPanel")//("myWindow", "Title of Window")
+
+    {{
+        alignCenter();
+
+        //closeable(false);  // you can't close this window
+        width("100%"); // windows will need a size
+        height("100%");
+        //control(consoleWindow);
+        text(consoleWindowText);
+        text("asd1");
+    }};
+
+    ConsoleBuilder cs = new ConsoleBuilder("console") {{
+        width("100%");
+        height("100%");
+        lines(17);
+        style("base-font");
+        color("#eeef");
+        this.focusable(false);
+
+        alignCenter();
+        valignCenter();
+        this.text(consoleWindowText);
+//        onStartScreenEffect(new EffectBuilder("move") {{
+//            length(15);
+//            inherit();
+//            neverStopRendering(true);
+//            effectParameter("mode", "in");
+//            effectParameter("direction", "top");
+//
+//        }});
+
+    }};
+
+    PanelBuilder ConsoleApp = new PanelBuilder("Left Panel with Console Application") {
+        {
+            childLayoutVertical();
+            valignBottom();
+            alignLeft();
+            width("450px");
+            style("nifty-panel-no-shadow");
+            height("300px");
+
+//                                assetManager.registerLoader(AWTLoader.class, "jpg");
+//
+//                                assetManager.registerLocator("/", FileLocator.class);
+//
+//                                image(new ImageBuilder() {{
+//                                    alignLeft();
+//                                    valignBottom();
+//                                    filename("acs.logo.jpg");
+//                                }});
+
+            control(new ButtonBuilder("ConsoleApplication", "Console Application:") {{
+                alignCenter();
+                height("20%");
+                width("100%");
+                this.onActiveEffect(new EffectBuilder("nimic"));
+                this.focusable(false);
+            }});
+
+
+            // this creates a simple console with 25 lines that is 80% width (of the parent element) and for demonstration purpose there is an effect added
+            // create a window
+            //control(consoleWindow);
+            //control(cs);
+            // Using the builder pattern
+            control(new ListBoxBuilder("myListBox") {{
+                displayItems(15);
+                selectionModeMutliple();
+                optionalHorizontalScrollbar();
+                optionalVerticalScrollbar();
+                width("*"); // standard nifty width attribute
+            }});
+
+        }
+    };
+
     static int indexIntesection = 0;
     private IntersectionSensing GetIntersectionState(IntersectionItem intersectionItem) {
         indexIntesection = indexIntesection%2;
@@ -189,6 +282,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                     trafficLightLocations[index++],  // DOWN
                     trafficLightLocations[index++],  // RIGHT
                     trafficLightLocations[index++]));// LEFT
+            worldDetectors.add(new WorldDetector("IntersectionDetect", i, Intersections.get(i)));
         }
 
         trafficLights = new Node[trafficLightLocations.length]; // numar de semafoare
@@ -411,26 +505,37 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             player.setWalkDirection(walkDirection);
             cam.setLocation(new Vector3f(player.getPhysicsLocation().getX(), player.getPhysicsLocation().getY() - 4, player.getPhysicsLocation().getZ()));
         }
-
+        String a = "";
+        //nifty.getCurrentScreen().findElementByName("myWindow").findElementByName("myTextBuilder").getRenderer(TextRenderer.class).setText(a + "asd\n");
+       // nifty.getCurrentScreen().findElementByName("myScrollPanel");
         ///!!! Sensing on the Graphic Engine !!!
         UpdateIntersectionState();
-
+        //nifty.getCurrentScreen().findElementByName("myScrollPanel").findElementByName("myTextBuilder").getRenderer(TextRenderer.class).setText("asd123");
         ///!!! Acting on the Graphic Engine !!!
         if (!request.isEmpty()) {
             actingHandler x = request.get(0);
             if (x.getType() == "vehicleMovement") {
                 vehicle.accelerate(40);
             }
-
         }
+
+        //consoleWindow.text("asd\n");
+       // nifty.getRenderEngine().renderText("String", 1, 2, 3,4,  de.lessvoid.nifty.tools.Color.randomColor());
+
+//        Console console = nifty.getCurrentScreen().findNiftyControl("console", Console.class);
+//
+//// output hello to the console
+//        console.output("Hello :)\n");
 
 //        CarMoveAt(vehicle.getPhysicsLocation().add(0,0,50));
 
+        //ListBox<String> lst = nifty.getCurrentScreen().findElementByName("myListBox")
+
+        //nifty.getCurrentScreen().findNiftyControl("myListBox", ListBox.class).addItem("asd123");
 
         Vector3f destination = valideLocations[2];
         //CarGoTo(destination);
         CarMoveAt(destination);
-
 
     }
 
@@ -690,52 +795,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                             }
                         });
 
-//                        panel(new PanelBuilder("Left Panel with Console Application") {
-//                            {
-//                                childLayoutVertical();
-//                                valignBottom();
-//                                alignLeft();
-//                                width("450px");
-//                                style("nifty-panel-no-shadow");
-//                                height("300px");
-//
-////                                assetManager.registerLoader(AWTLoader.class, "jpg");
-////
-////                                assetManager.registerLocator("/", FileLocator.class);
-////
-////                                image(new ImageBuilder() {{
-////                                    alignLeft();
-////                                    valignBottom();
-////                                    filename("acs.logo.jpg");
-////                                }});
-//
-//                                control(new ButtonBuilder("ConsoleApplication", "Console Application:") {{
-//                                    alignCenter();
-//                                    height("20%");
-//                                    width("100%");
-//                                    this.onActiveEffect(new EffectBuilder("nimic"));
-//                                    this.focusable(false);
-//                                }});
-//
-//
-//                                // this creates a simple console with 25 lines that is 80% width (of the parent element) and for demonstration purpose there is an effect added
-//                                // create a window
-//                                    control(new WindowBuilder("myWindow", "Title of Window") {{
-//                                    alignCenter();
-//                                    closeable(false);  // you can't close this window
-//                                    width("100%"); // windows will need a size
-//                                    height("100%");
-//                                    text(new TextBuilder() {{
-//                                        text("Hello Window");
-//                                        style("base-font");
-//                                        color("#eeef");
-//                                        valignCenter();
-//                                        width("100%");
-//                                    }});
-//                                }});
-//
-//                            }
-//                        });
+                        panel(ConsoleApp);
 
 
 
@@ -826,7 +886,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         BitmapFont myFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
         hudText = new BitmapText(myFont, false);
         hudText.setSize(15);
-        hudText.setColor(ColorRGBA.Green);           // the text
+        hudText.setColor(Green);           // the text
         hudText.setLocalTranslation(25, offset, 300); // position
         guiNode.attachChild(hudText);
     }
@@ -834,7 +894,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public void setSun() {
 
         PointLight lamp_light = new PointLight();
-        lamp_light.setColor(ColorRGBA.Red);
+        lamp_light.setColor(Red);
         lamp_light.setRadius(100);
         lamp_light.setPosition(new Vector3f(-10f, 21, 0));
         rootNode.addLight(lamp_light);
@@ -876,7 +936,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         SpotLightShadowRenderer slsr = new SpotLightShadowRenderer(assetManager, 1000);
         SpotLightShadowFilter slsf = new SpotLightShadowFilter(assetManager, 1000);
 
-        sl.setColor(ColorRGBA.Red);
+        sl.setColor(Red);
         sl.setSpotRange(20);
         sl.setPosition(valideLocations[1]);
         sl.setSpotInnerAngle(10f * FastMath.DEG_TO_RAD);

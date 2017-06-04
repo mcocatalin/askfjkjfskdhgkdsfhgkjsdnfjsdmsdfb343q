@@ -2,6 +2,7 @@ package Nucleus;
 
 import GEngine.graphicEngine;
 import Utility.Helper;
+import Utility.WorldDetector;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -25,13 +26,22 @@ import java.util.LinkedList;
 public class GlobalNucleus extends Agent {
 
     public static int GlobalNucleusSetPoint;
-    public static LinkedList<AID> availableControllers;
+    public static LinkedList<AID> availableNucleus;
     public static LinkedList<AID> disabledControllers;
     private int NucleusIndex;
     private boolean DoneCreatingAgents;
     private boolean doneInitBehaviour;
     private boolean requestedServiceController;
     ContainerController home = null;
+
+    WorldDetector wd;
+    boolean detectedWorld;
+
+
+    //State of intersections density of vehicles
+    private int density[][];
+
+    private boolean centralControl;
 
     public static AgentController rma; // Same as GlobalNucleus seted in iniBehaviour
 
@@ -58,7 +68,7 @@ public class GlobalNucleus extends Agent {
     Behaviour initBehaviour = new Behaviour() {
         @Override
         public void action() {
-            availableControllers = new LinkedList<AID>();
+            availableNucleus = new LinkedList<AID>();
             NucleusIndex = 0;
             DoneCreatingAgents = false;
             disabledControllers = new LinkedList<AID>();
@@ -66,7 +76,12 @@ public class GlobalNucleus extends Agent {
 
             home = this.myAgent.getContainerController();
 
-            Helper.GlobaNucleusAID = this.myAgent.getAID();
+            density = new int[graphicEngine.numberOfIntersections][2];
+
+            centralControl = false;
+
+            detectedWorld = false;
+
             //doneInitBehaviour = true;
 
             //AgentCreator ac = new AgentCreator();
@@ -78,10 +93,10 @@ public class GlobalNucleus extends Agent {
         }
     };
 
-    Behaviour updateSetPoint = new CyclicBehaviour() { // Send data to Nucleus to update setpoint
+    Behaviour updateStates = new CyclicBehaviour() { // Send data to Nucleus to update setpoint
         @Override
         public void action() {
-            if (DoneCreatingAgents) {
+            if (DoneCreatingAgents && detectedWorld) {
                 NucleusIndex = NucleusIndex % graphicEngine.numberOfIntersections;
                 Iterator it = getAID().getAllAddresses();
                 String adresa = (String) it.next();
@@ -90,6 +105,10 @@ public class GlobalNucleus extends Agent {
                 ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                 AID r = new AID("IntersectionNucleus" + NucleusIndex + "@" + platforma, AID.ISGUID);
                 r.addAddresses(adresa);
+                        if(centralControl){ // TO IMPLEMENT!!!
+                            messageToSend.setConversationId("CentralizedControl");
+                            //messageToSend.setContentObject(new );
+                        }
                 messageToSend.setConversationId("UpdateSetPoint");
                 messageToSend.addReceiver(r);
 
@@ -168,7 +187,7 @@ public class GlobalNucleus extends Agent {
                             AgentController rma = home.createNewAgent("IntersectionNucleus" + i,
                                     "Nucleus.Nucleus", new Object[0]);
                             rma.start();
-                            availableControllers.add(new AID("IntersectionNucleus" + i + "@" + platforma, AID.ISGUID));
+                            availableNucleus.add(new AID("IntersectionNucleus" + i + "@" + platforma, AID.ISGUID));
                         } catch (StaleProxyException e) {
                             e.printStackTrace();
                         }
@@ -192,15 +211,25 @@ public class GlobalNucleus extends Agent {
 
             ACLMessage mesaj_receptionat = myAgent.receive();
             if(mesaj_receptionat!=null) {
-                if (mesaj_receptionat.getConversationId() == "Defect") {
+                if (mesaj_receptionat.getConversationId() == "Defect" && !requestedServiceController) {
                     try {
                         AID defectedAID =  (AID) mesaj_receptionat.getContentObject();
                         disabledControllers.add(defectedAID);
+                        //availableNucleus.remove(defectedAID);
                     } catch (UnreadableException e) {
                         e.printStackTrace();
                     }
 
                     requestedServiceController = true;
+                }
+
+                if(mesaj_receptionat.getConversationId() == "CentralizedControl"){
+                    centralControl = true;
+                    try {
+                        density = (int[][]) mesaj_receptionat.getContentObject();
+                    } catch (UnreadableException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -209,7 +238,7 @@ public class GlobalNucleus extends Agent {
     Behaviour setServiceController = new CyclicBehaviour() {
         @Override
         public void action() { // To defected ones.
-            if (disabledControllers.size()> 0 && availableControllers.size() > 0 && requestedServiceController) {
+            if (disabledControllers.size() > 0 && availableNucleus.size() > 0 && requestedServiceController && detectedWorld) {
                 for (int i=0; i<disabledControllers.size(); i++) {
 
                     Iterator it = getAID().getAllAddresses();
@@ -217,13 +246,13 @@ public class GlobalNucleus extends Agent {
                     String platforma = getAID().getName().split("@")[1];
 
                     ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                    //AID r = new AID("IntersectionNucleus" + NucleusIndex + "@" + platforma, AID.ISGUID);
+                    AID r = new AID(Helper.IntersectionNucleus + disabledControllers.get(i).getLocalName().substring(disabledControllers.get(i).getLocalName().length()-1) + "@" + platforma, AID.ISGUID);
                     disabledControllers.get(i).addAddresses(adresa);
                     messageToSend.setConversationId("DefectSolver");
-                    messageToSend.addReceiver( disabledControllers.get(i));
+                    messageToSend.addReceiver(r);
 
                     try {
-                        messageToSend.setContentObject(availableControllers.get(i)); // send first AID available - to create a new fesable method for this
+                        messageToSend.setContentObject( new AID(Helper.IntersectionController + Helper.getAvailableControllerAID(disabledControllers.get(i)) + "@" + platforma, AID.ISGUID)); // send first AID available - !!! to create a new fesable method for this
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -234,7 +263,7 @@ public class GlobalNucleus extends Agent {
                         e.printStackTrace();
                     }
                 }
-                requestedServiceController = false;
+                //requestedServiceController = false;
             }
         }
     };
@@ -244,7 +273,7 @@ public class GlobalNucleus extends Agent {
 
         addBehaviour(initBehaviour);
 
-        addBehaviour(updateSetPoint);
+        addBehaviour(updateStates);
 
         addBehaviour(createAgents);
 

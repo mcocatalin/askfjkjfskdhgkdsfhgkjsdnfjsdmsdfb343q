@@ -1,7 +1,7 @@
 package Nucleus;
 
 import GEngine.graphicEngine;
-import Utility.Helper;
+import Utility.WorldDetector;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -34,6 +34,10 @@ public class Nucleus extends Agent {
     private AID serviceController;
     private boolean defectRequest;
 
+    WorldDetector wd;
+    boolean detectedWorld;
+
+
     ContainerController home;
     private AgentController rmaNucleus;
 
@@ -61,6 +65,7 @@ public class Nucleus extends Agent {
         public void action() {
             serviceController = null;
             defectRequest = false;
+            detectedWorld = false;
 
             home = this.myAgent.getContainerController();
 
@@ -106,6 +111,38 @@ public class Nucleus extends Agent {
         }
     };
 
+    Behaviour synchronizeIntersections = new CyclicBehaviour() {
+        @Override
+        public void action() {
+            if(detectedWorld) {
+
+                if (!inRange) {
+                    Iterator it = getAID().getAllAddresses();
+                    String adresa = (String) it.next();
+                    String platforma = getAID().getName().split("@")[1];
+
+                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                    AID r = new AID("GlobalNucleus" + "@" + platforma, AID.ISGUID);
+
+                    messageToSend.setConversationId("CentralizedControl");
+
+                    try {
+                        messageToSend.setContentObject(maxDensity); // send state of intersection
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    messageToSend.addReceiver(r);
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    myAgent.send(messageToSend);
+                }
+            }
+        }
+    };
+
     @Override
     public void setup() {
 
@@ -126,9 +163,11 @@ public class Nucleus extends Agent {
                             e.printStackTrace();
                         }
 
-                        if((maxDensity[0] <= setPoint) && (maxDensity[1] <= setPoint)){
+                        if((maxDensity[0] <= setPoint) ||  (maxDensity[1] <= setPoint)){
                             inRange = true;
                         }
+                        else
+                            inRange = false;
                     }
 
                     if(mesaj_receptionat.getConversationId()=="UpdateSetPoint") {
@@ -162,7 +201,7 @@ public class Nucleus extends Agent {
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() { // Send data to Intersection Controller to start a behaviour using this feedback
-                int thisID =Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1));
+                int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
                 Iterator it = getAID().getAllAddresses();
                 String adresa = (String) it.next();
                 String platforma = getAID().getName().split("@")[1];
@@ -170,17 +209,17 @@ public class Nucleus extends Agent {
                 ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                 AID r = new AID("IntersectionController" + thisID + "@" + platforma, AID.ISGUID);
                 r.addAddresses(adresa);
-                if(maxDensity != null) {
+                // if(maxDensity != null) {
+                if (detectedWorld) {
                     if (!disableTrafficSystemIndex[thisID]) {
-//                        messageToSend.setConversationId("StatusUpdate");
-//                        try {
-//                            messageToSend.setContentObject(inRange);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-                    }
-                    else {
-                        if(defectRequest && serviceController != null) {
+                        messageToSend.setConversationId("StatusUpdate");
+                        try {
+                            messageToSend.setContentObject(inRange);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        if (defectRequest && serviceController != null) {
                             messageToSend.setConversationId("DefectSolver");
                             try {
                                 messageToSend.setContentObject(serviceController);
@@ -190,7 +229,13 @@ public class Nucleus extends Agent {
                         }
                     }
                     messageToSend.addReceiver(r);
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     myAgent.send(messageToSend);
+                    //}
                 }
             }
         });
@@ -198,29 +243,37 @@ public class Nucleus extends Agent {
         addBehaviour(new CyclicBehaviour() { // Send data to GlobalNucleus to check setpoint
             @Override
             public void action() {
-                if (defectRequest) {
-                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
-                    Iterator it = getAID().getAllAddresses();
-                    String adresa = (String) it.next();
-                    String platforma = getAID().getName().split("@")[1];
+                if (detectedWorld) {
+                    if (defectRequest) {
+                        int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
+                        Iterator it = getAID().getAllAddresses();
+                        String adresa = (String) it.next();
+                        String platforma = getAID().getName().split("@")[1];
 
-                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                    //AID r = new AID("GlobalNucleus" + "@" + platforma, AID.ISGUID);
-                    //Helper.GlobaNucleusAID.addAddresses(adresa);
-                    //messageToSend.setContent("Sensing");
-                    messageToSend.setConversationId("Defect");
+                        ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                        AID r = new AID("GlobalNucleus" + "@" + platforma, AID.ISGUID);
 
-                    try {
-                        AID defectedAID = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
-                        messageToSend.setContentObject(defectedAID); // send index ID of Defect Controller
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        messageToSend.setConversationId("Defect");
+
+                        try {
+                            AID defectedAID = new AID("IntersectionController" + thisID + "@" + platforma, AID.ISGUID);
+                            messageToSend.setContentObject(defectedAID); // send AID of Defect Controller
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        messageToSend.addReceiver(r);
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        myAgent.send(messageToSend);
                     }
-                    messageToSend.addReceiver(Helper.GlobaNucleusAID);
-                    myAgent.send(messageToSend);
                 }
             }
         });
+
+        addBehaviour(synchronizeIntersections);
 
     }
 }

@@ -11,12 +11,15 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static Nucleus.GlobalNucleus.availableNucleus;
+
 /**
  * Created by Catalin on 5/9/2017.
  */
 public class Helper {
 
-    public static AID GlobaNucleusAID;
+    public static final String IntersectionNucleus = "IntersectionNucleus";
+    public static final String IntersectionController = "IntersectionController";
 
     public static HashMap< String, Integer > IntersectionPoint = new HashMap< String, Integer >(){{
         put("UpperPoint",1);
@@ -24,6 +27,17 @@ public class Helper {
         put("RightPoint",3);
         put("LeftPoint",4);
     }};
+
+    public static int getAvailableControllerAID(AID disabledControllerAID){
+
+        CharSequence ComponentID = disabledControllerAID.getLocalName().substring(disabledControllerAID.getLocalName().length()-1);
+        for (int i = 0; i< availableNucleus.size(); i++) {
+            if(!availableNucleus.get(i).getLocalName().contains(ComponentID)){
+                return i;
+            }
+        }
+        return -1;
+    }
 
 //    public boolean ElapsedTime(int timePeriod){
 //        TimerTask tmtsk = new TimerTask() {

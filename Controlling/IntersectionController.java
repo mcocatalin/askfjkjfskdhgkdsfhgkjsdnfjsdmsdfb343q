@@ -2,6 +2,7 @@ package Controlling;
 
 import Utility.IntersectionActing;
 import Utility.IntersectionSensing;
+import Utility.WorldDetector;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
@@ -28,6 +29,9 @@ public class IntersectionController extends Agent implements IController {
     AID serviceControllerID;
     Timer timer;
 
+    WorldDetector wd;
+    boolean detectedWorld;
+
     // Alternate state of traffic lights
     boolean Updown;
     boolean RightLeft;
@@ -48,6 +52,7 @@ public class IntersectionController extends Agent implements IController {
             defectState = false;
             serviceControllerID = null; // None service controller
             timer = new Timer(); // For switching state of lights
+            detectedWorld = false;
 
             Updown = true;
             RightLeft = false;
@@ -63,38 +68,42 @@ public class IntersectionController extends Agent implements IController {
     Behaviour normalCicleTrafficLights = new CyclicBehaviour() {
         @Override
         public void action() {
-            if (normalState) {
-                int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
-                Iterator it = getAID().getAllAddresses();
-                String adresa = (String) it.next();
-                String platforma = getAID().getName().split("@")[1];
+            if(detectedWorld) {
 
-                ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                AID r;
-                if(serviceControllerID != null)
-                    r = serviceControllerID;
-                else
-                    r = new AID("IntersectionActing" + thisID + "@" + platforma, AID.ISGUID);
-                r.addAddresses(adresa);
-                if (intersectionActing != null) {
-                    try {
-                        Thread.sleep(cicleInterval);
+                if (normalState) {
+                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
+                    Iterator it = getAID().getAllAddresses();
+                    String adresa = (String) it.next();
+                    String platforma = getAID().getName().split("@")[1];
 
-                        if (!disableTrafficSystemIndex[thisID]) {
-                            messageToSend.setConversationId("Acting");
-                            try {
-                                intersectionActing.setLaneDirection(Updown, RightLeft);
-                                messageToSend.setContentObject(intersectionActing);
-                                Updown = !Updown;
-                                RightLeft = !RightLeft;
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        } // to add any condition?
-                        messageToSend.addReceiver(r);
-                        myAgent.send(messageToSend);
-                    } catch (InterruptedException e) {
+                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                    AID r;
+                    if (serviceControllerID != null)
+                        r = serviceControllerID;
+                    else
+                        r = new AID("IntersectionActing" + thisID + "@" + platforma, AID.ISGUID);
+                    r.addAddresses(adresa);
+                    if (intersectionActing != null) {
+                        try {
+                            Thread.sleep(cicleInterval);
 
+                            if (!disableTrafficSystemIndex[thisID] || serviceControllerID != null) {
+                                messageToSend.setConversationId("Acting");
+                                try {
+                                    intersectionActing.setLaneDirection(Updown, RightLeft);
+                                    messageToSend.setContentObject(intersectionActing);
+                                    Updown = !Updown;
+                                    RightLeft = !RightLeft;
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            } // to add any condition?
+                            messageToSend.addReceiver(r);
+                            Thread.sleep(50);
+                            myAgent.send(messageToSend);
+                        } catch (InterruptedException e) {
+
+                        }
                     }
                 }
             }
@@ -105,31 +114,44 @@ public class IntersectionController extends Agent implements IController {
         @Override
         public void action() { // Receive world feedback
             ACLMessage mesaj_receptionat = myAgent.receive();
-            if (mesaj_receptionat != null) {
-                if (mesaj_receptionat.getConversationId() == "Sensing") { // Data from Sensors
-                    try {
-                        intersectionSensing = (IntersectionSensing) mesaj_receptionat.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
+            if (mesaj_receptionat != null)
+             {
+                 if (detectedWorld) {
+                    if (mesaj_receptionat.getConversationId() == "Sensing") { // Data from Sensors
+                        try {
+                            intersectionSensing = (IntersectionSensing) mesaj_receptionat.getContentObject();
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
 
-                if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
-                    try {
-                        normalState = (boolean) mesaj_receptionat.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
+                    if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
+                        try {
+                            normalState = (boolean) mesaj_receptionat.getContentObject();
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
                     }
-                }
 
-                if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
-                    try {
-                        serviceControllerID = (AID) mesaj_receptionat.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
+                    if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
+                        try {
+                            serviceControllerID = (AID) mesaj_receptionat.getContentObject();
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
+                 else
+                     if (mesaj_receptionat.getConversationId() == "WorldDetector") { // Data from Nucleus
+                         try {
+                             wd = (WorldDetector) mesaj_receptionat.getContentObject();
+                             detectedWorld = true;
+                         } catch (UnreadableException e) {
+                             e.printStackTrace();
+                         }
+                     }
             }
+
         }
     };
 
@@ -147,35 +169,52 @@ public class IntersectionController extends Agent implements IController {
             addBehaviour(new CyclicBehaviour() {
                 @Override
                 public void action() { // Send data to Nucleus to decide behaviour
-                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
-                    Iterator it = getAID().getAllAddresses();
-                    String adresa = (String) it.next();
-                    String platforma = getAID().getName().split("@")[1];
 
-                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                    AID r = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
-                    r.addAddresses(adresa);
-                    if (intersectionSensing != null) {
-                        if (!disableTrafficSystemIndex[thisID]) {
-                            messageToSend.setConversationId("StatusUpdate");
+                        int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
+                        Iterator it = getAID().getAllAddresses();
+                        String adresa = (String) it.next();
+                        String platforma = getAID().getName().split("@")[1];
+
+                        ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                        AID r = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
+                        r.addAddresses(adresa);
+                        if(detectedWorld) {
+                            if (intersectionSensing != null) {
+                                if (!disableTrafficSystemIndex[thisID]) {
+                                    messageToSend.setConversationId("StatusUpdate");
+
+                                    try {
+                                        messageToSend.setContentObject(intersectionSensing.getMaxDensity());
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                } else {
+                                    messageToSend.setConversationId("Defect");
+    //                            try {
+    //                                messageToSend.setContentObject(true);
+    //                            } catch (IOException e) {
+    //                                e.printStackTrace();
+    //                            }
+                                }
+
+                            }
+                        }
+                        else{
+                            messageToSend.setConversationId("WorldDetector");
 
                             try {
-                                messageToSend.setContentObject(intersectionSensing.getMaxDensity());
+                                messageToSend.setContentObject(wd);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-                        } else {
-                            messageToSend.setConversationId("Defect");
-//                            try {
-//                                messageToSend.setContentObject(true);
-//                            } catch (IOException e) {
-//                                e.printStackTrace();
-//                            }
                         }
-
-                        messageToSend.addReceiver(r);
-                        myAgent.send(messageToSend);
+                    messageToSend.addReceiver(r);
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
+                    myAgent.send(messageToSend);
                 }
             });
 
