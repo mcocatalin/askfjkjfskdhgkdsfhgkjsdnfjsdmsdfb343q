@@ -2,10 +2,12 @@ package Utility;
 
 import com.jme3.math.Vector3f;
 
+import java.io.Serializable;
+
 /**
  * Created by Catalin on 5/23/2017.
  */
-public class IntersectionItem {
+public class IntersectionItem implements Serializable{
 
     Vector3f itemLocation[]; // Item locations in clockwise direction, starting from Upper.
     boolean itemState[]; // Item state in clockwise direction, starting from Upper.

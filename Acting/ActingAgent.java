@@ -23,7 +23,7 @@ public class ActingAgent extends Agent implements IActing {
                 ACLMessage mesaj_receptionat = myAgent.receive();
                 if(mesaj_receptionat!=null)
                 {
-                    int thisID =Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1)); // Send Feedback to IntersectionController
+                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1)); // Send Feedback to IntersectionController
                     if(mesaj_receptionat.getContent()=="Acting") {
                         try {
                             intersectionActing = (IntersectionActing) mesaj_receptionat.getContentObject();

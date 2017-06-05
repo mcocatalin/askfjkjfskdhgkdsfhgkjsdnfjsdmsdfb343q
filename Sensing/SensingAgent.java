@@ -47,46 +47,43 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
 
     private boolean detectedWorld = false;
 
-    Behaviour detectWorld = new Behaviour() {
+    Behaviour detectWorld = new CyclicBehaviour() {
         @Override
         public void action() {
-            if(worldDetectors.size()>0){
-                int thisID = Integer.parseInt(this.myAgent.getLocalName().substring(this.myAgent.getLocalName().length()-1));
-                if(worldDetectors.get(thisID) != null ){
-                    WorldDetector wd = worldDetectors.remove(thisID);
+            if (!detectedWorld) {
+                if (worldDetectors.size() > 0) {
+                    int thisID = Integer.parseInt(this.myAgent.getLocalName().substring(this.myAgent.getLocalName().length() - 1));
+                    if (worldDetectors.get(thisID) != null) {
+                        WorldDetector wd = worldDetectors.get(thisID);
 
-                    Iterator it = getAID().getAllAddresses();
-                    String adresa = (String) it.next();
-                    String platforma = getAID().getName().split("@")[1];
+                        Iterator it = getAID().getAllAddresses();
+                        String adresa = (String) it.next();
+                        String platforma = getAID().getName().split("@")[1];
 
-                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                    AID r = new AID(Helper.IntersectionController + thisID + "@" + platforma, AID.ISGUID);
-                    r.addAddresses(adresa);
-                    //messageToSend.setContent("Sensing");
-                    messageToSend.setConversationId("WorldDetector");
-                    messageToSend.addReceiver(r);
+                        ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                        AID r = new AID(Helper.IntersectionController + thisID + "@" + platforma, AID.ISGUID);
+                        r.addAddresses(adresa);
+                        //messageToSend.setContent("Sensing");
+                        messageToSend.setConversationId("WorldDetector");
+                        messageToSend.addReceiver(r);
 
-                    try {
-                        messageToSend.setContentObject(wd);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        try {
+                            messageToSend.setContentObject(wd);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        myAgent.send(messageToSend);
                     }
 
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    myAgent.send(messageToSend);
                 }
-
+                detectedWorld = true;
             }
-            detectedWorld = true;
-        }
-
-        @Override
-        public boolean done() {
-            return true;
         }
     };
 

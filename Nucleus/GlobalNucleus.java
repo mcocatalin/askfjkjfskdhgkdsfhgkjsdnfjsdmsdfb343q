@@ -2,6 +2,7 @@ package Nucleus;
 
 import GEngine.graphicEngine;
 import Utility.Helper;
+import Utility.IntersectionItemGraph;
 import Utility.WorldDetector;
 import jade.core.AID;
 import jade.core.Agent;
@@ -34,11 +35,16 @@ public class GlobalNucleus extends Agent {
     private boolean requestedServiceController;
     ContainerController home = null;
 
-    WorldDetector wd;
-    boolean detectedWorld;
+    LinkedList<IntersectionItemGraph> LocationGraph;
 
 
-    //State of intersections density of vehicles
+    LinkedList<WorldDetector> wd;
+    int detectedWorldItems;
+    boolean doneDetecting;
+    boolean doneProcessingNucleusesLocation;
+
+
+    //State of intersections density of vehicles !!!
     private int density[][];
 
     private boolean centralControl;
@@ -56,12 +62,59 @@ public class GlobalNucleus extends Agent {
                 agents = AMSService.search( myAgent, new AMSAgentDescription (), c );
                 //AMSService.
             }
-            catch (Exception e) {  }
+            catch (Exception e) {
+
+            }
         }
 
         @Override
         public boolean done() {
             return true;
+        }
+    };
+
+    Behaviour createWorldNet = new CyclicBehaviour() {
+        @Override
+        public void action() {
+            if(wd != null){
+                if(wd.size() == graphicEngine.numberOfIntersections ) {
+                    if (!doneDetecting) {
+                        for (int i = 0; i < wd.size(); i++)
+                            LocationGraph.add(new IntersectionItemGraph(wd.get(i).getComponentID()));
+                        doneDetecting = true;
+                    } else
+                        if(!doneProcessingNucleusesLocation)
+                        {
+                        for (int i = 0; i < wd.size() - 1; i++) {
+                            for (int j = i + 1; j < wd.size(); j++) {
+                                int side = Helper.checkGraphPosition(wd.get(i).getIntersectionItem(), wd.get(j).getIntersectionItem());
+                                switch (side) {
+                                    case 0:
+                                        LocationGraph.get(i).setUpNeighbour(LocationGraph.get(j));
+                                        LocationGraph.get(j).setDownNeighbour(LocationGraph.get(i));
+                                        break;
+                                    case 1:
+                                        LocationGraph.get(i).setDownNeighbour(LocationGraph.get(j));
+                                        LocationGraph.get(j).setUpNeighbour(LocationGraph.get(i));
+                                        break;
+                                    case 2:
+                                        LocationGraph.get(i).setRightNeighbour(LocationGraph.get(j));
+                                        LocationGraph.get(j).setLeftNeighbour(LocationGraph.get(i));
+                                        break;
+                                    case 3:
+                                        LocationGraph.get(i).setLeftNeighbour(LocationGraph.get(j));
+                                        LocationGraph.get(j).setRightNeighbour(LocationGraph.get(i));
+                                        break;
+
+                                }
+
+                            }
+
+                        }
+                            doneProcessingNucleusesLocation = true;
+                    }
+                }
+            }
         }
     };
 
@@ -80,7 +133,12 @@ public class GlobalNucleus extends Agent {
 
             centralControl = false;
 
-            detectedWorld = false;
+            detectedWorldItems = 0;
+            wd = new LinkedList<WorldDetector>();
+            LocationGraph = new LinkedList<IntersectionItemGraph>();
+
+            doneDetecting = false;
+            doneProcessingNucleusesLocation = false;
 
             //doneInitBehaviour = true;
 
@@ -96,7 +154,7 @@ public class GlobalNucleus extends Agent {
     Behaviour updateStates = new CyclicBehaviour() { // Send data to Nucleus to update setpoint
         @Override
         public void action() {
-            if (DoneCreatingAgents && detectedWorld) {
+            if (DoneCreatingAgents && doneDetecting) {
                 NucleusIndex = NucleusIndex % graphicEngine.numberOfIntersections;
                 Iterator it = getAID().getAllAddresses();
                 String adresa = (String) it.next();
@@ -203,42 +261,66 @@ public class GlobalNucleus extends Agent {
     Behaviour getDefectedControllers = new CyclicBehaviour() {
         @Override
         public void action() {
-            // !!! Assign another controller to defected ones.
 
             Iterator it = getAID().getAllAddresses();
             String adresa = (String) it.next();
             String platforma = getAID().getName().split("@")[1];
 
             ACLMessage mesaj_receptionat = myAgent.receive();
-            if(mesaj_receptionat!=null) {
-                if (mesaj_receptionat.getConversationId() == "Defect" && !requestedServiceController) {
-                    try {
-                        AID defectedAID =  (AID) mesaj_receptionat.getContentObject();
-                        disabledControllers.add(defectedAID);
-                        //availableNucleus.remove(defectedAID);
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
+            if (mesaj_receptionat != null) {
+                if(doneDetecting) {
+                    // !!! Assign another controller to defected ones.
+
+
+                        if (mesaj_receptionat.getConversationId() == "Defect" && !requestedServiceController) {
+                            try {
+                                AID defectedAID = (AID) mesaj_receptionat.getContentObject();
+                                disabledControllers.add(defectedAID);
+                                //availableNucleus.remove(defectedAID);
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
+
+                            requestedServiceController = true;
+                        }
+
+                        if (mesaj_receptionat.getConversationId() == "CentralizedControl") {
+
+                            try {
+                                int NucleusID = Integer.parseInt(mesaj_receptionat.getSender().getLocalName().substring(mesaj_receptionat.getSender().getLocalName().length()-1)); // Send Feedback to IntersectionController
+
+                                density[NucleusID] = (int[]) mesaj_receptionat.getContentObject();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
+
+                            if( density != null && density.length == graphicEngine.numberOfIntersections)
+                                centralControl = true;
+                        }
                     }
-
-                    requestedServiceController = true;
-                }
-
-                if(mesaj_receptionat.getConversationId() == "CentralizedControl"){
-                    centralControl = true;
-                    try {
-                        density = (int[][]) mesaj_receptionat.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
+                else{
+                    if (mesaj_receptionat.getConversationId() == "WorldDetector") {
+                        try {
+                            WorldDetector wdAux = (WorldDetector) mesaj_receptionat.getContentObject();
+                            if(wdAux != null) {
+                                wd.add(wdAux);
+                                detectedWorldItems++;
+                            }
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
+
+
         }
     };
 
     Behaviour setServiceController = new CyclicBehaviour() {
         @Override
         public void action() { // To defected ones.
-            if (disabledControllers.size() > 0 && availableNucleus.size() > 0 && requestedServiceController && detectedWorld) {
+            if (disabledControllers.size() > 0 && availableNucleus.size() > 0 && requestedServiceController && doneDetecting) {
                 for (int i=0; i<disabledControllers.size(); i++) {
 
                     Iterator it = getAID().getAllAddresses();
@@ -270,6 +352,8 @@ public class GlobalNucleus extends Agent {
 
     @Override
     protected void setup() {
+
+        addBehaviour(createWorldNet);
 
         addBehaviour(initBehaviour);
 

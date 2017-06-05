@@ -140,16 +140,15 @@ public class IntersectionController extends Agent implements IController {
                             e.printStackTrace();
                         }
                     }
+
                 }
-                 else
-                     if (mesaj_receptionat.getConversationId() == "WorldDetector") { // Data from Nucleus
-                         try {
-                             wd = (WorldDetector) mesaj_receptionat.getContentObject();
-                             detectedWorld = true;
-                         } catch (UnreadableException e) {
-                             e.printStackTrace();
-                         }
+                 if (mesaj_receptionat.getConversationId() == "WorldDetector") { // Data from Nucleus
+                     try {
+                         wd = (WorldDetector) mesaj_receptionat.getContentObject();
+                     } catch (UnreadableException e) {
+                         e.printStackTrace();
                      }
+                 }
             }
 
         }
@@ -196,18 +195,22 @@ public class IntersectionController extends Agent implements IController {
     //                                e.printStackTrace();
     //                            }
                                 }
-
                             }
                         }
-                        else{
-                            messageToSend.setConversationId("WorldDetector");
+                        else {
+                            if (wd != null) {
+                                messageToSend.setConversationId("WorldDetector");
 
-                            try {
-                                messageToSend.setContentObject(wd);
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                                try {
+                                    messageToSend.setContentObject(wd);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                detectedWorld = true;
                             }
                         }
+
+
                     messageToSend.addReceiver(r);
                     try {
                         Thread.sleep(50);

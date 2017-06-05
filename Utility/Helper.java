@@ -1,5 +1,6 @@
 package Utility;
 
+import com.jme3.math.Plane;
 import com.jme3.math.Vector3f;
 import jade.core.AID;
 
@@ -27,6 +28,45 @@ public class Helper {
         put("RightPoint",3);
         put("LeftPoint",4);
     }};
+
+    public static int checkGraphPosition(IntersectionItem intersectionItem1, IntersectionItem intersectionItem2){
+        Plane plane = new Plane();
+
+        for(int i = 0; i < intersectionItem1.getItemLocation().length/2; i++){
+            plane.setOriginNormal(intersectionItem1.getItemLocation()[i], intersectionItem2.getItemLocation()[i+2]);
+            //for(int j= i; j< intersectionItem2.getItemLocation().length;j++) {
+                   if ( plane.whichSide(intersectionItem1.getItemLocation()[i+1]) == Plane.Side.Negative &&
+                        plane.whichSide(intersectionItem2.getItemLocation()[i]) == Plane.Side.Negative &&
+                        plane.whichSide(intersectionItem2.getItemLocation()[i+1]) == Plane.Side.Negative &&
+                           i == 0
+                        )
+                       return 0;  // isUpNeighbourNucleusID
+
+                    if ( plane.whichSide(intersectionItem1.getItemLocation()[i+1]) == Plane.Side.Positive &&
+                            plane.whichSide(intersectionItem2.getItemLocation()[i]) == Plane.Side.Positive &&
+                            plane.whichSide(intersectionItem2.getItemLocation()[i+1]) == Plane.Side.Positive &&
+                            i == 1
+                            )
+                        return 1; // isDownNeighbouNucleusID
+
+                    if ( plane.whichSide(intersectionItem1.getItemLocation()[i+1]) == Plane.Side.Positive &&
+                            plane.whichSide(intersectionItem2.getItemLocation()[i]) == Plane.Side.Positive &&
+                            plane.whichSide(intersectionItem2.getItemLocation()[i+1]) == Plane.Side.Positive &&
+                            i == 0
+                            )
+                        return 2; // isRightNeighbourNucleusID
+
+                    if ( plane.whichSide(intersectionItem1.getItemLocation()[i+1]) == Plane.Side.Negative &&
+                            plane.whichSide(intersectionItem2.getItemLocation()[i]) == Plane.Side.Negative &&
+                            plane.whichSide(intersectionItem2.getItemLocation()[i+1]) == Plane.Side.Negative &&
+                            i == 1
+                            )
+                        return 3; // isLeftNeighbourNucleusID
+
+
+        }
+        return -1;
+    }
 
     public static int getAvailableControllerAID(AID disabledControllerAID){
 

@@ -14,7 +14,6 @@ import jade.lang.acl.UnreadableException;
 import jade.util.leap.Iterator;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
-import jade.wrapper.ControllerException;
 import jade.wrapper.StaleProxyException;
 
 import java.io.IOException;
@@ -60,6 +59,37 @@ public class Nucleus extends Agent {
         }
     };
 
+    Behaviour sendWorldDetector = new CyclicBehaviour() {
+        @Override
+        public void action() {
+            if (!detectedWorld && wd!=null) {
+
+                Iterator it = getAID().getAllAddresses();
+                String adresa = (String) it.next();
+                String platforma = getAID().getName().split("@")[1];
+
+                ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                AID r = new AID("GlobalNucleus" + "@" + platforma, AID.ISGUID);
+
+                messageToSend.setConversationId("WorldDetector");
+
+                try {
+                    messageToSend.setContentObject(wd); // send state of intersection
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                messageToSend.addReceiver(r);
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                myAgent.send(messageToSend);
+                detectedWorld = true;
+            }
+        }
+    };
+
     Behaviour initBehaviour = new Behaviour() {
         @Override
         public void action() {
@@ -78,8 +108,6 @@ public class Nucleus extends Agent {
                     rmaNucleus.start();
                     // to print in console!!!
                 } catch (StaleProxyException e) {
-                    e.printStackTrace();
-                } catch (ControllerException e) {
                     e.printStackTrace();
                 }
 
@@ -116,7 +144,7 @@ public class Nucleus extends Agent {
         public void action() {
             if(detectedWorld) {
 
-                if (!inRange) {
+                if (!inRange && maxDensity != null) {
                     Iterator it = getAID().getAllAddresses();
                     String adresa = (String) it.next();
                     String platforma = getAID().getName().split("@")[1];
@@ -150,50 +178,59 @@ public class Nucleus extends Agent {
 
         addBehaviour(initBehaviour);
 
-        addBehaviour(new CyclicBehaviour() { // Disabled intersection
+        addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() { // Receive controller world status
                 ACLMessage mesaj_receptionat = myAgent.receive();
                 if(mesaj_receptionat!=null)
                 {
-                    if(mesaj_receptionat.getConversationId()=="StatusUpdate") {
-                        try {
-                            maxDensity = (int[]) mesaj_receptionat.getContentObject();
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
+                    if(detectedWorld) {
+                        if (mesaj_receptionat.getConversationId() == "StatusUpdate") {
+                            try {
+                                maxDensity = (int[]) mesaj_receptionat.getContentObject();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
+
+                            if ((maxDensity[0] <= setPoint) || (maxDensity[1] <= setPoint)) {
+                                inRange = true;
+                            } else
+                                inRange = false;
                         }
 
-                        if((maxDensity[0] <= setPoint) ||  (maxDensity[1] <= setPoint)){
-                            inRange = true;
+                        if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") {
+                            try {
+                                setPoint = (int) mesaj_receptionat.getContentObject();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
                         }
-                        else
-                            inRange = false;
-                    }
 
-                    if(mesaj_receptionat.getConversationId()=="UpdateSetPoint") {
-                        try {
-                            setPoint = (int) mesaj_receptionat.getContentObject();
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    if(mesaj_receptionat.getConversationId()=="Defect") {
+                        if (mesaj_receptionat.getConversationId() == "Defect") {
 //                        try {
 //                            defectRequest = (boolean) mesaj_receptionat.getContentObject();
 //                        } catch (UnreadableException e) {
 //                            e.printStackTrace();
 //                        }
-                        defectRequest = true;
-                    }
+                            defectRequest = true;
+                        }
 
-                    if(mesaj_receptionat.getConversationId()=="DefectSolver") {
-                        try {
-                            serviceController = (AID) mesaj_receptionat.getContentObject();
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
+                        if (mesaj_receptionat.getConversationId() == "DefectSolver") {
+                            try {
+                                serviceController = (AID) mesaj_receptionat.getContentObject();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
+                    else
+                        if(mesaj_receptionat.getConversationId()=="WorldDetector") {
+                            try {
+                                wd = (WorldDetector) mesaj_receptionat.getContentObject();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
+                        }
                 }
             }
         });
@@ -274,6 +311,8 @@ public class Nucleus extends Agent {
         });
 
         addBehaviour(synchronizeIntersections);
+
+        addBehaviour(sendWorldDetector);
 
     }
 }

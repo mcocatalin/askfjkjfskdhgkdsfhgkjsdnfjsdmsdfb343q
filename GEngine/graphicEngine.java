@@ -78,6 +78,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public Vector3f camLeft = new Vector3f();
     public Vector3f walkDirection = new Vector3f();
     public RigidBodyControl traffic_light;
+    public RigidBodyControl drone_light;
+
 
     // Vehicle members
     public VehicleControl vehicle;
@@ -89,6 +91,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public float decelerationValue = 0;
     public Node carNode;
     public Node[] trafficLights;
+    public Node[] droneControllers;
 
     public LinkedList<BoundingSphere> bounds = new LinkedList<BoundingSphere>();
 
@@ -98,18 +101,21 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     public Vector3f trafficLightLocations[] =
             {
-                    new Vector3f(33f, 18.257574f, -97f), // first intersection
-                    new Vector3f(50f, 18.257574f, -97f),
-                    new Vector3f(50f, 18.257574f, -114f),
-                    new Vector3f(33f, 18.257574f, -114f),
-                    new Vector3f(33f, 18.257574f, -97f),
+                    new Vector3f(-62.5f, -5.5f, -17.2f), // first intersection
+                    new Vector3f(-62.5f, -5.5f, -1.2f),
+                    new Vector3f(-79.5f, -5.5f, -1.2f),
+                    new Vector3f(-79.5f, -5.5f, -17.2f),
 
-                    new Vector3f(63f, 18.257574f, -97f), // second intersection
-                    new Vector3f(50f, 48.257574f, -97f),
-                    new Vector3f(50f, 18.257574f, -84f),
-                    new Vector3f(93f, 18.257574f, -114f),
-                    new Vector3f(33f, 18.257574f, -97f),
+                    new Vector3f(-156.8f, -5.5f, -17.2f), // second intersection
+                    new Vector3f(-156.8f, -5.5f, -1.2f),
+                    new Vector3f(-173.8f, -5.5f, -1.2f),
+                    new Vector3f(-173.8f, -5.5f, -17.2f),
             };
+
+    public Vector3f droneControllerLocations[] = {
+            new Vector3f(-71f, 5f, -9f),
+            new Vector3f(-167f, 5f, -9f)
+    };
 
     // Engine const variables
     final String[] modelPaths = {"Models/Ferrari/Car.scene", "src/assets/Models/Ford.zip"};
@@ -130,8 +136,13 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     final Matrix3f[] valideRotations = {
             new Matrix3f(0, 0, -1, 0, 1, 0, -1, 0, 0),
             new Matrix3f(0, 0, -1, 0, 1, 0, 1, 0, 0),
-            new Matrix3f(1, 0, 0, 0, 0, 1, 0, -1, 0),
-            new Matrix3f(0, 1, 0, -1, 0, 0, 0, 0, 1)
+            new Matrix3f(-1, 0, 0, 0, 1, 0, 0, 0,-1),
+            new Matrix3f(0, 0, 1, 0, 1, 0, -1, 0,0),
+
+//
+//            new Matrix3f(0, 1, 0, -1, 0, 0, 0, 0, 1),
+//            new Matrix3f(0, 1, 0, -1, 0, 0, 0, 0, 1),
+//            new Matrix3f(1, 0, 0, 0, 0, 1, 0, -1, 0),
     };
 
     public LinkedList<IntersectionItem> Intersections;
@@ -264,7 +275,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     private IntersectionSensing GetIntersectionState(IntersectionItem intersectionItem) {
         indexIntesection = indexIntesection%2;
         return new IntersectionSensing(
-                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[0]) + indexIntesection,
+                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[0]) + indexIntesection, // 0-1 alternate
                 GetIntersectionLocationDensity(intersectionItem.getItemLocation()[1]) + indexIntesection,
                 GetIntersectionLocationDensity(intersectionItem.getItemLocation()[2]) + indexIntesection,
                 GetIntersectionLocationDensity(intersectionItem.getItemLocation()[3]) + indexIntesection
@@ -287,8 +298,14 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         trafficLights = new Node[trafficLightLocations.length]; // numar de semafoare
 
+        droneControllers = new Node[numberOfIntersections]; // numar de Controllere
+
         for (int i = 0; i < trafficLightLocations.length; i++) {
             LoadIntersectionlights(trafficLightLocations[i], valideRotations[i % 4], trafficLights[i]);
+        }
+
+        for (int i = 0; i < numberOfIntersections; i++) {
+            LoadDroneControllers(droneControllerLocations[i], droneControllers[i]);
         }
     }
 
@@ -329,6 +346,26 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         sky.setLocalScale(1000);
         rootNode.attachChild(sky);
         rootNode.setShadowMode(RenderQueue.ShadowMode.Off);
+    }
+
+    private void LoadDroneControllers(Vector3f Location, Node droneController){
+        assetManager.registerLocator("src\\assets\\Models\\dronaController.zip", ZipLocator.class);
+        droneController = (Node) assetManager.loadModel("dronaController.mesh.j3o");
+        droneController.setLocalTranslation(Location);
+
+        //Geometry chasis = findGeom(trafficLights, "trafficLights");
+        // BoundingBox box = (BoundingBox) chasis.getModelBound();
+//Create a hull collision shape for the chassis
+        //CollisionShape trafficLightHull = CollisionShapeFactory.createDynamicMeshShape(chasis); !!! Cannot find geometry - LOSS!!!S
+        drone_light = new RigidBodyControl(0);
+
+        droneController.addControl(drone_light);
+        drone_light.setPhysicsLocation(Location); //new Vector3f(199,10,-64));
+       // drone_light.setPhysicsRotation(Rotation);// new Matrix3f(0,0,1,0,1,0,-1,0,0)); // rotate with 270 degrees on Y
+
+        getPhysicsSpace().add(drone_light);
+
+        rootNode.attachChild(droneController);
     }
 
     private void LoadIntersectionlights(Vector3f Location, Matrix3f Rotation, Node trafficLight) {
@@ -872,8 +909,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     }
 
     public void setMap() {
-        assetManager.registerLocator("src/assets/Models/simpleMap_v7.zip", ZipLocator.class);
-        map = assetManager.loadModel("simpleMap_v7.mesh.j3o");
+        assetManager.registerLocator("src/assets/Models/map.zip", ZipLocator.class);
+        map = assetManager.loadModel("map.mesh.j3o");
         map.center();
         RigidBodyControl map_PhysX = new RigidBodyControl(0);
         map.addControl(map_PhysX);
