@@ -112,7 +112,7 @@ public class Helper {
     public static String ReadConfigurationFile() {
         String result = null;
 
-        try(BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\Catalin\\IdeaProjects\\citySCAPE\\Utility\\Configuration.txt"))) {
+        try(BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\Catalin\\IdeaProjects\\CitySCAPE\\Utility\\Configuration.txt"))) {
             StringBuilder sb = new StringBuilder();
             String line = br.readLine();
 

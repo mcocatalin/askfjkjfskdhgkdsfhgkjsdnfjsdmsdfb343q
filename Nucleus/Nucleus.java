@@ -107,6 +107,7 @@ public class Nucleus extends Agent {
                             "Sensing.SensingAgent", new Object[0]);
                     rmaNucleus.start();
                     // to print in console!!!
+                    graphicEngine.EventLogEntries.add("Started Intersection Sensing " + i + " agent.");
                 } catch (StaleProxyException e) {
                     e.printStackTrace();
                 }
@@ -117,6 +118,7 @@ public class Nucleus extends Agent {
                             "Controlling.IntersectionController", new Object[0]);
                     rmaNucleus.start();
                     // to print in console!!!
+                    graphicEngine.EventLogEntries.add("Started Intersection Controller " + i + " agent.");
                 } catch (StaleProxyException e) {
                     e.printStackTrace();
                 }
@@ -127,6 +129,7 @@ public class Nucleus extends Agent {
                             "Acting.ActingAgent", new Object[0]);
                     rmaNucleus.start();
                     // to print in console!!!
+                    graphicEngine.EventLogEntries.add("Started Intersection Acting " + i + " agent.");
                 } catch (StaleProxyException e) {
                     e.printStackTrace();
                 }

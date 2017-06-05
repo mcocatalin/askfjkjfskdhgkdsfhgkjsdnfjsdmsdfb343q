@@ -72,7 +72,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public BitmapText hudText;
     public CharacterControl player;
     public BulletAppState bulletAppState;
-    public Nifty nifty;
+    public static Nifty nifty;
     public boolean left = false, right = false, up = false, down = false, camera = false, tp = false;
     public Vector3f camDir = new Vector3f();
     public Vector3f camLeft = new Vector3f();
@@ -175,6 +175,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     private Vector3f dir = new Vector3f();
     private Vector3f targetPosDir = new Vector3f();
 
+    public static LinkedList<String> EventLogEntries = new LinkedList<>();
+
     public static void main(String[] args) {
 
     }
@@ -234,7 +236,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             alignLeft();
             width("450px");
             style("nifty-panel-no-shadow");
-            height("300px");
+            height("350px");
 
 //                                assetManager.registerLoader(AWTLoader.class, "jpg");
 //
@@ -246,7 +248,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 //                                    filename("acs.logo.jpg");
 //                                }});
 
-            control(new ButtonBuilder("ConsoleApplication", "Console Application:") {{
+            control(new ButtonBuilder("EventLogConsole", "Event Log:") {{
                 alignCenter();
                 height("20%");
                 width("100%");
@@ -261,8 +263,9 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             //control(cs);
             // Using the builder pattern
             control(new ListBoxBuilder("myListBox") {{
-                displayItems(15);
-                selectionModeMutliple();
+                displayItems(14);
+                selectionModeDisabled();
+
                 optionalHorizontalScrollbar();
                 optionalVerticalScrollbar();
                 width("*"); // standard nifty width attribute
@@ -338,6 +341,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         // DEBUG
         //response.add(new sensingHandler("Intersection", index, intersectionLaneValues));
+
+
 
     }
 
@@ -568,12 +573,21 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         //ListBox<String> lst = nifty.getCurrentScreen().findElementByName("myListBox")
 
-        //nifty.getCurrentScreen().findNiftyControl("myListBox", ListBox.class).addItem("asd123");
+        //
 
         Vector3f destination = valideLocations[2];
         //CarGoTo(destination);
         CarMoveAt(destination);
 
+        createEventLogEntry();
+
+    }
+
+    public static void createEventLogEntry(){
+        if(!EventLogEntries.isEmpty()) {
+            String event = EventLogEntries.remove(0);
+            nifty.getCurrentScreen().findNiftyControl("myListBox", ListBox.class).addItem(">>" + " " + event);
+        }
     }
 
     private void UpdateIntersectionState(){
@@ -647,7 +661,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                                 height("400px");
                                 valignBottom();
                                 alignRight();
-                                control(new ButtonBuilder("GoOnline", "Start/Stop") {{
+                                control(new ButtonBuilder("GoOnline", "Start") {{
                                     width("100%");
                                     height("40px");
                                     focusable(false);

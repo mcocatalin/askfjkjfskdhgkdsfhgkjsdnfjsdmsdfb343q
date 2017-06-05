@@ -3,17 +3,17 @@ package src;
 import GEngine.graphicEngine;
 import jade.core.Agent;
 import jade.core.Profile;
-import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.core.behaviours.Behaviour;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
-import jade.wrapper.StaleProxyException;
+
+import static GEngine.graphicEngine.EventLogEntries;
 
 /**
  * Created by Catalin on 12/31/2016.
  */
-public class citySCAPE  extends Agent{
+public class CitySCAPE extends Agent{
     static graphicEngine app;
 
 
@@ -26,20 +26,21 @@ public class citySCAPE  extends Agent{
     Behaviour initBehaviour = new Behaviour() {
         @Override
         public void action() {
-            runtime = jade.core.Runtime.instance();
-            home = null;
-            p = new ProfileImpl();
-            home = runtime.createMainContainer(p);
+//            runtime = jade.core.Runtime.instance();
+//            home = null;
+//            p = new ProfileImpl();
+//            home = runtime.createMainContainer(p);
+//
+//            try {
+//                rma = home.createNewAgent("GlobalNucleus" ,
+//                        "Nucleus.GlobalNucleus", new Object[0]);
+//                rma.start();
+//                // to print in console!!!
+//            } catch (StaleProxyException e) {
+//                e.printStackTrace();
+//            }
 
-            try {
-                rma = home.createNewAgent("GlobalNucleus" ,
-                        "Nucleus.GlobalNucleus", new Object[0]);
-                rma.start();
-                // to print in console!!!
-            } catch (StaleProxyException e) {
-                e.printStackTrace();
-            }
-
+            EventLogEntries.add(0,"Environement loaded.");
 
         }
 
@@ -55,7 +56,7 @@ public class citySCAPE  extends Agent{
 
         app.start();
 
-        //addBehaviour(initBehaviour);
+        addBehaviour(initBehaviour);
 
     }
 }

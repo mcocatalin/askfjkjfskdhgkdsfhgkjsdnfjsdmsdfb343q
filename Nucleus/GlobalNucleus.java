@@ -21,6 +21,8 @@ import jade.wrapper.StaleProxyException;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import static GEngine.graphicEngine.EventLogEntries;
+
 /**
  * Created by Catalin on 5/22/2017.
  */
@@ -143,6 +145,8 @@ public class GlobalNucleus extends Agent {
             //doneInitBehaviour = true;
 
             //AgentCreator ac = new AgentCreator();
+
+            EventLogEntries.add("Global nucleus initialized!");
         }
 
         @Override
@@ -209,6 +213,7 @@ public class GlobalNucleus extends Agent {
                             rma = home.createNewAgent("VehicleSensing" + i,
                                     "Sensing.SensingAgent", new Object[0]);
                             rma.start();
+                            //graphicEngine.EventLogEntries.add("Created " )
                             // to print in console!!!
                         } catch (StaleProxyException e) {
                             e.printStackTrace();
@@ -246,6 +251,7 @@ public class GlobalNucleus extends Agent {
                                     "Nucleus.Nucleus", new Object[0]);
                             rma.start();
                             availableNucleus.add(new AID("IntersectionNucleus" + i + "@" + platforma, AID.ISGUID));
+                            graphicEngine.EventLogEntries.add("Started Intersection Nucleus " + i + " agent.");
                         } catch (StaleProxyException e) {
                             e.printStackTrace();
                         }
@@ -253,6 +259,8 @@ public class GlobalNucleus extends Agent {
                 }
                 DoneCreatingAgents = true;
             }
+//            else
+//                graphicEngine.createEventLogEntry("Initiated Global Nucleus!");
 
         }
     };
