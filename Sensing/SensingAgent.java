@@ -13,8 +13,7 @@ import jade.util.leap.Iterator;
 import java.io.IOException;
 import java.util.LinkedList;
 
-import static GEngine.graphicEngine.response;
-import static GEngine.graphicEngine.worldDetectors;
+import static GEngine.graphicEngine.*;
 
 /**
  * Created by Catalin on 5/1/2017.
@@ -47,7 +46,7 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
 
     private boolean detectedWorld = false;
 
-    Behaviour detectWorld = new CyclicBehaviour() {
+    CyclicBehaviour detectWorld = new CyclicBehaviour() {
         @Override
         public void action() {
             if (!detectedWorld) {
@@ -74,11 +73,13 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                         }
 
                         try {
-                            Thread.sleep(50);
+                            Thread.sleep(50*(thisID+1));
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                         myAgent.send(messageToSend);
+
+                        EventLogEntries.add(this.myAgent.getLocalName() + " a trimis worldDetect");
                     }
 
                 }
@@ -98,9 +99,14 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
             { // Send Message to Controller
                 synchronized (response) { // Thread access at the same time
                       if(response.size()>0) {
+                          int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
 
-                          sensingHandler toHandle = response.remove(0);
-                          if (toHandle != null) {
+                          //if (toHandle != null)
+
+                          if(response.get(0).getComponentID() == thisID)
+                          {
+
+                              sensingHandler toHandle = response.remove(0);
                               //if (this.myAgent.getAID().getLocalName().contains(toHandle.getType() + "Sensing" + toHandle.getComponentID())) {
 
                                   Iterator it = getAID().getAllAddresses();
@@ -121,7 +127,7 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                                   }
 
                                   try {
-                                      Thread.sleep(50);
+                                      Thread.sleep(50*(toHandle.getComponentID()+1));
                                   } catch (InterruptedException e) {
                                       e.printStackTrace();
                                   }

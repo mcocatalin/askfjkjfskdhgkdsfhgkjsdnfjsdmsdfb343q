@@ -61,7 +61,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
 
     // Intersection members
-    public static int numberOfIntersections = 2;
+    public static int numberOfIntersections = 5;
 
     // Graphic UI members
     public static boolean startApplication = false;
@@ -110,11 +110,29 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                     new Vector3f(-156.8f, -5.5f, -1.2f),
                     new Vector3f(-173.8f, -5.5f, -1.2f),
                     new Vector3f(-173.8f, -5.5f, -17.2f),
+
+                    new Vector3f(-62.5f, -5.5f, 77.2f), // third intersection
+                    new Vector3f(-62.5f, -5.5f, 93.4f),
+                    new Vector3f(-79.5f, -5.5f, 93.3f),
+                    new Vector3f(-79.5f, -5.5f, 77.3f),
+
+                    new Vector3f(32.1f, -5.5f, -17.2f), // forth intersection
+                    new Vector3f(32.1f, -5.5f, -1.2f),
+                    new Vector3f(15.1f, -5.5f, -1.2f),
+                    new Vector3f(15.1f, -5.5f, -17.2f),
+
+                    new Vector3f(-62.5f, -5.5f, -111.5f), // fifth intersection
+                    new Vector3f(-62.5f, -5.5f, -95.4f),
+                    new Vector3f(-79.5f, -5.5f, -95.4f),
+                    new Vector3f(-79.5f, -5.5f, -111.4f),
             };
 
     public Vector3f droneControllerLocations[] = {
             new Vector3f(-71f, 5f, -9f),
-            new Vector3f(-167f, 5f, -9f)
+            new Vector3f(-167f, 5f, -9f),
+            new Vector3f(-71f, 5f, 86f),
+            new Vector3f(23f, 5f, -9f),
+            new Vector3f(-71f, 5f, -103f),
     };
 
     // Engine const variables
@@ -234,9 +252,9 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             childLayoutVertical();
             valignBottom();
             alignLeft();
-            width("450px");
+            width("350px");
             style("nifty-panel-no-shadow");
-            height("350px");
+            height("100%");
 
 //                                assetManager.registerLoader(AWTLoader.class, "jpg");
 //
@@ -250,7 +268,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
             control(new ButtonBuilder("EventLogConsole", "Event Log:") {{
                 alignCenter();
-                height("20%");
+                height("5%");
                 width("100%");
                 this.onActiveEffect(new EffectBuilder("nimic"));
                 this.focusable(false);
@@ -263,12 +281,13 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             //control(cs);
             // Using the builder pattern
             control(new ListBoxBuilder("myListBox") {{
-                displayItems(14);
+                displayItems(35);
                 selectionModeDisabled();
 
-                optionalHorizontalScrollbar();
-                optionalVerticalScrollbar();
-                width("*"); // standard nifty width attribute
+//                optionalHorizontalScrollbar();
+//                optionalVerticalScrollbar();
+                height("80%");
+                width("100%"); // standard nifty width attribute
             }});
 
         }
@@ -433,7 +452,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                     anglemult *= -1;
                     speedmult *=-1;
                 }
-                vehicle.steer(angle * anglemult );
+                vehicle.steer(angle * anglemult*0.1f );
                 vehicle.accelerate(-speed * speedmult);
                 vehicle.brake(0);
             }
@@ -661,7 +680,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                                 height("400px");
                                 valignBottom();
                                 alignRight();
-                                control(new ButtonBuilder("GoOnline", "Start") {{
+                                control(new ButtonBuilder("GoOnline", "Start/Stop") {{
                                     width("100%");
                                     height("40px");
                                     focusable(false);
@@ -846,6 +865,317 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                             }
                         });
 
+//                        panel(new PanelBuilder("Botton Right Screen Panel") {
+//                            {
+//                                childLayoutVertical(); // panel properties, add more...
+//                                //childLayoutAbsoluteInside();
+//                                width("250px");
+//                                style("nifty-panel-no-shadow");
+//                                height("400px");
+//                                valignBottom();
+//                                alignRight();
+//                                control(new ButtonBuilder("GoOnline", "Start") {{
+//                                    width("100%");
+//                                    height("40px");
+//                                    focusable(false);
+//                                }});
+//
+//                                panel(new PanelBuilder("Interface for agents") {
+//                                    {
+//                                        childLayoutVertical();
+//                                        alignCenter();
+//                                        width("90%");
+//                                        height("40%");
+//
+//                                        control(new ButtonBuilder("referintaLabel", "Referinta Nucleu Global:") {{
+//                                            alignCenter();
+//                                            height("30px");
+//                                            width("100%");
+//                                            this.onActiveEffect(new EffectBuilder("nimic"));
+//                                            this.focusable(false);
+//                                        }});
+//
+//                                        control(new SliderBuilder("referintaValue", false) {{
+//                                            alignCenter();
+//                                            this.focusable(false);
+//                                            width("90%");
+//                                            height("40px");
+//                                            buttonStepSize(1f);
+//                                            min(1);
+//                                            max(5);
+//                                        }});
+//
+//
+//                                        control(new ButtonBuilder("nrMasiniLabel", "Numar total de masini:") {{
+//                                            alignCenter();
+//                                            height("30px");
+//                                            width("100%");
+//                                            this.onActiveEffect(new EffectBuilder("nimic"));
+//                                            this.focusable(false);
+//                                        }});
+//
+//                                        control(new SliderBuilder("nrMasiniValue", false) {{
+//                                            alignCenter();
+//                                            this.focusable(false);
+//                                            width("90%");
+//                                            height("40px");
+//                                            buttonStepSize(1f);
+//                                            min(0);
+//                                            max(30);
+//                                        }});
+//                                    }
+//                                });
+//
+//                                panel(new PanelBuilder("Stari controllere semafor") {
+//                                    {
+//                                        childLayoutHorizontal();
+//                                        //childLayoutVertical();
+//                                        alignCenter();
+//                                        width("100%");
+//                                        height("100%");
+//                                        control(new ButtonBuilder("pertext", "Stari controllere semafor") {{
+//                                            alignCenter();
+//                                            height("40");
+//                                            width("100%");
+//                                            this.onActiveEffect(new EffectBuilder("nimic"));
+//                                            this.focusable(false);
+//                                        }});
+//
+//                                       // childLayoutHorizontal();
+////                                        panel(new PanelBuilder("LeftSemaforController") {
+////                                            {
+////                                                childLayoutHorizontal();
+////                                                //childLayoutVertical();
+////                                                width("33%");
+////                                                height("100%");
+////
+////                                                panel(new PanelBuilder("goll"){{
+////                                                    width("5%");
+////                                                }});
+////
+////                                                    control(new CheckboxBuilder("activeSemafor2") {{
+////                                                    alignRight();
+////                                                    valignCenter();
+////                                                    this.focusable(false);
+////                                                    this.checked(true);
+////                                                    width("40px");
+////                                                    height("40px");
+////                                                }});
+////
+////                                              }});
+////
+////                                        panel(new PanelBuilder("CentertSemaforController") {
+////                                            {
+////                                                //childLayoutVertical();
+////                                                childLayoutHorizontal();
+////                                                width("100%");
+////                                                height("33%");
+////
+//////                                                panel(new PanelBuilder("goll"){{
+//////                                                    width("5%");
+//////                                                }});
+////
+//////                                                panel(new PanelBuilder("CentertSemaforController") {
+//////                                                    {
+//////                                                        childLayoutVertical();
+//////                                                        width("100%");
+//////                                                        height("33%");
+//////                                                        valignTop();
+//////
+//////                                                        control(new CheckboxBuilder("activeSemafor1") {{
+//////                                                            alignCenter();
+//////                                                            valignTop();
+//////                                                            this.focusable(false);
+//////                                                            this.checked(true);
+//////                                                            width("40px");
+//////                                                            height("40px");
+//////                                                        }});
+//////
+//////                                                    }});
+//////
+//////                                                panel(new PanelBuilder("CentertSemaforController") {
+//////                                                    {
+//////                                                        childLayoutVertical();
+//////                                                        width("100%");
+//////                                                        height("33%");
+//////                                                        valignCenter();
+//////
+//////                                                        control(new CheckboxBuilder("activeSemafor0") {{
+//////                                                            alignCenter();
+//////                                                            valignCenter();
+//////                                                            this.focusable(false);
+//////                                                            this.checked(true);
+//////                                                            width("40px");
+//////                                                            height("40px");
+//////                                                        }});
+//////
+//////                                                    }});
+////
+//////                                                panel(new PanelBuilder("CentertSemaforController") {
+//////                                                    {
+//////                                                        childLayoutVertical();
+//////                                                        width("100%");
+//////                                                        height("33%");
+//////
+//////                                                        control(new CheckboxBuilder("activeSemafor3") {{
+//////                                                            alignCenter();
+//////                                                            valignBottom();
+//////                                                            this.focusable(false);
+//////                                                            this.checked(true);
+//////                                                            width("40px");
+//////                                                            height("40px");
+//////                                                        }});
+//////
+//////                                                    }});
+////
+////                                            }});
+//////
+////                                        panel(new PanelBuilder("LeftSemaforController") {
+////                                            {
+////                                                //childLayoutHorizontal();
+////                                                childLayoutVertical();
+////                                                width("33%");
+////                                                height("100%");
+////
+////                                                panel(new PanelBuilder("goll"){{
+////                                                    width("5%");
+////                                                }});
+////
+////                                                control(new CheckboxBuilder("activeSemafor2") {{
+////                                                    alignRight();
+////                                                    valignCenter();
+////                                                    this.focusable(false);
+////                                                    this.checked(true);
+////                                                    width("40px");
+////                                                    height("40px");
+////                                                }});
+////
+////                                            }});
+//
+//
+//
+//                                        panel(new PanelBuilder("Semafor1") {
+//                                            {
+//                                                childLayoutHorizontal();
+//                                                width("100%");
+//                                                height("10%");
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("5%");
+//                                                }});
+//
+//                                                control(new ButtonBuilder("disableSemafor1", "Dezactivare Semafor 1") {{
+//
+//                                                    alignLeft();
+//                                                    valignCenter();
+//                                                    height("80%");
+//                                                    width("60%");
+//                                                    this.onActiveEffect(new EffectBuilder("nimic"));
+//                                                    this.focusable(false);
+//
+//                                                }});
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("10%");
+//                                                }});
+//
+//                                                control(new CheckboxBuilder("disableSemafor1Value") {{
+//                                                    alignRight();
+//                                                    valignCenter();
+//                                                    this.focusable(false);
+//                                                    this.checked(false);
+//                                                    width("20px");
+//                                                    height("20px");
+//                                                }});
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("5%");
+//                                                }});
+//                                            }});
+//
+//                                        panel(new PanelBuilder("Semafor2") {
+//                                            {
+//                                                childLayoutHorizontal();
+//                                                width("100%");
+//                                                height("10%");
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("5%");
+//                                                }});
+//
+//                                                control(new ButtonBuilder("disableSemafor2", "Dezactivare Semafor 2") {{
+//
+//                                                    alignLeft();
+//                                                    valignCenter();
+//                                                    height("80%");
+//                                                    width("60%");
+//                                                    this.onActiveEffect(new EffectBuilder("nimic"));
+//                                                    this.focusable(false);
+//                                                }});
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("10%");
+//                                                }});
+//
+//                                                control(new CheckboxBuilder("disableSemafor1Value") {{
+//                                                    alignRight();
+//                                                    valignCenter();
+//                                                    this.focusable(false);
+//                                                    this.checked(false);
+//                                                    width("20px");
+//                                                    height("20px");
+//                                                }});
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("5%");
+//                                                }});
+//                                            }});
+//
+//                                        panel(new PanelBuilder("ChaoticCar") {
+//                                            {
+//                                                childLayoutHorizontal();
+//                                                width("100%");
+//                                                height("10%");
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("5%");
+//                                                }});
+//
+//                                                control(new ButtonBuilder("addRecklessCar", "Perturbatie in trafic") {{
+//
+//                                                    alignLeft();
+//                                                    valignCenter();
+//                                                    height("80%");
+//                                                    width("60%");
+//                                                    this.onActiveEffect(new EffectBuilder("nimic"));
+//                                                    this.focusable(false);
+//                                                }});
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("10%");
+//                                                }});
+//
+//                                                control(new CheckboxBuilder("addRecklessCarValue") {{
+//                                                    alignRight();
+//                                                    valignCenter();
+//                                                    this.focusable(false);
+//                                                    this.checked(false);
+//                                                    width("20px");
+//                                                    height("20px");
+//                                                }});
+//
+//                                                panel(new PanelBuilder("goll"){{
+//                                                    width("5%");
+//                                                }});
+//                                            }});
+//
+//
+//
+//                                    }
+//                                });
+//                            }
+//                        });
+
                         panel(ConsoleApp);
 
 
@@ -862,12 +1192,54 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         nifty.subscribe(nifty.getCurrentScreen(), "nrMasiniValue", SliderChangedEvent.class, eventHandler2);
         nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor1Value", CheckBoxStateChangedEvent.class, eventHandler3);
         nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor2Value", CheckBoxStateChangedEvent.class, eventHandler4);
+
         nifty.subscribe(nifty.getCurrentScreen(), "addRecklessCarValue", SliderChangedEvent.class, eventHandler5);
         nifty.subscribe(nifty.getCurrentScreen(), "referintaValue", SliderChangedEvent.class, eventHandler6);
+
+        nifty.subscribe(nifty.getCurrentScreen(), "activeSemafor0Value", CheckBoxStateChangedEvent.class, eventHandler7);
+        nifty.subscribe(nifty.getCurrentScreen(), "activeSemafor1Value", CheckBoxStateChangedEvent.class, eventHandler8);
+        nifty.subscribe(nifty.getCurrentScreen(), "activeSemafor2Value", CheckBoxStateChangedEvent.class, eventHandler9);
+        nifty.subscribe(nifty.getCurrentScreen(), "activeSemafor3Value", CheckBoxStateChangedEvent.class, eventHandler10);
+        nifty.subscribe(nifty.getCurrentScreen(), "activeSemafor4Value", CheckBoxStateChangedEvent.class, eventHandler11);
 
         nifty.gotoScreen("test");
 
     }
+
+    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler7 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
+        @Override
+        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
+            //disableTrafficSystemIndex[0] = true;
+        }
+    };
+
+    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler8 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
+        @Override
+        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
+            //disableTrafficSystemIndex[0] = true;
+        }
+    };
+
+    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler9 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
+        @Override
+        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
+            //disableTrafficSystemIndex[0] = true;
+        }
+    };
+
+    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler10 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
+        @Override
+        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
+            //disableTrafficSystemIndex[0] = true;
+        }
+    };
+
+    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler11 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
+        @Override
+        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
+            //disableTrafficSystemIndex[0] = true;
+        }
+    };
 
     EventTopicSubscriber<ButtonClickedEvent> eventHandler1 = new EventTopicSubscriber<ButtonClickedEvent>() {
         @Override

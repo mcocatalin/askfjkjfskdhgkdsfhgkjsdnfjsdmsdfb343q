@@ -14,6 +14,7 @@ import jade.util.leap.Iterator;
 import java.io.IOException;
 import java.util.Timer;
 
+import static GEngine.graphicEngine.EventLogEntries;
 import static GEngine.graphicEngine.disableTrafficSystemIndex;
 
 /**
@@ -41,6 +42,8 @@ public class IntersectionController extends Agent implements IController {
 
     private long wakeupTime;
 
+    int setPoint;
+
     // to be deleted!!
     boolean finished;
 
@@ -54,6 +57,7 @@ public class IntersectionController extends Agent implements IController {
             timer = new Timer(); // For switching state of lights
             detectedWorld = false;
 
+
             Updown = true;
             RightLeft = false;
         }
@@ -65,7 +69,7 @@ public class IntersectionController extends Agent implements IController {
     };
 
 
-    Behaviour normalCicleTrafficLights = new CyclicBehaviour() {
+    CyclicBehaviour normalCicleTrafficLights = new CyclicBehaviour() {
         @Override
         public void action() {
             if(detectedWorld) {
@@ -98,9 +102,11 @@ public class IntersectionController extends Agent implements IController {
                                     e.printStackTrace();
                                 }
                             } // to add any condition?
+
                             messageToSend.addReceiver(r);
-                            Thread.sleep(50);
+                            Thread.sleep(50*(thisID+1));
                             myAgent.send(messageToSend);
+
                         } catch (InterruptedException e) {
 
                         }
@@ -110,46 +116,111 @@ public class IntersectionController extends Agent implements IController {
         }
     };
 
-    Behaviour receiver = new CyclicBehaviour() { // Disabled intersection
+    CyclicBehaviour receiver = new CyclicBehaviour() { // Disabled intersection
         @Override
         public void action() { // Receive world feedback
-            ACLMessage mesaj_receptionat = myAgent.receive();
-            if (mesaj_receptionat != null)
-             {
-                 if (detectedWorld) {
-                    if (mesaj_receptionat.getConversationId() == "Sensing") { // Data from Sensors
-                        try {
-                            intersectionSensing = (IntersectionSensing) mesaj_receptionat.getContentObject();
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
+            if(myAgent.getCurQueueSize()>0) {
+                for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
+                    ACLMessage mesaj_receptionat = myAgent.receive();
+                    if (mesaj_receptionat != null)
+                    {
+                        myAgent.getCurQueueSize();
+                        if (detectedWorld) {
+                            if (mesaj_receptionat.getConversationId() == "Sensing") { // Data from Sensors
+                                try {
+                                    intersectionSensing = (IntersectionSensing) mesaj_receptionat.getContentObject();
+                                } catch (UnreadableException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Sensors
+                                try {
+                                    setPoint = (int) mesaj_receptionat.getContentObject();
+                                } catch (UnreadableException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
+                                try {
+                                    normalState = (boolean) mesaj_receptionat.getContentObject();
+                                } catch (UnreadableException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
+                                try {
+                                    serviceControllerID = (AID) mesaj_receptionat.getContentObject();
+                                } catch (UnreadableException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                        }
+                        if (mesaj_receptionat.getConversationId() == "WorldDetector") { // Data from Nucleus
+                            try {
+                                wd = (WorldDetector) mesaj_receptionat.getContentObject();
+                                EventLogEntries.add(this.myAgent.getLocalName() + " a primit worldDetect");
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
-
-                    if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
-                        try {
-                            normalState = (boolean) mesaj_receptionat.getContentObject();
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
-                        }
+                    else {
+                        block();
+                        break;
                     }
-
-                    if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
-                        try {
-                            serviceControllerID = (AID) mesaj_receptionat.getContentObject();
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
                 }
-                 if (mesaj_receptionat.getConversationId() == "WorldDetector") { // Data from Nucleus
-                     try {
-                         wd = (WorldDetector) mesaj_receptionat.getContentObject();
-                     } catch (UnreadableException e) {
-                         e.printStackTrace();
-                     }
-                 }
             }
+//            ACLMessage mesaj_receptionat = myAgent.receive();
+//            if (mesaj_receptionat != null)
+//             {
+//                 myAgent.getCurQueueSize();
+//                 if (detectedWorld) {
+//                    if (mesaj_receptionat.getConversationId() == "Sensing") { // Data from Sensors
+//                        try {
+//                            intersectionSensing = (IntersectionSensing) mesaj_receptionat.getContentObject();
+//                        } catch (UnreadableException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//
+//                     if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Sensors
+//                         try {
+//                             setPoint = (int) mesaj_receptionat.getContentObject();
+//                         } catch (UnreadableException e) {
+//                             e.printStackTrace();
+//                         }
+//                     }
+//
+//                    if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
+//                        try {
+//                            normalState = (boolean) mesaj_receptionat.getContentObject();
+//                        } catch (UnreadableException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//
+//                    if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
+//                        try {
+//                            serviceControllerID = (AID) mesaj_receptionat.getContentObject();
+//                        } catch (UnreadableException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//
+//                }
+//                     if (mesaj_receptionat.getConversationId() == "WorldDetector") { // Data from Nucleus
+//                     try {
+//                         wd = (WorldDetector) mesaj_receptionat.getContentObject();
+//                         EventLogEntries.add(this.myAgent.getLocalName() + " a primit worldDetect");
+//                     } catch (UnreadableException e) {
+//                         e.printStackTrace();
+//                     }
+//                 }
+//            }
 
         }
     };
@@ -178,22 +249,26 @@ public class IntersectionController extends Agent implements IController {
                         AID r = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
                         r.addAddresses(adresa);
                         if(detectedWorld) {
-                            if (intersectionSensing != null) {
-                                if (!disableTrafficSystemIndex[thisID]) {
-                                    messageToSend.setConversationId("StatusUpdate");
+                            if(myAgent.getCurQueueSize()>0) {
+                                for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
+                                    if (intersectionSensing != null) {
+                                        if (!disableTrafficSystemIndex[thisID]) {
+                                            messageToSend.setConversationId("StatusUpdate");
 
-                                    try {
-                                        messageToSend.setContentObject(intersectionSensing.getMaxDensity());
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
+                                            try {
+                                                messageToSend.setContentObject(intersectionSensing.getMaxDensity());
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
+                                            }
+                                        } else {
+                                            messageToSend.setConversationId("Defect");
+            //                            try {
+            //                                messageToSend.setContentObject(true);
+            //                            } catch (IOException e) {
+            //                                e.printStackTrace();
+            //                            }
+                                        }
                                     }
-                                } else {
-                                    messageToSend.setConversationId("Defect");
-    //                            try {
-    //                                messageToSend.setContentObject(true);
-    //                            } catch (IOException e) {
-    //                                e.printStackTrace();
-    //                            }
                                 }
                             }
                         }
@@ -207,13 +282,14 @@ public class IntersectionController extends Agent implements IController {
                                     e.printStackTrace();
                                 }
                                 detectedWorld = true;
+                                EventLogEntries.add(this.myAgent.getLocalName() + " a trimis worldDetect");
                             }
                         }
 
 
                     messageToSend.addReceiver(r);
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(50*(thisID+1));
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }

@@ -183,7 +183,7 @@ public class GlobalNucleus extends Agent {
                 NucleusIndex++;
 
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -191,7 +191,7 @@ public class GlobalNucleus extends Agent {
         }
     };
 
-    Behaviour createAgents = new CyclicBehaviour() {
+    CyclicBehaviour createAgents = new CyclicBehaviour() {
         @Override
         public void action() {
             if(graphicEngine.startApplication && !DoneCreatingAgents) {
@@ -266,7 +266,7 @@ public class GlobalNucleus extends Agent {
     };
 
 
-    Behaviour getDefectedControllers = new CyclicBehaviour() {
+    CyclicBehaviour getDefectedControllers = new CyclicBehaviour() {
         @Override
         public void action() {
 

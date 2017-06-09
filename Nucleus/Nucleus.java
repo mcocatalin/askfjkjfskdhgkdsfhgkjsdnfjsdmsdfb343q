@@ -18,6 +18,7 @@ import jade.wrapper.StaleProxyException;
 
 import java.io.IOException;
 
+import static GEngine.graphicEngine.EventLogEntries;
 import static GEngine.graphicEngine.disableTrafficSystemIndex;
 
 /**
@@ -59,7 +60,7 @@ public class Nucleus extends Agent {
         }
     };
 
-    Behaviour sendWorldDetector = new CyclicBehaviour() {
+    CyclicBehaviour sendWorldDetector = new CyclicBehaviour() {
         @Override
         public void action() {
             if (!detectedWorld && wd!=null) {
@@ -67,7 +68,7 @@ public class Nucleus extends Agent {
                 Iterator it = getAID().getAllAddresses();
                 String adresa = (String) it.next();
                 String platforma = getAID().getName().split("@")[1];
-
+                int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
                 ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                 AID r = new AID("GlobalNucleus" + "@" + platforma, AID.ISGUID);
 
@@ -75,12 +76,13 @@ public class Nucleus extends Agent {
 
                 try {
                     messageToSend.setContentObject(wd); // send state of intersection
+                    EventLogEntries.add(this.myAgent.getLocalName() + " a trimis worldDetect");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 messageToSend.addReceiver(r);
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(50*(thisID+1));
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -100,17 +102,6 @@ public class Nucleus extends Agent {
             home = this.myAgent.getContainerController();
 
             for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
-                // Sensing Agents
-                try {
-                   // home.getAgent("IntersectionSensing" + i);
-                    rmaNucleus = home.createNewAgent("IntersectionSensing" + i,
-                            "Sensing.SensingAgent", new Object[0]);
-                    rmaNucleus.start();
-                    // to print in console!!!
-                    graphicEngine.EventLogEntries.add("Started Intersection Sensing " + i + " agent.");
-                } catch (StaleProxyException e) {
-                    e.printStackTrace();
-                }
 
                 // Controlling Agents
                 try {
@@ -133,6 +124,18 @@ public class Nucleus extends Agent {
                 } catch (StaleProxyException e) {
                     e.printStackTrace();
                 }
+
+                // Sensing Agents
+                try {
+                    // home.getAgent("IntersectionSensing" + i);
+                    rmaNucleus = home.createNewAgent("IntersectionSensing" + i,
+                            "Sensing.SensingAgent", new Object[0]);
+                    rmaNucleus.start();
+                    // to print in console!!!
+                    graphicEngine.EventLogEntries.add("Started Intersection Sensing " + i + " agent.");
+                } catch (StaleProxyException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -142,7 +145,7 @@ public class Nucleus extends Agent {
         }
     };
 
-    Behaviour synchronizeIntersections = new CyclicBehaviour() {
+    CyclicBehaviour synchronizeIntersections = new CyclicBehaviour() {
         @Override
         public void action() {
             if(detectedWorld) {
@@ -152,6 +155,7 @@ public class Nucleus extends Agent {
                     String adresa = (String) it.next();
                     String platforma = getAID().getName().split("@")[1];
 
+                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
                     ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                     AID r = new AID("GlobalNucleus" + "@" + platforma, AID.ISGUID);
 
@@ -164,7 +168,7 @@ public class Nucleus extends Agent {
                     }
                     messageToSend.addReceiver(r);
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(50*(thisID+1));
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -184,56 +188,63 @@ public class Nucleus extends Agent {
         addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() { // Receive controller world status
-                ACLMessage mesaj_receptionat = myAgent.receive();
-                if(mesaj_receptionat!=null)
-                {
-                    if(detectedWorld) {
-                        if (mesaj_receptionat.getConversationId() == "StatusUpdate") {
-                            try {
-                                maxDensity = (int[]) mesaj_receptionat.getContentObject();
-                            } catch (UnreadableException e) {
-                                e.printStackTrace();
+
+                if (myAgent.getCurQueueSize() > 0) {
+                    for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
+                        ACLMessage mesaj_receptionat = myAgent.receive();
+                        if (mesaj_receptionat != null) {
+                            if (detectedWorld) {
+                                if (mesaj_receptionat.getConversationId() == "StatusUpdate") {
+                                    try {
+                                        maxDensity = (int[]) mesaj_receptionat.getContentObject();
+                                    } catch (UnreadableException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    if ((maxDensity[0] <= setPoint) || (maxDensity[1] <= setPoint)) {
+                                        inRange = true;
+                                    } else
+                                        inRange = false;
+                                }
+
+                                if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") {
+                                    try {
+                                        setPoint = (int) mesaj_receptionat.getContentObject();
+                                    } catch (UnreadableException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+                                if (mesaj_receptionat.getConversationId() == "Defect") {
+                                    //                        try {
+                                    //                            defectRequest = (boolean) mesaj_receptionat.getContentObject();
+                                    //                        } catch (UnreadableException e) {
+                                    //                            e.printStackTrace();
+                                    //                        }
+                                    defectRequest = true;
+                                }
+
+                                if (mesaj_receptionat.getConversationId() == "DefectSolver") {
+                                    try {
+                                        serviceController = (AID) mesaj_receptionat.getContentObject();
+                                    } catch (UnreadableException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            } else if (mesaj_receptionat.getConversationId() == "WorldDetector") {
+                                try {
+                                    wd = (WorldDetector) mesaj_receptionat.getContentObject();
+                                    EventLogEntries.add(this.myAgent.getLocalName() + " a primit worldDetect");
+                                } catch (UnreadableException e) {
+                                    e.printStackTrace();
+                                }
                             }
-
-                            if ((maxDensity[0] <= setPoint) || (maxDensity[1] <= setPoint)) {
-                                inRange = true;
-                            } else
-                                inRange = false;
-                        }
-
-                        if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") {
-                            try {
-                                setPoint = (int) mesaj_receptionat.getContentObject();
-                            } catch (UnreadableException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        if (mesaj_receptionat.getConversationId() == "Defect") {
-//                        try {
-//                            defectRequest = (boolean) mesaj_receptionat.getContentObject();
-//                        } catch (UnreadableException e) {
-//                            e.printStackTrace();
-//                        }
-                            defectRequest = true;
-                        }
-
-                        if (mesaj_receptionat.getConversationId() == "DefectSolver") {
-                            try {
-                                serviceController = (AID) mesaj_receptionat.getContentObject();
-                            } catch (UnreadableException e) {
-                                e.printStackTrace();
-                            }
+                        } else {
+                            block();
+                            break;
                         }
                     }
-                    else
-                        if(mesaj_receptionat.getConversationId()=="WorldDetector") {
-                            try {
-                                wd = (WorldDetector) mesaj_receptionat.getContentObject();
-                            } catch (UnreadableException e) {
-                                e.printStackTrace();
-                            }
-                        }
+
                 }
             }
         });
@@ -252,9 +263,9 @@ public class Nucleus extends Agent {
                 // if(maxDensity != null) {
                 if (detectedWorld) {
                     if (!disableTrafficSystemIndex[thisID]) {
-                        messageToSend.setConversationId("StatusUpdate");
+                        messageToSend.setConversationId("UpdateSetPoint"); // send SetPoint setted in UI at CoreAgent to controller
                         try {
-                            messageToSend.setContentObject(inRange);
+                            messageToSend.setContentObject(setPoint);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -270,7 +281,7 @@ public class Nucleus extends Agent {
                     }
                     messageToSend.addReceiver(r);
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(3000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -303,7 +314,7 @@ public class Nucleus extends Agent {
                         }
                         messageToSend.addReceiver(r);
                         try {
-                            Thread.sleep(50);
+                            Thread.sleep(100);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
