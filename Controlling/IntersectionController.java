@@ -24,7 +24,7 @@ public class IntersectionController extends Agent implements IController {
 
     IntersectionSensing intersectionSensing;
     IntersectionActing intersectionActing;
-    boolean changeState;
+
     boolean normalState;
     boolean defectState;
     AID serviceControllerID;
@@ -88,7 +88,7 @@ public class IntersectionController extends Agent implements IController {
                     else
                         r = new AID("IntersectionActing" + thisID + "@" + platforma, AID.ISGUID);
                     r.addAddresses(adresa);
-                    if (intersectionActing != null) {
+                    //if (intersectionActing != null) {
                         try {
                             Thread.sleep(cicleInterval);
 
@@ -111,7 +111,7 @@ public class IntersectionController extends Agent implements IController {
                         } catch (InterruptedException e) {
 
                         }
-                    }
+                   // }
                 }
             }
         }
@@ -135,21 +135,27 @@ public class IntersectionController extends Agent implements IController {
                                 }
                             }
 
-                            if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Sensors
+                            if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Nucleus
                                 try {
                                     setPoint = (int) mesaj_receptionat.getContentObject();
+                                    if(intersectionSensing.getMaxDensity()[0] <= setPoint || intersectionSensing.getMaxDensity()[1] <= setPoint){
+                                        normalState = true;
+                                    }
+                                    else
+                                        normalState = false;
+
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();
                                 }
                             }
 
-                            if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
-                                try {
-                                    normalState = (boolean) mesaj_receptionat.getContentObject();
-                                } catch (UnreadableException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+//                            if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
+//                                try {
+//                                    normalState = (boolean) mesaj_receptionat.getContentObject();
+//                                } catch (UnreadableException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
 
                             if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
                                 try {

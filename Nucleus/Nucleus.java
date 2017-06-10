@@ -207,6 +207,8 @@ public class Nucleus extends Agent {
                         e.printStackTrace();
                     }
                     myAgent.send(messageToSend);
+
+                    defectRequest=false; // sent Defect Request, waiting for answer
                 }
             }
         }

@@ -34,7 +34,7 @@ public class CoreAgent extends Agent {
     private int NucleusIndex;
     private boolean DoneCreatingAgents;
     private boolean doneInitBehaviour;
-    private boolean requestedServiceController;
+    private static int requestedServiceController;
     ContainerController home = null;
 
     LinkedList<IntersectionItemGraph> LocationGraph;
@@ -84,35 +84,49 @@ public class CoreAgent extends Agent {
                         for (int i = 0; i < wd.size(); i++)
                             LocationGraph.add(new IntersectionItemGraph(wd.get(i).getComponentID()));
                         doneDetecting = true;
-                    } else
-                        if(!doneProcessingNucleusesLocation)
-                        {
-                        for (int i = 0; i < wd.size() - 1; i++) {
-                            for (int j = i + 1; j < wd.size(); j++) {
-                                int side = Helper.checkGraphPosition(wd.get(i).getIntersectionItem(), wd.get(j).getIntersectionItem());
-                                switch (side) {
-                                    case 0:
-                                        LocationGraph.get(i).setUpNeighbour(LocationGraph.get(j));
-                                        LocationGraph.get(j).setDownNeighbour(LocationGraph.get(i));
-                                        break;
-                                    case 1:
-                                        LocationGraph.get(i).setDownNeighbour(LocationGraph.get(j));
-                                        LocationGraph.get(j).setUpNeighbour(LocationGraph.get(i));
-                                        break;
-                                    case 2:
-                                        LocationGraph.get(i).setRightNeighbour(LocationGraph.get(j));
-                                        LocationGraph.get(j).setLeftNeighbour(LocationGraph.get(i));
-                                        break;
-                                    case 3:
-                                        LocationGraph.get(i).setLeftNeighbour(LocationGraph.get(j));
-                                        LocationGraph.get(j).setRightNeighbour(LocationGraph.get(i));
-                                        break;
 
-                                }
+                        LocationGraph.get(0).setUpNeighbour(LocationGraph.get(1));
+                        LocationGraph.get(0).setLeftNeighbour(LocationGraph.get(2));
+                        LocationGraph.get(0).setDownNeighbour(LocationGraph.get(3));
+                        LocationGraph.get(0).setRightNeighbour(LocationGraph.get(4));
 
-                            }
+                        LocationGraph.get(1).setDownNeighbour(LocationGraph.get(0));
 
-                        }
+                        LocationGraph.get(2).setRightNeighbour(LocationGraph.get(0));
+
+                        LocationGraph.get(3).setUpNeighbour(LocationGraph.get(0));
+
+                        LocationGraph.get(4).setLeftNeighbour(LocationGraph.get(0));
+//                    }
+//                    else // TO REVISE
+//                        if(!doneProcessingNucleusesLocation)
+//                        {
+//                        for (int i = 0; i < wd.size() - 1; i++) {
+//                            for (int j = i + 1; j < wd.size(); j++) {
+//                                int side = Helper.checkGraphPosition(wd.get(i).getIntersectionItem(), wd.get(j).getIntersectionItem());
+//                                switch (side) {
+//                                    case 0:
+//                                        LocationGraph.get(i).setUpNeighbour(LocationGraph.get(j));
+//                                        LocationGraph.get(j).setDownNeighbour(LocationGraph.get(i));
+//                                        break;
+//                                    case 1:
+//                                        LocationGraph.get(i).setDownNeighbour(LocationGraph.get(j));
+//                                        LocationGraph.get(j).setUpNeighbour(LocationGraph.get(i));
+//                                        break;
+//                                    case 2:
+//                                        LocationGraph.get(i).setRightNeighbour(LocationGraph.get(j));
+//                                        LocationGraph.get(j).setLeftNeighbour(LocationGraph.get(i));
+//                                        break;
+//                                    case 3:
+//                                        LocationGraph.get(i).setLeftNeighbour(LocationGraph.get(j));
+//                                        LocationGraph.get(j).setRightNeighbour(LocationGraph.get(i));
+//                                        break;
+//
+//                                }
+//
+//                            }
+//
+//                        }
                             doneProcessingNucleusesLocation = true;
                     }
                 }
@@ -127,7 +141,7 @@ public class CoreAgent extends Agent {
             NucleusIndex = 0;
             DoneCreatingAgents = false;
             disabledControllers = new LinkedList<AID>();
-            requestedServiceController = false;
+            requestedServiceController = 0;
 
             home = this.myAgent.getContainerController();
 
@@ -299,7 +313,7 @@ public class CoreAgent extends Agent {
                     // !!! Assign another controller to defected ones.
 
 
-                        if (mesaj_receptionat.getConversationId() == "Defect" && !requestedServiceController) {
+                        if (mesaj_receptionat.getConversationId() == "Defect") {
                             try {
                                 AID defectedAID = (AID) mesaj_receptionat.getContentObject();
                                 disabledControllers.add(defectedAID);
@@ -308,7 +322,7 @@ public class CoreAgent extends Agent {
                                 e.printStackTrace();
                             }
 
-                            requestedServiceController = true;
+                            requestedServiceController++;
                         }
 
                         if (mesaj_receptionat.getConversationId() == "CentralizedControl") {
@@ -343,7 +357,7 @@ public class CoreAgent extends Agent {
     Behaviour setServiceController = new CyclicBehaviour() {
         @Override
         public void action() { // To defected ones.
-            if (disabledControllers.size() > 0 && availableNucleus.size() > 0 && requestedServiceController && doneDetecting) {
+            if (disabledControllers.size() > 0 && availableNucleus.size() > 0 && requestedServiceController>0 && doneDetecting) {
                 for (int i=0; i<disabledControllers.size(); i++) {
 
                     Iterator it = getAID().getAllAddresses();
@@ -368,7 +382,7 @@ public class CoreAgent extends Agent {
                         e.printStackTrace();
                     }
                 }
-                //requestedServiceController = false;
+                requestedServiceController--;
             }
         }
     };
