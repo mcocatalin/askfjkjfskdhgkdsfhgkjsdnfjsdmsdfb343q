@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static Nucleus.GlobalNucleus.availableNucleus;
+import static Nucleus.CoreAgent.availableNucleus;
 
 /**
  * Created by Catalin on 5/9/2017.

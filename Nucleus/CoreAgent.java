@@ -26,7 +26,7 @@ import static GEngine.graphicEngine.EventLogEntries;
 /**
  * Created by Catalin on 5/22/2017.
  */
-public class GlobalNucleus extends Agent {
+public class CoreAgent extends Agent {
 
     public static int GlobalNucleusSetPoint;
     public static LinkedList<AID> availableNucleus;
@@ -51,7 +51,7 @@ public class GlobalNucleus extends Agent {
 
     private boolean centralControl;
 
-    public static AgentController rma; // Same as GlobalNucleus seted in iniBehaviour
+    public static AgentController rma; // Same as CoreAgent seted in iniBehaviour
 
     Behaviour discoverAgents = new Behaviour() {
         @Override
@@ -146,7 +146,7 @@ public class GlobalNucleus extends Agent {
 
             //AgentCreator ac = new AgentCreator();
 
-            EventLogEntries.add("Global nucleus initialized!");
+            EventLogEntries.add("Core Agent initialized!");
         }
 
         @Override
@@ -191,18 +191,37 @@ public class GlobalNucleus extends Agent {
         }
     };
 
+    Behaviour createEnvironment = new Behaviour() {
+        @Override
+        public void action() {
+
+            try {
+                rma = home.createNewAgent("Environment" ,
+                        "src.CitySCAPE", new Object[0]);
+                rma.start();
+                //graphicEngine.EventLogEntries.add("Created " )
+                // to print in console!!!
+            } catch (StaleProxyException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public boolean done() {
+            return true;
+        }
+    };
+
     CyclicBehaviour createAgents = new CyclicBehaviour() {
         @Override
         public void action() {
+
             if(graphicEngine.startApplication && !DoneCreatingAgents) {
 
                 Iterator it = getAID().getAllAddresses();
                 String adresa = (String) it.next();
                 String platforma = getAID().getName().split("@")[1];
 
-
-
-                // Maximum 9 vehicles, method to parse ID is checking only the last character of the Agent Local Name. To be revised!!!
 
                 // Start number of vehicles # to continue!
                 if(graphicEngine.numberOfCars >0) {
@@ -307,13 +326,9 @@ public class GlobalNucleus extends Agent {
                         }
                     }
                 else{
-                    if (mesaj_receptionat.getConversationId() == "WorldDetector") {
+                    if (mesaj_receptionat.getConversationId() == "WorldDetect") {
                         try {
-                            WorldDetector wdAux = (WorldDetector) mesaj_receptionat.getContentObject();
-                            if(wdAux != null) {
-                                wd.add(wdAux);
-                                detectedWorldItems++;
-                            }
+                            wd = (LinkedList<WorldDetector>) mesaj_receptionat.getContentObject();
                         } catch (UnreadableException e) {
                             e.printStackTrace();
                         }
@@ -364,6 +379,8 @@ public class GlobalNucleus extends Agent {
         addBehaviour(createWorldNet);
 
         addBehaviour(initBehaviour);
+
+        addBehaviour(createEnvironment);
 
         addBehaviour(updateStates);
 

@@ -44,7 +44,7 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
         this.triggered = triggered;
     }
 
-    private boolean detectedWorld = false;
+    private boolean detectedWorld = true; // TO BE LET TRUE !!!!
 
     CyclicBehaviour detectWorld = new CyclicBehaviour() {
         @Override
@@ -80,9 +80,11 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                         myAgent.send(messageToSend);
 
                         EventLogEntries.add(this.myAgent.getLocalName() + " a trimis worldDetect");
+                        System.out.println("Sensor " + this.myAgent.getLocalName() + " a trimis mesaj: " + messageToSend.getConversationId());
                     }
 
                 }
+
                 detectedWorld = true;
             }
         }
@@ -91,7 +93,7 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
     @Override
     public void setup(){
 
-        addBehaviour(detectWorld);
+        addBehaviour(detectWorld); // Deactivated!
 
         addBehaviour(new CyclicBehaviour() {
             @Override

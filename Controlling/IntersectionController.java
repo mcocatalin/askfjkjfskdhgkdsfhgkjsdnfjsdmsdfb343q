@@ -14,8 +14,8 @@ import jade.util.leap.Iterator;
 import java.io.IOException;
 import java.util.Timer;
 
+import static GEngine.graphicEngine.ActiveIntersectionControllers;
 import static GEngine.graphicEngine.EventLogEntries;
-import static GEngine.graphicEngine.disableTrafficSystemIndex;
 
 /**
  * Created by Catalin on 5/27/2017.
@@ -55,7 +55,8 @@ public class IntersectionController extends Agent implements IController {
             defectState = false;
             serviceControllerID = null; // None service controller
             timer = new Timer(); // For switching state of lights
-            detectedWorld = false;
+
+            detectedWorld = true;  // TO BE LET TRUE !!!
 
 
             Updown = true;
@@ -91,7 +92,7 @@ public class IntersectionController extends Agent implements IController {
                         try {
                             Thread.sleep(cicleInterval);
 
-                            if (!disableTrafficSystemIndex[thisID] || serviceControllerID != null) {
+                            if (ActiveIntersectionControllers[thisID] || serviceControllerID != null) {
                                 messageToSend.setConversationId("Acting");
                                 try {
                                     intersectionActing.setLaneDirection(Updown, RightLeft);
@@ -167,6 +168,8 @@ public class IntersectionController extends Agent implements IController {
                                 e.printStackTrace();
                             }
                         }
+
+                        System.out.println("Controllerul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
                     }
                     else {
                         block();
@@ -225,6 +228,67 @@ public class IntersectionController extends Agent implements IController {
         }
     };
 
+    CyclicBehaviour sendNucleusData = new CyclicBehaviour() {
+        @Override
+        public void action() { // Send data to Nucleus to decide behaviour
+
+            int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
+            Iterator it = getAID().getAllAddresses();
+            String adresa = (String) it.next();
+            String platforma = getAID().getName().split("@")[1];
+
+            ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+            AID r = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
+            r.addAddresses(adresa);
+            if(detectedWorld) {
+                if(myAgent.getCurQueueSize()>0) {
+                    for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
+                        if (intersectionSensing != null) {
+                            if (ActiveIntersectionControllers[thisID]) {
+//                                                        messageToSend.setConversationId("StatusUpdate"); // No status update needed in nucleus!!!
+//
+//                                                        try {
+//                                                            messageToSend.setContentObject(intersectionSensing.getMaxDensity());
+//                                                        } catch (IOException e) {
+//                                                            e.printStackTrace();
+//                                                        }
+                            } else {
+                                messageToSend.setConversationId("Defect");
+                                //                            try {
+                                //                                messageToSend.setContentObject(true);
+                                //                            } catch (IOException e) {
+                                //                                e.printStackTrace();
+                                //                            }
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                if (wd != null) {
+                    messageToSend.setConversationId("WorldDetector");
+
+                    try {
+                        messageToSend.setContentObject(wd);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    detectedWorld = true;
+                    EventLogEntries.add(this.myAgent.getLocalName() + " a trimis worldDetect");
+                }
+            }
+
+
+            messageToSend.addReceiver(r);
+            try {
+                Thread.sleep(50*(thisID+1));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            myAgent.send(messageToSend);
+        }
+    };
+
 
 
         @Override
@@ -236,74 +300,7 @@ public class IntersectionController extends Agent implements IController {
 
             addBehaviour(receiver);
 
-            addBehaviour(new CyclicBehaviour() {
-                @Override
-                public void action() { // Send data to Nucleus to decide behaviour
-
-                        int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
-                        Iterator it = getAID().getAllAddresses();
-                        String adresa = (String) it.next();
-                        String platforma = getAID().getName().split("@")[1];
-
-                        ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                        AID r = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
-                        r.addAddresses(adresa);
-                        if(detectedWorld) {
-                            if(myAgent.getCurQueueSize()>0) {
-                                for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
-                                    if (intersectionSensing != null) {
-                                        if (!disableTrafficSystemIndex[thisID]) {
-                                            messageToSend.setConversationId("StatusUpdate");
-
-                                            try {
-                                                messageToSend.setContentObject(intersectionSensing.getMaxDensity());
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                        } else {
-                                            messageToSend.setConversationId("Defect");
-            //                            try {
-            //                                messageToSend.setContentObject(true);
-            //                            } catch (IOException e) {
-            //                                e.printStackTrace();
-            //                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else {
-                            if (wd != null) {
-                                messageToSend.setConversationId("WorldDetector");
-
-                                try {
-                                    messageToSend.setContentObject(wd);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                                detectedWorld = true;
-                                EventLogEntries.add(this.myAgent.getLocalName() + " a trimis worldDetect");
-                            }
-                        }
-
-
-                    messageToSend.addReceiver(r);
-                    try {
-                        Thread.sleep(50*(thisID+1));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    myAgent.send(messageToSend);
-                }
-            });
-
-//
-//            addBehaviour(new CyclicBehaviour() { // Set IntersectionActing object to be handled by Acting agent.
-//                @Override
-//                public void action() {
-//
-//                }
-//            });
+            addBehaviour(sendNucleusData);
 
         }
     }
