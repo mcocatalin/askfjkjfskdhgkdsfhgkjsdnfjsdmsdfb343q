@@ -37,4 +37,15 @@ public class IntersectionActing implements Serializable {
         intersectionState[2] = Down;
         intersectionState[3] = Left;
     }
+
+    public boolean Equals(IntersectionActing act){
+
+            if (    this.intersectionState[0] == act.intersectionState[0] &&
+                    this.intersectionState[1] == act.intersectionState[1] &&
+                    this.intersectionState[2] == act.intersectionState[2] &&
+                    this.intersectionState[3] == act.intersectionState[3]  )
+                return true;
+
+        return false;
+    }
 }

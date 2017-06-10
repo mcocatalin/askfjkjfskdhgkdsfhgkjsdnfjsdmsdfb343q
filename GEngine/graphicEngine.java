@@ -286,9 +286,6 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             control(new ListBoxBuilder("myListBox") {{
                 displayItems(35);
                 selectionModeDisabled();
-
-//                optionalHorizontalScrollbar();
-//                optionalVerticalScrollbar();
                 height("80%");
                 width("100%"); // standard nifty width attribute
             }});
@@ -572,12 +569,10 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             player.setWalkDirection(walkDirection);
             cam.setLocation(new Vector3f(player.getPhysicsLocation().getX(), player.getPhysicsLocation().getY() - 4, player.getPhysicsLocation().getZ()));
         }
-        String a = "";
-        //nifty.getCurrentScreen().findElementByName("myWindow").findElementByName("myTextBuilder").getRenderer(TextRenderer.class).setText(a + "asd\n");
-       // nifty.getCurrentScreen().findElementByName("myScrollPanel");
+
         ///!!! Sensing on the Graphic Engine !!!
         UpdateIntersectionState();
-        //nifty.getCurrentScreen().findElementByName("myScrollPanel").findElementByName("myTextBuilder").getRenderer(TextRenderer.class).setText("asd123");
+
         ///!!! Acting on the Graphic Engine !!!
         if (!request.isEmpty()) {
             actingHandler x = request.get(0);

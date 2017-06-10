@@ -15,26 +15,77 @@ public class ActingAgent extends Agent implements IActing {
 
     IntersectionActing intersectionActing;
 
-    @Override
-    protected void setup() {
-        addBehaviour(new CyclicBehaviour() {
-            @Override
-            public void action() {
-                ACLMessage mesaj_receptionat = myAgent.receive();
-                if(mesaj_receptionat!=null)
-                {
-                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1)); // Send Feedback to IntersectionController
-                    if(mesaj_receptionat.getConversationId()=="Acting") {
-                        try {
-                            intersectionActing = (IntersectionActing) mesaj_receptionat.getContentObject();
-                        } catch (UnreadableException e) {
-                            e.printStackTrace();
-                        }
-                        //Object objHandle = intersectionActing;
-                        graphicEngine.request.add(new actingHandler("Intersection", thisID, intersectionActing));
+    CyclicBehaviour normalCycle = new CyclicBehaviour() {
+        @Override
+        public void action() {
+            ACLMessage mesaj_receptionat = myAgent.receive();
+            if(mesaj_receptionat!=null)
+            {
+                int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1)); // Send Feedback to IntersectionController
+                if(mesaj_receptionat.getConversationId()=="ActingNormalCycle") {
+                    try {
+                        intersectionActing = (IntersectionActing) mesaj_receptionat.getContentObject();
+                    } catch (UnreadableException e) {
+                        e.printStackTrace();
                     }
+                    actingHandler act = new actingHandler("Intersection", thisID, intersectionActing,true);
+
+                    if(graphicEngine.request.size() != 0) {
+                        boolean equals = false;
+                        for (int i = 0; i < graphicEngine.request.size(); i++) {
+
+                            equals = equals  || graphicEngine.request.get(i).Equals(act);
+                            if(equals)
+                                break;
+                        }
+                        if(!equals)
+                            graphicEngine.request.add(act);
+                    }
+                    else
+                        graphicEngine.request.add(act);
                 }
             }
-        });
+        }
+    };
+
+CyclicBehaviour centralizedControl =  new CyclicBehaviour() {
+    @Override
+    public void action() {
+        ACLMessage mesaj_receptionat = myAgent.receive();
+        if(mesaj_receptionat!=null)
+        {
+            int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1)); // Send Feedback to IntersectionController
+            if(mesaj_receptionat.getConversationId()=="ActingCentralizedControl") {
+                try {
+                    intersectionActing = (IntersectionActing) mesaj_receptionat.getContentObject();
+                } catch (UnreadableException e) {
+                    e.printStackTrace();
+                }
+                actingHandler act = new actingHandler("Intersection", thisID, intersectionActing,true);
+
+                if(graphicEngine.request.size() != 0) {
+                    boolean equals = false;
+                    for (int i = 0; i < graphicEngine.request.size(); i++) {
+
+                        equals = equals  || graphicEngine.request.get(i).Equals(act);
+                        if(equals)
+                            break;
+                    }
+                    if(!equals)
+                        graphicEngine.request.add(0,act);
+                }
+                else
+                    graphicEngine.request.add(0,act);
+            }
+        }
+    }
+};
+
+    @Override
+    protected void setup() {
+
+        addBehaviour(normalCycle);
+
+        addBehaviour(centralizedControl);
     }
 }

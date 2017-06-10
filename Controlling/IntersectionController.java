@@ -27,7 +27,7 @@ public class IntersectionController extends Agent implements IController {
 
     boolean normalState;
     boolean defectState;
-    AID serviceControllerID;
+    AID serviceControllerAID;
     Timer timer;
 
     WorldDetector wd;
@@ -53,7 +53,7 @@ public class IntersectionController extends Agent implements IController {
             intersectionActing = new IntersectionActing();
             normalState = true;
             defectState = false;
-            serviceControllerID = null; // None service controller
+            serviceControllerAID = null; // None service controller
             timer = new Timer(); // For switching state of lights
 
             detectedWorld = true;  // TO BE LET TRUE !!!
@@ -70,7 +70,42 @@ public class IntersectionController extends Agent implements IController {
     };
 
 
-    CyclicBehaviour normalCicleTrafficLights = new CyclicBehaviour() {
+    CyclicBehaviour centralizedControl = new CyclicBehaviour() {
+        @Override
+        public void action() {
+            if(detectedWorld) {
+
+                if (!normalState) { // Centralized Behaviour
+                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
+                    Iterator it = getAID().getAllAddresses();
+                    String adresa = (String) it.next();
+                    String platforma = getAID().getName().split("@")[1];
+
+                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                    AID r = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
+                    r.addAddresses(adresa);
+                    if(detectedWorld) { // not relevant yet
+                        if(myAgent.getCurQueueSize()>0) {
+                            for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
+                                 // TO SEND HERE MAX DENSITY VECTOR AND CHECK SOMEWHERE IN CORE AGENT PERSPECTIVE OF INTERSECTION WOTH NEIGHBOURS ... ICKY!
+                            }
+                        }
+                    }
+
+                    messageToSend.addReceiver(r);
+                    try {
+                        Thread.sleep(50*(thisID+1));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    myAgent.send(messageToSend);
+
+                }
+            }
+        }
+    };
+
+    CyclicBehaviour normalCicle = new CyclicBehaviour() {
         @Override
         public void action() {
             if(detectedWorld) {
@@ -83,35 +118,38 @@ public class IntersectionController extends Agent implements IController {
 
                     ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                     AID r;
-                    if (serviceControllerID != null)
-                        r = serviceControllerID;
+                    if (serviceControllerAID != null) {
+                        // r = serviceControllerAID;
+                        int controllerID = Integer.parseInt(serviceControllerAID.getLocalName().substring(serviceControllerAID.getLocalName().length() - 1));
+                        r = new AID("IntersectionActing" + controllerID + "@" + platforma, AID.ISGUID);
+                    }
                     else
                         r = new AID("IntersectionActing" + thisID + "@" + platforma, AID.ISGUID);
                     r.addAddresses(adresa);
                     //if (intersectionActing != null) {
+//                        try {
+//                            Thread.sleep(cicleInterval);
+
+                    if (ActiveIntersectionControllers[thisID] || serviceControllerAID != null) {
+                        messageToSend.setConversationId("ActingNormalCycle");
                         try {
-                            Thread.sleep(cicleInterval);
-
-                            if (ActiveIntersectionControllers[thisID] || serviceControllerID != null) {
-                                messageToSend.setConversationId("Acting");
-                                try {
-                                    intersectionActing.setLaneDirection(Updown, RightLeft);
-                                    messageToSend.setContentObject(intersectionActing);
-                                    Updown = !Updown;
-                                    RightLeft = !RightLeft;
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            } // to add any condition?
-
-                            messageToSend.addReceiver(r);
-                            Thread.sleep(50*(thisID+1));
-                            myAgent.send(messageToSend);
-
-                        } catch (InterruptedException e) {
-
+                            intersectionActing.setLaneDirection(Updown, RightLeft);
+                            messageToSend.setContentObject(intersectionActing);
+                            Updown = !Updown;
+                            RightLeft = !RightLeft;
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                   // }
+                    } // to add any condition?
+
+                    messageToSend.addReceiver(r);
+                    //Thread.sleep(50*(thisID+1));
+                    myAgent.send(messageToSend);
+
+//                        } catch (InterruptedException e) {
+//
+//                        }
+                    // }
                 }
             }
         }
@@ -141,8 +179,10 @@ public class IntersectionController extends Agent implements IController {
                                     if(intersectionSensing.getMaxDensity()[0] <= setPoint || intersectionSensing.getMaxDensity()[1] <= setPoint){
                                         normalState = true;
                                     }
-                                    else
+                                    else {
                                         normalState = false;
+
+                                    }
 
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();
@@ -159,7 +199,7 @@ public class IntersectionController extends Agent implements IController {
 
                             if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
                                 try {
-                                    serviceControllerID = (AID) mesaj_receptionat.getContentObject();
+                                    serviceControllerAID = (AID) mesaj_receptionat.getContentObject();
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();
                                 }
@@ -214,7 +254,7 @@ public class IntersectionController extends Agent implements IController {
 //
 //                    if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
 //                        try {
-//                            serviceControllerID = (AID) mesaj_receptionat.getContentObject();
+//                            serviceControllerAID = (AID) mesaj_receptionat.getContentObject();
 //                        } catch (UnreadableException e) {
 //                            e.printStackTrace();
 //                        }
@@ -302,11 +342,13 @@ public class IntersectionController extends Agent implements IController {
 
             addBehaviour(initBehaviour);
 
-            addBehaviour(normalCicleTrafficLights);
+            addBehaviour(normalCicle);
 
             addBehaviour(receiver);
 
             addBehaviour(sendNucleusData);
+
+            addBehaviour(centralizedControl);
 
         }
     }

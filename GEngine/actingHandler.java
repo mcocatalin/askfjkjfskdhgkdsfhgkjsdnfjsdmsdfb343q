@@ -1,12 +1,24 @@
 package GEngine;
 
+import Utility.IntersectionActing;
+
 /**
  * Created by Catalin on 3/19/2017.
  */
 public class actingHandler {
     public String type = "None";
     public int componentID;
-    public Object objToHandle;
+    public IntersectionActing objToHandle;
+
+    public boolean isWaitCycle() {
+        return waitCycle;
+    }
+
+    public void setWaitCycle(boolean waitCycle) {
+        this.waitCycle = waitCycle;
+    }
+
+    public boolean waitCycle;
     //Properties
 
     public actingHandler() {
@@ -49,18 +61,35 @@ public class actingHandler {
         this.componentID = componentID;
     }
 
-    public Object getObjToHandle() {
+    public IntersectionActing getObjToHandle() {
         return objToHandle;
     }
 
-    public void setObjToHandle(Object objToHandle) {
+    public void setObjToHandle(IntersectionActing objToHandle) {
         this.objToHandle = objToHandle;
     }
 
-    public actingHandler(String type, int componentID, Object objToHandle) {
+    public actingHandler(String type, int componentID, IntersectionActing objToHandle, boolean waitCycle) {
+        this.type = type;
+        this.componentID = componentID;
+        this.objToHandle = objToHandle;
+        this.waitCycle = waitCycle;
+    }
+
+    public actingHandler(String type, int componentID, IntersectionActing objToHandle) {
 
         this.type = type;
         this.componentID = componentID;
         this.objToHandle = objToHandle;
+    }
+
+    public boolean Equals(actingHandler act){
+
+        if(this.getType() == act.getType() && this.getComponentID() == act.getComponentID() && this.getObjToHandle().Equals(act.getObjToHandle()) && this.waitCycle == act.waitCycle)
+        {
+            return true;
+        }
+
+        return false;
     }
 }
