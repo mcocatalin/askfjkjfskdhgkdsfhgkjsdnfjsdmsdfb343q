@@ -632,10 +632,9 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         expiredCycleTime[act.getComponentID()] = false;
         System.out.println("\nStarted normal cycle for intersection " + act.getComponentID() );
         if(act.waitCycle == true){
-            boolean state = false;
             if(act.getObjToHandle().getIntersectionState()[0] && act.getObjToHandle().getIntersectionState()[2]){
                 // Intersection Item position are ok, clockwise starting from UP, where UP means from main perspective the lane to go UP, results the intersection item from the bottom!!!
-                state = !state;
+
             }
             if(act.getObjToHandle().getIntersectionState()[1] && act.getObjToHandle().getIntersectionState()[3]){
                 // Intersection Item position are ok, clockwise starting from UP, where UP means from main perspective the lane to go UP, results the intersection item from the bottom!!!
@@ -1335,22 +1334,22 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public void setSun() {
 
 
-//        for(int i=0;i<numberOfIntersections;i++) // GOOD TRAFFIC LIGHT INIT !!!
-//            for(int j=0;j<4;j++) {
-//
-//                trafficLightSpots[i][j] = new SpotLight();
-//                trafficLightSpots[i][j].setSpotRange(10f);                           // distance
-//                trafficLightSpots[i][j].setSpotInnerAngle(150); // inner light cone (central beam)
-//                trafficLightSpots[i][j].setSpotOuterAngle(150); // outer light cone (edge of the light)
-//                trafficLightSpots[i][j].setColor(ColorRGBA.Red);         // light color
-////        spot.setPosition(trafficLightPointSimulation[0]);// .setY(trafficLightPointSimulation[0].getY() + 2));               // shine from camera loc
-////        spot.setDirection(new Vector3f(trafficLightPointSimulation[0].add(70,-0.5f,14)) );             // shine forward from camera loc
-//
-//                trafficLightSpots[i][j].setPosition(trafficLightLocations[i][j].add(0, 2, 0));               // shine from camera loc
-//                trafficLightSpots[i][j].setDirection(new Vector3f(200f, 0, 100));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
-//
-//                rootNode.addLight(trafficLightSpots[i][j]);
-//            }
+        for(int i=0;i<numberOfIntersections;i++) // GOOD TRAFFIC LIGHT INIT !!!
+            for(int j=0;j<4;j++) {
+
+                trafficLightSpots[i][j] = new SpotLight();
+                trafficLightSpots[i][j].setSpotRange(10f);                           // distance
+                trafficLightSpots[i][j].setSpotInnerAngle(150); // inner light cone (central beam)
+                trafficLightSpots[i][j].setSpotOuterAngle(150); // outer light cone (edge of the light)
+                trafficLightSpots[i][j].setColor(ColorRGBA.Red);         // light color
+//        spot.setPosition(trafficLightPointSimulation[0]);// .setY(trafficLightPointSimulation[0].getY() + 2));               // shine from camera loc
+//        spot.setDirection(new Vector3f(trafficLightPointSimulation[0].add(70,-0.5f,14)) );             // shine forward from camera loc
+
+                trafficLightSpots[i][j].setPosition(trafficLightLocations[i][j].add(0, 2, 0));               // shine from camera loc
+                trafficLightSpots[i][j].setDirection(new Vector3f(200f, 0, 100));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
+
+                rootNode.addLight(trafficLightSpots[i][j]);
+            }
 
 
         ColorRGBA sun_central_color = new ColorRGBA();

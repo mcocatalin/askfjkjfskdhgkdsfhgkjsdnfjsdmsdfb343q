@@ -70,7 +70,7 @@ public class IntersectionController extends Agent implements IController {
     };
 
 
-    CyclicBehaviour centralizedControl = new CyclicBehaviour() {
+    CyclicBehaviour centralizedCycle = new CyclicBehaviour() {
         @Override
         public void action() {
             if(detectedWorld) {
@@ -105,7 +105,7 @@ public class IntersectionController extends Agent implements IController {
         }
     };
 
-    CyclicBehaviour normalCicle = new CyclicBehaviour() {
+    CyclicBehaviour normalCycle = new CyclicBehaviour() {
         @Override
         public void action() {
             if(detectedWorld) {
@@ -342,13 +342,13 @@ public class IntersectionController extends Agent implements IController {
 
             addBehaviour(initBehaviour);
 
-            addBehaviour(normalCicle);
-
             addBehaviour(receiver);
 
             addBehaviour(sendNucleusData);
 
-            addBehaviour(centralizedControl);
+            addBehaviour(normalCycle);
+
+            addBehaviour(centralizedCycle);
 
         }
     }

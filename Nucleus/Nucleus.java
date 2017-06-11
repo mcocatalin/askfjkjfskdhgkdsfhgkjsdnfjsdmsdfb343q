@@ -146,7 +146,7 @@ public class Nucleus extends Agent {
         }
     };
 
-    CyclicBehaviour synchronizeIntersections = new CyclicBehaviour() {
+    CyclicBehaviour centralizedControl = new CyclicBehaviour() {
         @Override
         public void action() {
             if(detectedWorld) {
@@ -337,7 +337,7 @@ public class Nucleus extends Agent {
 
         addBehaviour(sendCoreData);
 
-        addBehaviour(synchronizeIntersections);
+        addBehaviour(centralizedControl);
 
         addBehaviour(sendWorldDetector); // Deactivated !!!
 
