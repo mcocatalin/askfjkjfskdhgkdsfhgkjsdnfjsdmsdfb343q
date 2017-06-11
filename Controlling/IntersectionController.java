@@ -215,7 +215,7 @@ public class IntersectionController extends Agent implements IController {
                             }
                         }
 
-                        System.out.println("Controllerul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
+                        //System.out.println("Controllerul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
                     }
                     else {
                         block();

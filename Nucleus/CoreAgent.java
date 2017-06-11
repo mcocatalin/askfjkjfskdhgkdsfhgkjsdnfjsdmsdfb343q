@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 import static GEngine.graphicEngine.EventLogEntries;
+import static GEngine.graphicEngine.numberOfIntersections;
 
 /**
  * Created by Catalin on 5/22/2017.
@@ -173,33 +174,34 @@ public class CoreAgent extends Agent {
         @Override
         public void action() {
             if (DoneCreatingAgents && doneDetecting) {
-                NucleusIndex = NucleusIndex % graphicEngine.numberOfIntersections;
-                Iterator it = getAID().getAllAddresses();
-                String adresa = (String) it.next();
-                String platforma = getAID().getName().split("@")[1];
+                for(NucleusIndex = 0; NucleusIndex< numberOfIntersections; NucleusIndex++) {
 
-                ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                AID r = new AID("IntersectionNucleus" + NucleusIndex + "@" + platforma, AID.ISGUID);
-                r.addAddresses(adresa);
-                        if(centralControl){ // TO IMPLEMENT!!!
-                            messageToSend.setConversationId("CentralizedControl");
-                            //messageToSend.setContentObject(new );
-                        }
-                messageToSend.setConversationId("UpdateSetPoint");
-                messageToSend.addReceiver(r);
+                    Iterator it = getAID().getAllAddresses();
+                    String adresa = (String) it.next();
+                    String platforma = getAID().getName().split("@")[1];
 
-                try {
-                    messageToSend.setContentObject(GlobalNucleusSetPoint);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                myAgent.send(messageToSend);
-                NucleusIndex++;
+                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                    AID r = new AID("IntersectionNucleus" + NucleusIndex + "@" + platforma, AID.ISGUID);
+                    r.addAddresses(adresa);
+                    if (centralControl) { // TO IMPLEMENT!!!
+                        messageToSend.setConversationId("CentralizedControl");
+                        //messageToSend.setContentObject(new );
+                    }
+                    messageToSend.setConversationId("UpdateSetPoint");
+                    messageToSend.addReceiver(r);
 
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    try {
+                        messageToSend.setContentObject(GlobalNucleusSetPoint);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    myAgent.send(messageToSend);
+
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }

@@ -1,5 +1,6 @@
 package Utility;
 
+import GEngine.graphicEngine;
 import com.jme3.math.Plane;
 import com.jme3.math.Vector3f;
 import jade.core.AID;
@@ -9,6 +10,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,6 +69,27 @@ public class Helper {
         }
         return -1;
     }
+
+    public static TimerTask tmtsk = new TimerTask() {
+
+        @Override
+        public void run() {
+            //System.out.println("\nStarted cycle cronometer task");
+//            try {
+//                Thread.sleep(Controlling.IntersectionController.cicleInterval);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
+
+            graphicEngine.expiredCycleTime[0] = true;
+            graphicEngine.expiredCycleTime[1] = true;
+            graphicEngine.expiredCycleTime[2] = true;
+            graphicEngine.expiredCycleTime[3] = true;
+            graphicEngine.expiredCycleTime[4] = true;
+
+           // System.out.println("\nEnded cycle cronometer task" );
+        }
+    };
 
     public static int getAvailableControllerAID(AID disabledControllerAID){
 

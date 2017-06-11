@@ -39,7 +39,12 @@ public class ActingAgent extends Agent implements IActing {
                                 break;
                         }
                         if(!equals)
-                            graphicEngine.request.add(act);
+//                            try {
+//                                Thread.sleep(IntersectionController.cicleInterval);
+                                graphicEngine.request.add(act);
+//                            } catch (InterruptedException e) {
+//                                e.printStackTrace();
+//                            }
                     }
                     else
                         graphicEngine.request.add(act);

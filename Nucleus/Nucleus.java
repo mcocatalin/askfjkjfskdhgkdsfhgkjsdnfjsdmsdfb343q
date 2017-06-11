@@ -269,7 +269,7 @@ public class Nucleus extends Agent {
                             }
                         }
 
-                        System.out.println("Nucleul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
+                        //System.out.println("Nucleul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
                     } else {
                         block();
                         break;
@@ -318,7 +318,7 @@ public class Nucleus extends Agent {
                 }
                 myAgent.send(messageToSend);
 
-                System.out.println("Nucleul " + this.myAgent.getLocalName() + " a trimis  catre controller mesaj: " + messageToSend.getConversationId());
+                //System.out.println("Nucleul " + this.myAgent.getLocalName() + " a trimis  catre controller mesaj: " + messageToSend.getConversationId());
                 //}
             }
         }

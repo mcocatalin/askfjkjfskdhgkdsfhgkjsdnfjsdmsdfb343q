@@ -2,6 +2,7 @@ package GEngine;
 
 import Controlling.IntersectionController;
 import Nucleus.CoreAgent;
+import Utility.Helper;
 import Utility.IntersectionItem;
 import Utility.IntersectionSensing;
 import Utility.WorldDetector;
@@ -53,6 +54,7 @@ import org.bushe.swing.event.EventTopicSubscriber;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
 
 import static com.jme3.math.ColorRGBA.Green;
 import static com.jme3.math.ColorRGBA.Red;
@@ -176,12 +178,10 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             new Matrix3f(0, 0, -1, 0, 1, 0, 1, 0, 0),
             new Matrix3f(-1, 0, 0, 0, 1, 0, 0, 0,-1),
             new Matrix3f(0, 0, 1, 0, 1, 0, -1, 0,0),
-
-//
-//            new Matrix3f(0, 1, 0, -1, 0, 0, 0, 0, 1),
-//            new Matrix3f(0, 1, 0, -1, 0, 0, 0, 0, 1),
-//            new Matrix3f(1, 0, 0, 0, 0, 1, 0, -1, 0),
     };
+
+    // Cycle time for intersection states
+    public static boolean expiredCycleTime[] = new boolean[numberOfIntersections];
 
     public LinkedList<IntersectionItem> Intersections;
 
@@ -328,11 +328,10 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         int index = 0;
         Intersections = new LinkedList<IntersectionItem>();
         for(int i = 0; i< numberOfIntersections; i++) {
-            for(int j=0; j<4;j++)
-            Intersections.add(new IntersectionItem(trafficLightLocations[i][j],  // UP
-                    trafficLightLocations[i][j],  // DOWN
-                    trafficLightLocations[i][j],  // RIGHT
-                    trafficLightLocations[i][j]));// LEFT
+            Intersections.add(new IntersectionItem(trafficLightLocations[i][0],  // UP
+                    trafficLightLocations[i][1],  // DOWN
+                    trafficLightLocations[i][2],  // RIGHT
+                    trafficLightLocations[i][3]));// LEFT
             worldDetectors.add(new WorldDetector("IntersectionDetect", i, Intersections.get(i)));
 
         }
@@ -343,7 +342,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         for (int i = 0; i < trafficLightLocations.length; i++) {
             for(int j=0; j<4;j++) {
-                LoadIntersectionlights(trafficLightLocations[i][j], valideRotations[i % 4], trafficLights[i]);
+                LoadIntersectionlights(trafficLightLocations[i][j], valideRotations[j], trafficLights[i]);
             }
         }
 
@@ -375,11 +374,15 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
 
         cameraSetup();
-        load_player();
+        //load_player();
 
         SetIntersections();
 
         setUpKeys();
+
+        // INIT COUNTER!!!
+        Timer tm = new Timer();
+        tm.scheduleAtFixedRate(Helper.tmtsk, 0, IntersectionController.cicleInterval);
 
         // DEBUG
         //response.add(new sensingHandler("Intersection", index, intersectionLaneValues));
@@ -561,7 +564,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public void simpleUpdate(float tpf) {
 
         hudText.setText("GPS: " + (int) cam.getLocation().getX() + "x" + " " + (int) cam.getLocation().getY() + "y" + " " + (int) cam.getLocation().getZ() + "z");
-
+//
         if (!camera) {
             camDir.set(cam.getDirection()).multLocal(0.6f);
             camLeft.set(cam.getLeft()).multLocal(0.4f);
@@ -586,9 +589,9 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             {
                 flyCam.setDragToRotate(false);
             }
-
-            player.setWalkDirection(walkDirection);
-            cam.setLocation(new Vector3f(player.getPhysicsLocation().getX(), player.getPhysicsLocation().getY() - 4, player.getPhysicsLocation().getZ()));
+//
+//            player.setWalkDirection(walkDirection);
+//            cam.setLocation(new Vector3f(player.getPhysicsLocation().getX(), player.getPhysicsLocation().getY() - 4, player.getPhysicsLocation().getZ()));
         }
 
         ///!!! Sensing on the Graphic Engine !!!
@@ -601,13 +604,19 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 //                vehicle.accelerate(40);
 //            }
 
-            actingHandler act = request.remove(0);
-
-            try {
-                actOnTrafficLights(act);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                //Thread.sleep(500);
+    // !!! INTERSECTION ACTING
+                actingHandler act = request.get(0);
+                if(expiredCycleTime[act.getComponentID()])
+                {
+                    actOnTrafficLights(act);
+                    request.remove(0);
+                }
+                   // actOnTrafficLights(act);
+//            } catch (InterruptedException e) {
+//                e.printStackTrace();
+//            }
 
         }
 
@@ -619,15 +628,19 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     }
 
-    public void actOnTrafficLights(actingHandler act) throws InterruptedException {
+    public void actOnTrafficLights(actingHandler act) { //throws InterruptedException {
+        expiredCycleTime[act.getComponentID()] = false;
+        System.out.println("\nStarted normal cycle for intersection " + act.getComponentID() );
         if(act.waitCycle == true){
+            boolean state = false;
             if(act.getObjToHandle().getIntersectionState()[0] && act.getObjToHandle().getIntersectionState()[2]){
                 // Intersection Item position are ok, clockwise starting from UP, where UP means from main perspective the lane to go UP, results the intersection item from the bottom!!!
+                state = !state;
             }
             if(act.getObjToHandle().getIntersectionState()[1] && act.getObjToHandle().getIntersectionState()[3]){
                 // Intersection Item position are ok, clockwise starting from UP, where UP means from main perspective the lane to go UP, results the intersection item from the bottom!!!
             }
-            Thread.sleep(IntersectionController.cicleInterval);
+            //Thread.sleep(IntersectionController.cicleInterval);
 
         }
     }
@@ -1321,52 +1334,35 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     public void setSun() {
 
-//        PointLight lamp_light = new PointLight();
-//        lamp_light.setColor(Red);
-//        lamp_light.setRadius(200);
-//        lamp_light.setPosition(trafficLightPointSimulation[0]);
-//        rootNode.addLight(lamp_light);
 
-        for(int i=0;i<numberOfIntersections;i++)
-            for(int j=0;j<4;j++) {
-
-                trafficLightSpots[i][j] = new SpotLight();
-                trafficLightSpots[i][j].setSpotRange(10f);                           // distance
-                trafficLightSpots[i][j].setSpotInnerAngle(150); // inner light cone (central beam)
-                trafficLightSpots[i][j].setSpotOuterAngle(150); // outer light cone (edge of the light)
-                trafficLightSpots[i][j].setColor(ColorRGBA.Red);         // light color
-//        spot.setPosition(trafficLightPointSimulation[0]);// .setY(trafficLightPointSimulation[0].getY() + 2));               // shine from camera loc
-//        spot.setDirection(new Vector3f(trafficLightPointSimulation[0].add(70,-0.5f,14)) );             // shine forward from camera loc
-
-                trafficLightSpots[i][j].setPosition(trafficLightLocations[i][j].add(0, 2, 0));               // shine from camera loc
-                trafficLightSpots[i][j].setDirection(new Vector3f(200f, 0, 100));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
-
-                rootNode.addLight(trafficLightSpots[i][j]);
-            }
+//        for(int i=0;i<numberOfIntersections;i++) // GOOD TRAFFIC LIGHT INIT !!!
+//            for(int j=0;j<4;j++) {
 //
-//        trafficLightSpots[1][0] = new SpotLight();
-//        trafficLightSpots[1][0].setSpotRange(100f);                           // distance
-//        trafficLightSpots[1][0].setSpotInnerAngle(150); // inner light cone (central beam)
-//        trafficLightSpots[1][0].setSpotOuterAngle(150); // outer light cone (edge of the light)
-//        trafficLightSpots[1][0].setColor(ColorRGBA.Red);         // light color
+//                trafficLightSpots[i][j] = new SpotLight();
+//                trafficLightSpots[i][j].setSpotRange(10f);                           // distance
+//                trafficLightSpots[i][j].setSpotInnerAngle(150); // inner light cone (central beam)
+//                trafficLightSpots[i][j].setSpotOuterAngle(150); // outer light cone (edge of the light)
+//                trafficLightSpots[i][j].setColor(ColorRGBA.Red);         // light color
 ////        spot.setPosition(trafficLightPointSimulation[0]);// .setY(trafficLightPointSimulation[0].getY() + 2));               // shine from camera loc
 ////        spot.setDirection(new Vector3f(trafficLightPointSimulation[0].add(70,-0.5f,14)) );             // shine forward from camera loc
 //
-//        trafficLightSpots[1][0].setPosition( trafficLightLocations[1][0].add(0,2,0) );               // shine from camera loc
-//        trafficLightSpots[1][0].setDirection(new Vector3f(200f,0,100 ));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
+//                trafficLightSpots[i][j].setPosition(trafficLightLocations[i][j].add(0, 2, 0));               // shine from camera loc
+//                trafficLightSpots[i][j].setDirection(new Vector3f(200f, 0, 100));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
 //
-//        rootNode.addLight(trafficLightSpots[1][0]);
+//                rootNode.addLight(trafficLightSpots[i][j]);
+//            }
+
 
         ColorRGBA sun_central_color = new ColorRGBA();
         sun_central_color.set(255 / 255f, 255 / 255f, 251 / 255f, 0.5f);
         PointLight sun_central = new PointLight();
         sun_central.setColor(sun_central_color);
-        sun_central.setRadius(1000f);
+        sun_central.setRadius(100000f);
         sun_central.setPosition(new Vector3f(0.0f, 400.0f, 0.0f));
 
         PointLight sun_up = new PointLight();
         sun_central.setColor(sun_central_color);
-        sun_central.setRadius(1000f);
+        sun_central.setRadius(100000f);
         sun_central.setPosition(new Vector3f(0.0f, 1000.0f, 0.0f));
 
         rootNode.addLight(sun_central);
@@ -1508,7 +1504,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         }
         else if (binding.equals("Teleport"))
         {
-            player.setPhysicsLocation(cam.getLocation());
+           // player.setPhysicsLocation(cam.getLocation());
         }
 
         if (binding.equals("Left")) {

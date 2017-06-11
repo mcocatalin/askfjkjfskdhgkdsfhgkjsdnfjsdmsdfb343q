@@ -80,7 +80,7 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                         myAgent.send(messageToSend);
 
                         EventLogEntries.add(this.myAgent.getLocalName() + " a trimis worldDetect");
-                        System.out.println("Sensor " + this.myAgent.getLocalName() + " a trimis mesaj: " + messageToSend.getConversationId());
+                        //System.out.println("Sensor " + this.myAgent.getLocalName() + " a trimis mesaj: " + messageToSend.getConversationId());
                     }
 
                 }
