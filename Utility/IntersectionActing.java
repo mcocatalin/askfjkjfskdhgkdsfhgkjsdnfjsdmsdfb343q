@@ -48,4 +48,8 @@ public class IntersectionActing implements Serializable {
 
         return false;
     }
+
+    public boolean[] getIntersectionState() {
+        return intersectionState;
+    }
 }
