@@ -19,37 +19,40 @@ public class ActingAgent extends Agent implements IActing {
         @Override
         public void action() {
             ACLMessage mesaj_receptionat = myAgent.receive();
-            if(mesaj_receptionat!=null)
-            {
-                int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1)); // Send Feedback to IntersectionController
-                if(mesaj_receptionat.getConversationId()=="ActingNormalCycle") {
-                    try {
-                        intersectionActing = (IntersectionActing) mesaj_receptionat.getContentObject();
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
-                    }
-                    actingHandler act = new actingHandler("Intersection", thisID, intersectionActing,true);
+//            if(myAgent.getCurQueueSize()>0) {
+//                for (int j = 0; j < myAgent.getCurQueueSize(); j++) {
+                    if (mesaj_receptionat != null) {
+                        int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1)); // Send Feedback to IntersectionController
+                        if (mesaj_receptionat.getConversationId() == "ActingNormalCycle") {
+                            try {
+                                intersectionActing = (IntersectionActing) mesaj_receptionat.getContentObject();
+                            } catch (UnreadableException e) {
+                                e.printStackTrace();
+                            }
+                            actingHandler act = new actingHandler("Intersection", thisID, intersectionActing, true);
 
-                    if(graphicEngine.request.size() != 0) {
-                        boolean equals = false;
-                        for (int i = 0; i < graphicEngine.request.size(); i++) {
+                            if (graphicEngine.request.size() != 0) {
+                                boolean equals = false;
+                                for (int i = 0; i < graphicEngine.request.size(); i++) {
 
-                            equals = equals  || graphicEngine.request.get(i).Equals(act);
-                            if(equals)
-                                break;
-                        }
-                        if(!equals)
+                                    equals = equals || graphicEngine.request.get(i).Equals(act);
+                                    if (equals)
+                                        break;
+                                }
+                                if (!equals)
 //                            try {
 //                                Thread.sleep(IntersectionController.cicleInterval);
-                                graphicEngine.request.add(act);
+                                    graphicEngine.request.add(act);
 //                            } catch (InterruptedException e) {
 //                                e.printStackTrace();
 //                            }
+                            } else
+                                graphicEngine.request.add(act);
+                        }
                     }
-                    else
-                        graphicEngine.request.add(act);
-                }
-            }
+//                }
+//            }
+
         }
     };
 

@@ -87,6 +87,54 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
 
                 detectedWorld = true;
             }
+            //block();
+        }
+    };
+
+    CyclicBehaviour senseChanges = new CyclicBehaviour() {
+        @Override
+        public void action()
+        { // Send Message to Controller
+            synchronized (response) { // Thread access at the same time
+                if(response.size()>0) {
+                    int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
+
+                    //if (toHandle != null)
+
+                    if(response.get(0).getComponentID() == thisID)
+                    {
+
+                        sensingHandler toHandle = response.remove(0);
+                        //if (this.myAgent.getAID().getLocalName().contains(toHandle.getType() + "Sensing" + toHandle.getComponentID())) {
+
+                        Iterator it = getAID().getAllAddresses();
+                        String adresa = (String) it.next();
+                        String platforma = getAID().getName().split("@")[1];
+
+                        ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                        AID r = new AID(toHandle.getType() + "Controller" + toHandle.getComponentID() + "@" + platforma, AID.ISGUID);
+                        r.addAddresses(adresa);
+                        //messageToSend.setContent("Sensing");
+                        messageToSend.setConversationId("Sensing");
+                        messageToSend.addReceiver(r);
+
+                        try {
+                            messageToSend.setContentObject(toHandle.getObjToHandle());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        try {
+                            Thread.sleep(50*(toHandle.getComponentID()+1));
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        myAgent.send(messageToSend);
+                    }
+                    //}
+                }
+            }
+            //block();
         }
     };
 
@@ -95,51 +143,7 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
 
         addBehaviour(detectWorld); // Deactivated!
 
-        addBehaviour(new CyclicBehaviour() {
-            @Override
-            public void action()
-            { // Send Message to Controller
-                synchronized (response) { // Thread access at the same time
-                      if(response.size()>0) {
-                          int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
-
-                          //if (toHandle != null)
-
-                          if(response.get(0).getComponentID() == thisID)
-                          {
-
-                              sensingHandler toHandle = response.remove(0);
-                              //if (this.myAgent.getAID().getLocalName().contains(toHandle.getType() + "Sensing" + toHandle.getComponentID())) {
-
-                                  Iterator it = getAID().getAllAddresses();
-                                  String adresa = (String) it.next();
-                                  String platforma = getAID().getName().split("@")[1];
-
-                                  ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                                  AID r = new AID(toHandle.getType() + "Controller" + toHandle.getComponentID() + "@" + platforma, AID.ISGUID);
-                                  r.addAddresses(adresa);
-                                  //messageToSend.setContent("Sensing");
-                                  messageToSend.setConversationId("Sensing");
-                                  messageToSend.addReceiver(r);
-
-                                  try {
-                                      messageToSend.setContentObject(toHandle.getObjToHandle());
-                                  } catch (IOException e) {
-                                      e.printStackTrace();
-                                  }
-
-                                  try {
-                                      Thread.sleep(50*(toHandle.getComponentID()+1));
-                                  } catch (InterruptedException e) {
-                                      e.printStackTrace();
-                                  }
-                                  myAgent.send(messageToSend);
-                              }
-                          //}
-                      }
-                }
-            }
-        });
+        addBehaviour(senseChanges);
 
         addBehaviour(new Behaviour() { // citeste retea de agenti
             @Override

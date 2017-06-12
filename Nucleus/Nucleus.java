@@ -14,7 +14,6 @@ import jade.lang.acl.UnreadableException;
 import jade.util.leap.Iterator;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
-import jade.wrapper.StaleProxyException;
 
 import java.io.IOException;
 
@@ -37,6 +36,8 @@ public class Nucleus extends Agent {
     WorldDetector wd;
     boolean detectedWorld;
 
+    AMSAgentDescription[] agents = null;
+
 
     ContainerController home;
     private AgentController rmaNucleus;
@@ -44,7 +45,6 @@ public class Nucleus extends Agent {
     Behaviour discoverAgents = new Behaviour() {
         @Override
         public void action() { // To descover all agents in current ContainerController
-            AMSAgentDescription[] agents = null;
 
             try {
                 SearchConstraints c = new SearchConstraints();
@@ -89,6 +89,7 @@ public class Nucleus extends Agent {
                 myAgent.send(messageToSend);
                 detectedWorld = true;
             }
+            //block();
         }
     };
 
@@ -104,39 +105,39 @@ public class Nucleus extends Agent {
 
             for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
 
-                // Controlling Agents
-                try {
-                    rmaNucleus = home.createNewAgent("IntersectionController" + i,
-                            "Controlling.IntersectionController", new Object[0]);
-                    rmaNucleus.start();
-                    // to print in console!!!
-                    graphicEngine.EventLogEntries.add("Started Intersection Controller " + i + " agent.");
-                } catch (StaleProxyException e) {
-                    e.printStackTrace();
-                }
-
-                // Acting Agents
-                try {
-                    rmaNucleus = home.createNewAgent("IntersectionActing" + i,
-                            "Acting.ActingAgent", new Object[0]);
-                    rmaNucleus.start();
-                    // to print in console!!!
-                    graphicEngine.EventLogEntries.add("Started Intersection Acting " + i + " agent.");
-                } catch (StaleProxyException e) {
-                    e.printStackTrace();
-                }
-
-                // Sensing Agents
-                try {
-                    // home.getAgent("IntersectionSensing" + i);
-                    rmaNucleus = home.createNewAgent("IntersectionSensing" + i,
-                            "Sensing.SensingAgent", new Object[0]);
-                    rmaNucleus.start();
-                    // to print in console!!!
-                    graphicEngine.EventLogEntries.add("Started Intersection Sensing " + i + " agent.");
-                } catch (StaleProxyException e) {
-                    e.printStackTrace();
-                }
+//                // Controlling Agents
+//                try {
+//                    rmaNucleus = home.createNewAgent("IntersectionController" + i,
+//                            "Controlling.IntersectionController", new Object[0]);
+//                    rmaNucleus.start();
+//                    // to print in console!!!
+//                    graphicEngine.EventLogEntries.add("Started Intersection Controller " + i + " agent.");
+//                } catch (StaleProxyException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                // Acting Agents
+//                try {
+//                    rmaNucleus = home.createNewAgent("IntersectionActing" + i,
+//                            "Acting.ActingAgent", new Object[0]);
+//                    rmaNucleus.start();
+//                    // to print in console!!!
+//                    graphicEngine.EventLogEntries.add("Started Intersection Acting " + i + " agent.");
+//                } catch (StaleProxyException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                // Sensing Agents
+//                try {
+//                    // home.getAgent("IntersectionSensing" + i);
+//                    rmaNucleus = home.createNewAgent("IntersectionSensing" + i,
+//                            "Sensing.SensingAgent", new Object[0]);
+//                    rmaNucleus.start();
+//                    // to print in console!!!
+//                    graphicEngine.EventLogEntries.add("Started Intersection Sensing " + i + " agent.");
+//                } catch (StaleProxyException e) {
+//                    e.printStackTrace();
+//                }
             }
         }
 
@@ -176,6 +177,7 @@ public class Nucleus extends Agent {
                     myAgent.send(messageToSend);
                 }
             }
+            //block();
         }
     };
 
@@ -211,6 +213,7 @@ public class Nucleus extends Agent {
                     defectRequest=false; // sent Defect Request, waiting for answer
                 }
             }
+            //block();
         }
     };
 
@@ -238,7 +241,7 @@ public class Nucleus extends Agent {
 
                             if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") {
                                 try {
-                                    setPoint = (int) mesaj_receptionat.getContentObject();
+                                    setPoint = (Integer) mesaj_receptionat.getContentObject();
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();
                                 }
@@ -270,13 +273,15 @@ public class Nucleus extends Agent {
                         }
 
                         //System.out.println("Nucleul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
-                    } else {
-                        block();
-                        break;
                     }
+//                    else {
+//                        block();
+//                        break;
+//                    }
                 }
 
             }
+            //block();
         }
     };
 
@@ -321,6 +326,7 @@ public class Nucleus extends Agent {
                 //System.out.println("Nucleul " + this.myAgent.getLocalName() + " a trimis  catre controller mesaj: " + messageToSend.getConversationId());
                 //}
             }
+            //block();
         }
     };
 

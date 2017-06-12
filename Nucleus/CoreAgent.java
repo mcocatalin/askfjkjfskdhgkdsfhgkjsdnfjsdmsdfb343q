@@ -52,7 +52,7 @@ public class CoreAgent extends Agent {
 
     private boolean centralControl;
 
-    public static AgentController rma; // Same as CoreAgent seted in iniBehaviour
+    public static AgentController rma; // Same as CoreAgent setted in iniBehaviour
 
     Behaviour discoverAgents = new Behaviour() {
         @Override
@@ -132,6 +132,7 @@ public class CoreAgent extends Agent {
                     }
                 }
             }
+            //block();
         }
     };
 
@@ -204,6 +205,7 @@ public class CoreAgent extends Agent {
                     }
                 }
             }
+            //block();
         }
     };
 
@@ -290,13 +292,46 @@ public class CoreAgent extends Agent {
                         } catch (StaleProxyException e) {
                             e.printStackTrace();
                         }
+                        // Controlling Agents
+                        try {
+                            rma = home.createNewAgent("IntersectionController" + i,
+                                    "Controlling.IntersectionController", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                            graphicEngine.EventLogEntries.add("Started Intersection Controller " + i + " agent.");
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Acting Agents
+                        try {
+                            rma = home.createNewAgent("IntersectionActing" + i,
+                                    "Acting.ActingAgent", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                            graphicEngine.EventLogEntries.add("Started Intersection Acting " + i + " agent.");
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
+
+                        // Sensing Agents
+                        try {
+                            // home.getAgent("IntersectionSensing" + i);
+                            rma = home.createNewAgent("IntersectionSensing" + i,
+                                    "Sensing.SensingAgent", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                            graphicEngine.EventLogEntries.add("Started Intersection Sensing " + i + " agent.");
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
                 DoneCreatingAgents = true;
             }
 //            else
 //                graphicEngine.createEventLogEntry("Initiated Global Nucleus!");
-
+            //block();
         }
     };
 
@@ -352,7 +387,7 @@ public class CoreAgent extends Agent {
                 }
             }
 
-
+            //block();
         }
     };
 
@@ -386,6 +421,7 @@ public class CoreAgent extends Agent {
                 }
                 requestedServiceController--;
             }
+            //block();
         }
     };
 

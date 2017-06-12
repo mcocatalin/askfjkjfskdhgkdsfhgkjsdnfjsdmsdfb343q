@@ -102,6 +102,7 @@ public class IntersectionController extends Agent implements IController {
 
                 }
             }
+            //block();
         }
     };
 
@@ -152,6 +153,7 @@ public class IntersectionController extends Agent implements IController {
                     // }
                 }
             }
+            //block();
         }
     };
 
@@ -217,10 +219,10 @@ public class IntersectionController extends Agent implements IController {
 
                         //System.out.println("Controllerul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
                     }
-                    else {
-                        block();
-                        break;
-                    }
+//                    else {
+//                        block();
+//                        break;
+//                    }
                 }
             }
 //            ACLMessage mesaj_receptionat = myAgent.receive();
@@ -270,7 +272,7 @@ public class IntersectionController extends Agent implements IController {
 //                     }
 //                 }
 //            }
-
+            //block();
         }
     };
 
@@ -332,6 +334,8 @@ public class IntersectionController extends Agent implements IController {
                 e.printStackTrace();
             }
             myAgent.send(messageToSend);
+
+            //block();
         }
     };
 
