@@ -51,10 +51,7 @@ import de.lessvoid.nifty.controls.slider.builder.SliderBuilder;
 import de.lessvoid.nifty.screen.DefaultScreenController;
 import org.bushe.swing.event.EventTopicSubscriber;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Timer;
+import java.util.*;
 
 import static com.jme3.math.ColorRGBA.Green;
 import static com.jme3.math.ColorRGBA.Red;
@@ -65,6 +62,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     // Intersection members
     public static int numberOfIntersections = 5;
+    public static int numberOfSensorperLane = 2;
 
     // Graphic UI members
     public static boolean startApplication = false;
@@ -157,6 +155,9 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             new Vector3f(-71f, 5f, -103f),
     };
 
+    // intersection density pe intersection
+    public IntersectionSensing intersectionSensingDensity[];
+
     // Engine const variables
     final String[] modelPaths = {"Models/Ferrari/Car.scene", "src/assets/Models/Ford.zip"};
 
@@ -219,8 +220,29 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     }
 
-    public int GetIntersectionLocationDensity(Vector3f Location) {
+    public int GetIntersectionLocationDensity(Vector3f Location) { // not quite nice
         // !!!!!!!!!!!!!!!!!! Check number of cars in range!!!
+
+        Vector<Integer> resultVec = new Vector<Integer>();
+
+        int result[] = new int[numberOfSensorperLane];
+        int aux;
+
+        //note a single Random object is reused here
+        Random randomGenerator = new Random();
+        for(int i=0; i<numberOfSensorperLane;i++)
+            result[i] = randomGenerator.nextInt(4); // maximum 4 cars to detect on a zone of sensors
+
+         Arrays.sort(result);
+        for( int i = 0; i < result.length/2; ++i )
+        {
+            aux = result[i];
+            result[i] = result[result.length - i - 1];
+            result[result.length - i - 1] = aux;
+        }
+
+
+
         return 0;
     }
 
@@ -312,13 +334,13 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     static int indexIntesection = 0;
     private IntersectionSensing GetIntersectionState(IntersectionItem intersectionItem) {
-        indexIntesection = indexIntesection%2;
-        return new IntersectionSensing(
-                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[0]) + indexIntesection, // 0-1 alternate
-                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[1]) + indexIntesection,
-                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[2]) + indexIntesection,
-                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[3]) + indexIntesection
-        );
+//        indexIntesection = indexIntesection%2;
+        return new IntersectionSensing();
+//                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[0]) + indexIntesection, // 0-1 alternate
+//                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[1]) + indexIntesection,
+//                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[2]) + indexIntesection,
+//                GetIntersectionLocationDensity(intersectionItem.getItemLocation()[3]) + indexIntesection
+//        );
 
     }
 
@@ -351,10 +373,14 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         }
 
         doneCreatingWorldNet = true;
+
+
     }
 
     @Override
     public void simpleInitApp() {
+
+        intersectionSensingDensity = new IntersectionSensing[numberOfIntersections];
 
         bulletAppState = new BulletAppState();
         stateManager.attach(bulletAppState);
@@ -374,7 +400,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
 
         cameraSetup();
-        //load_player();
+        load_player();
 
         SetIntersections();
 
@@ -387,9 +413,46 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         // DEBUG
         //response.add(new sensingHandler("Intersection", index, intersectionLaneValues));
 
-
+        SetInitIntersectionDensity();
 
     }
+
+    private void SetInitIntersectionDensity(){
+
+        intersectionSensingDensity = new IntersectionSensing[numberOfIntersections];
+            for(int i=0;i<numberOfIntersections;i++)
+                intersectionSensingDensity[i] = new IntersectionSensing();
+
+        int result[] = new int[numberOfSensorperLane];
+        int aux;
+        Random randomGenerator = new Random();
+        for(int i = 0; i<numberOfIntersections; i++) {
+            //note a single Random object is reused here
+            for(int j=0;j<4;j++) {
+                for (int k = 0; k < numberOfSensorperLane; k++) {
+                    intersectionSensingDensity[i].setLaneDensityPerObj(j, k, randomGenerator.nextInt(4));
+                    //                for (int j = 0; j < numberOfSensorperLane; j++) {
+//                    result[j] = randomGenerator.nextInt(4); // maximum 4 cars to detect on a zone of sensors
+//
+//                    Arrays.sort(result);
+//                    for (int count = 0; count < result.length / 2; ++count) {
+//                        aux = result[count];
+//                        result[count] = result[result.length - count - 1];
+//                        result[result.length - count - 1] = aux;
+//                    }
+//                }
+//                intersectionSensingDensity[i].setLaneDensity(j,result);
+                }
+            }
+//
+
+//                    intersectionSensingDensity[i].setLaneDensity(k, result);
+//
+//
+            }
+        }
+
+
 
     private void load_sky() {
         Spatial sky = SkyFactory.createSky(assetManager, "Textures/Sky/Bright/FullskiesBlueClear03.dds", false);
@@ -442,6 +505,10 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     }
 
     public void CarMoveAt(Vector3f targetLocation) {
+
+//
+//        Vector3f targetLocation = vehicle.getPhysicsLocation().add(-30f,0,0);
+
             vehicle.getPhysicsLocation(vector1);
             vector2.set(targetLocation);
             vector2.subtractLocal(vector1);
@@ -478,7 +545,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                     anglemult *= -1;
                     speedmult *=-1;
                 }
-                vehicle.steer(angle * anglemult*0.1f );
+                vehicle.steer(angle * anglemult );
                 vehicle.accelerate(-speed * speedmult);
                 vehicle.brake(0);
             }
@@ -560,6 +627,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     }
 
+    Vector3f destination = new Vector3f(-62.5f, -5.5f, -17.2f);
+
     @Override
     public void simpleUpdate(float tpf) {
 
@@ -620,13 +689,19 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
         }
 
-        Vector3f destination = valideLocations[2];
-        //CarGoTo(destination);
-        CarMoveAt(destination);
+
+//        //CarGoTo(destination);
+        if(counter%10000 == 0) {
+            CarMoveAt(destination);
+           // destination = null;
+
+        }
+        counter++;
 
         createEventLogEntry();
 
     }
+    int counter = 0;
 
     public void actOnTrafficLights(actingHandler act) { //throws InterruptedException {
         expiredCycleTime[act.getComponentID()] = false;
@@ -656,7 +731,6 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         boolean contains = false;
         for ( IntersectionItem intersectionItem: Intersections )
         {
-
             IntersectionSensing intersectionLaneValues;
             intersectionLaneValues = GetIntersectionState(intersectionItem);
             // to delete increment after creating GetIntersectionState method!!!
@@ -748,7 +822,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
                                             height("40px");
                                             buttonStepSize(1f);
                                             min(1);
-                                            max(5);
+                                            max(15);
                                         }});
 
 
@@ -1329,11 +1403,15 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         hudText.setColor(Green);           // the text
         hudText.setLocalTranslation(25, offset, 300); // position
         guiNode.attachChild(hudText);
+
+        setDisplayStatView(true);
+
+
     }
 
     public void setSun() {
 
-
+//
 //        for(int i=0;i<numberOfIntersections;i++) // GOOD TRAFFIC LIGHT INIT !!!
 //            for(int j=0;j<4;j++) {
 //
@@ -1356,12 +1434,12 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         sun_central_color.set(255 / 255f, 255 / 255f, 251 / 255f, 0.5f);
         PointLight sun_central = new PointLight();
         sun_central.setColor(sun_central_color);
-        sun_central.setRadius(100000f);
+        sun_central.setRadius(1000f);
         sun_central.setPosition(new Vector3f(0.0f, 400.0f, 0.0f));
 
         PointLight sun_up = new PointLight();
         sun_central.setColor(sun_central_color);
-        sun_central.setRadius(100000f);
+        sun_central.setRadius(1000f);
         sun_central.setPosition(new Vector3f(0.0f, 1000.0f, 0.0f));
 
         rootNode.addLight(sun_central);

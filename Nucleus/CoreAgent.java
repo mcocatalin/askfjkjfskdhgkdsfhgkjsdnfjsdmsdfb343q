@@ -132,8 +132,16 @@ public class CoreAgent extends Agent {
                     }
                 }
             }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             //block();
         }
+
+
     };
 
     Behaviour initBehaviour = new Behaviour() {
@@ -163,12 +171,21 @@ public class CoreAgent extends Agent {
             //AgentCreator ac = new AgentCreator();
 
             EventLogEntries.add("Core Agent initialized!");
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
 
         @Override
         public boolean done() {
             return true;
         }
+
+
     };
 
     Behaviour updateStates = new CyclicBehaviour() { // Send data to Nucleus to update setpoint
@@ -198,12 +215,18 @@ public class CoreAgent extends Agent {
                     }
                     myAgent.send(messageToSend);
 
-                    try {
-                        Thread.sleep(3000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(3000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                 }
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             //block();
         }
@@ -242,41 +265,41 @@ public class CoreAgent extends Agent {
 
 
                 // Start number of vehicles # to continue!
-                if(graphicEngine.numberOfCars >0) {
-                    for (int i = 0; i < graphicEngine.numberOfCars; i++) {
-                        // Sensing Agents
-                        //if(AMSService.)
-                        try {
-                            rma = home.createNewAgent("VehicleSensing" + i,
-                                    "Sensing.SensingAgent", new Object[0]);
-                            rma.start();
-                            //graphicEngine.EventLogEntries.add("Created " )
-                            // to print in console!!!
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
-                        }
-
-                        // Controlling Agents
-                        try {
-                            rma = home.createNewAgent("VehicleController" + i,
-                                    "Controlling.VehicleController", new Object[0]);
-                            rma.start();
-                            // to print in console!!!
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
-                        }
-
-                        // Acting Agents
-                        try {
-                            rma = home.createNewAgent("VehicleActing" + i,
-                                    "Acting.ActingAgent", new Object[0]);
-                            rma.start();
-                            // to print in console!!!
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+//                if(graphicEngine.numberOfCars >0) {
+//                    for (int i = 0; i < graphicEngine.numberOfCars; i++) {
+//                        // Sensing Agents
+//                        //if(AMSService.)
+//                        try {
+//                            rma = home.createNewAgent("VehicleSensing" + i,
+//                                    "Sensing.SensingAgent", new Object[0]);
+//                            rma.start();
+//                            //graphicEngine.EventLogEntries.add("Created " )
+//                            // to print in console!!!
+//                        } catch (StaleProxyException e) {
+//                            e.printStackTrace();
+//                        }
+//
+//                        // Controlling Agents
+//                        try {
+//                            rma = home.createNewAgent("VehicleController" + i,
+//                                    "Controlling.VehicleController", new Object[0]);
+//                            rma.start();
+//                            // to print in console!!!
+//                        } catch (StaleProxyException e) {
+//                            e.printStackTrace();
+//                        }
+//
+//                        // Acting Agents
+//                        try {
+//                            rma = home.createNewAgent("VehicleActing" + i,
+//                                    "Acting.ActingAgent", new Object[0]);
+//                            rma.start();
+//                            // to print in console!!!
+//                        } catch (StaleProxyException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }
 
                 if(graphicEngine.numberOfIntersections>0) {
 
@@ -329,6 +352,13 @@ public class CoreAgent extends Agent {
                 }
                 DoneCreatingAgents = true;
             }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
 //            else
 //                graphicEngine.createEventLogEntry("Initiated Global Nucleus!");
             //block();
@@ -387,6 +417,12 @@ public class CoreAgent extends Agent {
                 }
             }
 
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             //block();
         }
     };
@@ -413,15 +449,17 @@ public class CoreAgent extends Agent {
                         e.printStackTrace();
                     }
                     myAgent.send(messageToSend);
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+
                 }
                 requestedServiceController--;
             }
             //block();
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     };
 

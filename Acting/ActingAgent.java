@@ -49,7 +49,16 @@ public class ActingAgent extends Agent implements IActing {
                             } else
                                 graphicEngine.request.add(act);
                         }
+
+
+
                     }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 //                }
 //            }
 
@@ -85,6 +94,12 @@ CyclicBehaviour centralizedControl =  new CyclicBehaviour() {
                 else
                     graphicEngine.request.add(0,act);
             }
+        }
+
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 };

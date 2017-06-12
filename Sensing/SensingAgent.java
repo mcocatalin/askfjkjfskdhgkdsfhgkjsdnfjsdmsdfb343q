@@ -88,6 +88,13 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                 detectedWorld = true;
             }
             //block();
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
     };
 
@@ -133,8 +140,16 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                     }
                     //}
                 }
+
             }
             //block();
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
     };
 

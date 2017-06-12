@@ -94,13 +94,19 @@ public class IntersectionController extends Agent implements IController {
 
                     messageToSend.addReceiver(r);
                     try {
-                        Thread.sleep(50*(thisID+1));
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                     myAgent.send(messageToSend);
 
                 }
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             //block();
         }
@@ -147,6 +153,12 @@ public class IntersectionController extends Agent implements IController {
                     //Thread.sleep(50*(thisID+1));
                     myAgent.send(messageToSend);
 
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
 //                        } catch (InterruptedException e) {
 //
 //                        }
@@ -154,6 +166,12 @@ public class IntersectionController extends Agent implements IController {
                 }
             }
             //block();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
     };
 
@@ -176,19 +194,19 @@ public class IntersectionController extends Agent implements IController {
                             }
 
                             if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Nucleus
-                                try {
-                                    setPoint = (int) mesaj_receptionat.getContentObject();
-                                    if(intersectionSensing.getMaxDensity()[0] <= setPoint || intersectionSensing.getMaxDensity()[1] <= setPoint){
-                                        normalState = true;
-                                    }
-                                    else {
-                                        normalState = false;
-
-                                    }
-
-                                } catch (UnreadableException e) {
-                                    e.printStackTrace();
-                                }
+//                                try {
+////                                    setPoint = (int) mesaj_receptionat.getContentObject();
+////                                    if(intersectionSensing.getMaxDensity()[0] <= setPoint || intersectionSensing.getMaxDensity()[1] <= setPoint){
+////                                        normalState = true;
+////                                    }
+////                                    else {
+////                                        normalState = false;
+////
+////                                    }
+//
+//                                } catch (UnreadableException e) {
+//                                    e.printStackTrace();
+//                                }
                             }
 
 //                            if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
@@ -273,6 +291,12 @@ public class IntersectionController extends Agent implements IController {
 //                 }
 //            }
             //block();
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     };
 
@@ -328,14 +352,15 @@ public class IntersectionController extends Agent implements IController {
 
 
             messageToSend.addReceiver(r);
-            try {
-                Thread.sleep(50*(thisID+1));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             myAgent.send(messageToSend);
 
             //block();
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     };
 

@@ -88,6 +88,15 @@ public class Nucleus extends Agent {
                 }
                 myAgent.send(messageToSend);
                 detectedWorld = true;
+
+
+
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             //block();
         }
@@ -139,6 +148,13 @@ public class Nucleus extends Agent {
 //                    e.printStackTrace();
 //                }
             }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
 
         @Override
@@ -176,7 +192,15 @@ public class Nucleus extends Agent {
                     }
                     myAgent.send(messageToSend);
                 }
+
+
             }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             //block();
         }
     };
@@ -212,7 +236,19 @@ public class Nucleus extends Agent {
 
                     defectRequest=false; // sent Defect Request, waiting for answer
                 }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             //block();
         }
     };
@@ -280,6 +316,13 @@ public class Nucleus extends Agent {
 //                    }
                 }
 
+
+
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             //block();
         }
@@ -316,15 +359,27 @@ public class Nucleus extends Agent {
                     }
                 }
                 messageToSend.addReceiver(r);
+//                try {
+//                    Thread.sleep(3000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+                myAgent.send(messageToSend);
+
                 try {
-                    Thread.sleep(3000);
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                myAgent.send(messageToSend);
 
                 //System.out.println("Nucleul " + this.myAgent.getLocalName() + " a trimis  catre controller mesaj: " + messageToSend.getConversationId());
                 //}
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             //block();
         }
@@ -333,7 +388,7 @@ public class Nucleus extends Agent {
     @Override
     public void setup() {
 
-        addBehaviour(discoverAgents); // Debug use only
+        //addBehaviour(discoverAgents); // Debug use only
 
         addBehaviour(initBehaviour);
 
