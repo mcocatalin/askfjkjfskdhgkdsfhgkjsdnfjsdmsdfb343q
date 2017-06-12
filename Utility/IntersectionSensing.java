@@ -1,13 +1,13 @@
 package Utility;
 
-import GEngine.graphicEngine;
-
 import java.io.Serializable;
+
+import static GEngine.graphicEngine.numberOfSensorperLane;
 
 /**
  * Created by Catalin on 5/22/2017.
  */
-public class IntersectionSensing implements Serializable {
+public class IntersectionSensing implements Serializable { // Has information about intersection index lane -{ 0 - TO GO UP /// 1 - TO GO RIGHT /// 3 - TO GO DOWN /// 4 - TO GO LEFT } !!! And Sensor area number of cars.
 
     int laneDensity[][]; // Intersection lane density in clockwise direction starting with Upper
 
@@ -17,13 +17,40 @@ public class IntersectionSensing implements Serializable {
 
     public void setLaneDensityPerObj(int j, int k, int obj) {
         this.laneDensity[j][k] = obj;
+    }
 
-        //                    for (int count = 0; count < result.length / 2; ++count) {
-//                        aux = result[count];
-//                        result[count] = result[result.length - count - 1];
-//                        result[result.length - count - 1] = aux;
-//                    }
+    public void DecrementNumberofCars(int lane, int decrement){
+        for(int i=numberOfSensorperLane-1; i>= 0; i--){
+            //if(this.laneDensity[lane][i] ) // metoda de update din graphic engine!!!
+        }
+    }
 
+    public void initOrder(){
+        if(this != null){
+            int aux;
+
+            int numberOfCarsperSensorArea = this.laneDensity[0][0];
+
+            for(int i = 0; i < 4;i++){
+                for(int j=0;j < numberOfSensorperLane-1;j++){
+                    for(int k=j;k < numberOfSensorperLane;k++)
+                    if(laneDensity[i][j]<laneDensity[i][k]){
+                        aux = laneDensity[i][j];
+                        laneDensity[i][j] = laneDensity[i][k];
+                        laneDensity[i][k] = aux;
+
+//
+//
+//                        if(numberOfCarsperSensorArea <= maxCarsPerSensingArea)
+//                            result[j] = numberOfCarsperSensorArea;
+//                        else
+//                            result[j] =  maxCarsPerSensingArea;
+//                        numberOfCarsperSensorArea = numberOfCarsperSensorArea - result[j];
+
+                    }
+                }
+            }
+        }
     }
 
     public void setLaneDensity(int index, int[] density){
@@ -44,7 +71,7 @@ public class IntersectionSensing implements Serializable {
     }
 
     public IntersectionSensing(int[] upperDensity, int[] lowerDensity, int[] leftDensity, int[] rightDensity) {
-        laneDensity = new int[4][graphicEngine.numberOfSensorperLane];
+        laneDensity = new int[4][numberOfSensorperLane];
 
         laneDensity[0] = upperDensity;
         laneDensity[1] = rightDensity;
@@ -66,6 +93,6 @@ public class IntersectionSensing implements Serializable {
     }
 
     public IntersectionSensing() {
-        laneDensity = new int[4][graphicEngine.numberOfSensorperLane];
+        laneDensity = new int[4][numberOfSensorperLane];
     }
 }

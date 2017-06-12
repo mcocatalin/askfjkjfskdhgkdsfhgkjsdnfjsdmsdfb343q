@@ -59,21 +59,21 @@ public class CitySCAPE extends Agent{
                 messageToSend.setConversationId("WorldDetect");
 
                 try {
-                    AID defectedAID = new AID("CoreAgent" + "@" + platforma, AID.ISGUID);
                     messageToSend.setContentObject(graphicEngine.worldDetectors); // send AID of Defect Controller
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 messageToSend.addReceiver(r);
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
                 myAgent.send(messageToSend);
 
                 app.doneCreatingWorldNet = false;
 
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     };

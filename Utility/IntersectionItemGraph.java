@@ -6,18 +6,36 @@ package Utility;
 public class IntersectionItemGraph {
     int ComponentID;
 
+    IntersectionSensing intersectionSensing;
+
+    IntersectionActing intersectionActing;
+
     IntersectionItemGraph isLeftNeighbourNucleusID;
     IntersectionItemGraph isRightNeighbourNucleusID;
     IntersectionItemGraph isUpNeighbourNucleusID;
-    IntersectionItemGraph isDownNeighbouNucleusIDr;
+    IntersectionItemGraph isDownNeighbouNucleusID;
+
+
+    public IntersectionActing getIntersectionActing() {
+        return intersectionActing;
+    }
+
+    public void setIntersectionActing(IntersectionActing intersectionActing) {
+        this.intersectionActing = intersectionActing;
+    }
+
+
+    public IntersectionSensing getIntersectionSensing() {
+        return intersectionSensing;
+    }
+
+    public void setIntersectionSensing(IntersectionSensing intersectionSensing) {
+        this.intersectionSensing = intersectionSensing;
+    }
 
     public IntersectionItemGraph(int componentID) {
         ComponentID = componentID;
 
-//        isLeftNeighbourNucleusID = new IntersectionItemGraph(-1);
-//        isRightNeighbourNucleusID =  new IntersectionItemGraph(-1);
-//        isUpNeighbourNucleusID =  new IntersectionItemGraph(-1);
-//        isDownNeighbouNucleusIDr =  new IntersectionItemGraph(-1);
     }
 
     public IntersectionItemGraph(int componentID, IntersectionItemGraph isLeftNeighbour, IntersectionItemGraph isRightNeighbour, IntersectionItemGraph isUpNeighbour, IntersectionItemGraph isDownNeighbour) {
@@ -26,7 +44,7 @@ public class IntersectionItemGraph {
         this.isLeftNeighbourNucleusID = isLeftNeighbour;
         this.isRightNeighbourNucleusID = isRightNeighbour;
         this.isUpNeighbourNucleusID = isUpNeighbour;
-        this.isDownNeighbouNucleusIDr = isDownNeighbour;
+        this.isDownNeighbouNucleusID = isDownNeighbour;
     }
 
     public IntersectionItemGraph() {
@@ -36,7 +54,7 @@ public class IntersectionItemGraph {
         isLeftNeighbourNucleusID = new IntersectionItemGraph(-1);
         isRightNeighbourNucleusID = new IntersectionItemGraph(-1);
         isUpNeighbourNucleusID = new IntersectionItemGraph(-1);
-        isDownNeighbouNucleusIDr = new IntersectionItemGraph(-1);
+        isDownNeighbouNucleusID = new IntersectionItemGraph(-1);
     }
 
     public int getComponentID() {
@@ -72,10 +90,10 @@ public class IntersectionItemGraph {
     }
 
     public IntersectionItemGraph isDownNeighbour() {
-        return isDownNeighbouNucleusIDr;
+        return isDownNeighbouNucleusID;
     }
 
     public void setDownNeighbour(IntersectionItemGraph downNeighbour) {
-        isDownNeighbouNucleusIDr = downNeighbour;
+        isDownNeighbouNucleusID = downNeighbour;
     }
 }

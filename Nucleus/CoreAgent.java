@@ -38,13 +38,13 @@ public class CoreAgent extends Agent {
     private static int requestedServiceController;
     ContainerController home = null;
 
-    LinkedList<IntersectionItemGraph> LocationGraph;
+    public static LinkedList<IntersectionItemGraph> LocationGraph;
 
 
     LinkedList<WorldDetector> wd;
     int detectedWorldItems;
     boolean doneDetecting;
-    boolean doneProcessingNucleusesLocation;
+    public static boolean doneProcessingNucleusesLocation;
 
 
     //State of intersections density of vehicles !!!
