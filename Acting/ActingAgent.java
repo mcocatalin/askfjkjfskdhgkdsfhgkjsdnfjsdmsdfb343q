@@ -39,15 +39,38 @@ public class ActingAgent extends Agent implements IActing {
                                     if (equals)
                                         break;
                                 }
-                                if (!equals)
+                                if (!equals) {
 //                            try {
 //                                Thread.sleep(IntersectionController.cicleInterval);
-                                    graphicEngine.request.add(act);
+                                        graphicEngine.request.add(act);
+//                                        if (normalCycleTimer[thisID] || CoreAgent.LocationGraph.get(thisID).getIntersectionActing() == null) {
+//                                            CoreAgent.LocationGraph.get(thisID).setIntersectionActing(act.getObjToHandle());
+//                                            normalCycleTimer[thisID] = false;
+//                                        }
+                                }
 //                            } catch (InterruptedException e) {
 //                                e.printStackTrace();
 //                            }
-                            } else
+                            } else {
                                 graphicEngine.request.add(act);
+//
+//                                if (normalCycleTimer[thisID] || CoreAgent.LocationGraph.get(thisID).getIntersectionActing() == null) {
+//                                    CoreAgent.LocationGraph.get(thisID).setIntersectionActing(act.getObjToHandle());
+//                                    normalCycleTimer[thisID] = false;
+//                                }
+                            }
+
+//                            if(CoreAgent.LocationGraph.get(thisID).getIntersectionActing() != null) {
+//                                boolean equals = false;
+//
+//                                    equals = intersectionActing.Equals(CoreAgent.LocationGraph.get(thisID).getIntersectionActing());
+//
+//                                if(!equals){
+//                                    CoreAgent.LocationGraph.get(thisID).setIntersectionActing(intersectionActing);
+//                                }
+//                            }
+//                            else
+//                                CoreAgent.LocationGraph.get(thisID).setIntersectionActing(intersectionActing);
                         }
 
 
@@ -55,7 +78,7 @@ public class ActingAgent extends Agent implements IActing {
                     }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

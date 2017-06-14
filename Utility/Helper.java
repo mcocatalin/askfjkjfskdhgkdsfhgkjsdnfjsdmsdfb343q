@@ -1,19 +1,17 @@
 package Utility;
 
-import GEngine.graphicEngine;
 import com.jme3.math.Plane;
 import com.jme3.math.Vector3f;
 import jade.core.AID;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static GEngine.graphicEngine.numberOfIntersections;
 import static Nucleus.CoreAgent.availableNucleus;
 
 /**
@@ -30,6 +28,63 @@ public class Helper {
         put("RightPoint",3);
         put("LeftPoint",4);
     }};
+
+    public static boolean DoneDecrementDelay[] = new boolean[4];
+
+    public static long tStart;
+
+
+    public static void LogDebugUseData(int ID, long time, int UpLaneIntersectionValue, int RightIntersectionValue, int DownLaneIntersectionValue, int LeftLaneIntersectionValue, boolean state1, int state2){
+//
+//        try {
+//            if (!log.exists()) {
+//                System.out.println("We had to make a new file.");
+//                log.createNewFile();
+//            }
+//
+//            FileWriter fileWriter = new FileWriter(log, true);
+//
+//            try (BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
+
+                System.out.println( time + " " + "ID: " + ID + " Cycle interval: " +state1 + " " + " intersection state: " + state2 + " "+ UpLaneIntersectionValue + " " + RightIntersectionValue + " " + DownLaneIntersectionValue + " " + LeftLaneIntersectionValue);
+//                bufferedWriter.newLine();
+//
+//                //bufferedWriter.write("Eroare_temperatura = " + (referinta_temperatura - temperatura) + " eroare umiditate = " + (referinta_umiditate - umiditate) + "\n" + "Comenzi: racire = " + racire + "; incalzire = " + incalzire + "; umidificator = " + umidificator + "; ventilator = " + (ventilator + surplus_comanda_ventilator) + "\n\n");
+//                bufferedWriter.close();
+//            }
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+    }
+
+
+    public static void LogFileData(int ID, long time, int UpLaneIntersectionValue, int RightIntersectionValue, int DownLaneIntersectionValue, int LeftLaneIntersectionValue){
+        File log = new File("Controller" + ID + "LogFile" + ".txt");
+
+        try {
+            if (!log.exists()) {
+                System.out.println("We had to make a new file.");
+                log.createNewFile();
+            }
+
+            FileWriter fileWriter = new FileWriter(log, true);
+
+            try (BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
+
+                bufferedWriter.write( time + " " + UpLaneIntersectionValue + " " + RightIntersectionValue + " " + DownLaneIntersectionValue + " " + LeftLaneIntersectionValue);
+                bufferedWriter.newLine();
+
+                //bufferedWriter.write("Eroare_temperatura = " + (referinta_temperatura - temperatura) + " eroare umiditate = " + (referinta_umiditate - umiditate) + "\n" + "Comenzi: racire = " + racire + "; incalzire = " + incalzire + "; umidificator = " + umidificator + "; ventilator = " + (ventilator + surplus_comanda_ventilator) + "\n\n");
+                bufferedWriter.close();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     public static int checkGraphPosition(IntersectionItem intersectionItem1, IntersectionItem intersectionItem2){
         Plane plane = new Plane();
@@ -70,26 +125,43 @@ public class Helper {
         return -1;
     }
 
-    public static TimerTask tmtsk = new TimerTask() {
+    public static TimerTask tmtsk[] = new TimerTask[4];
+    public static TimerTask tmtskNormal[] = new TimerTask[numberOfIntersections];
 
+
+//    tmtsk[0] = new TimerTask();
+
+    public static TimerTask decrementTask[] = new TimerTask[4];
+
+    public static boolean go = false;
+
+    public static TimerTask globalSimulator = new TimerTask() {
         @Override
         public void run() {
-            //System.out.println("\nStarted cycle cronometer task");
-//            try {
-//                Thread.sleep(Controlling.IntersectionController.cicleInterval);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-
-            graphicEngine.expiredCycleTime[0] = true;
-            graphicEngine.expiredCycleTime[1] = true;
-            graphicEngine.expiredCycleTime[2] = true;
-            graphicEngine.expiredCycleTime[3] = true;
-            graphicEngine.expiredCycleTime[4] = true;
-
-           // System.out.println("\nEnded cycle cronometer task" );
+            go = true;
         }
     };
+
+//    decrementTask[0] = new TimerTask(){
+//
+//        @Override
+//        public void run() {
+//            //System.out.println("\nStarted cycle cronometer task");
+////            try {
+////                Thread.sleep(Controlling.IntersectionController.cicleInterval);
+////            } catch (InterruptedException e) {
+////                e.printStackTrace();
+////            }
+//
+//            DoneDecrementDelay[0] = true;
+//            DoneDecrementDelay[1] = true;
+//            DoneDecrementDelay[2] = true;
+//            DoneDecrementDelay[3] = true;
+//
+//            // System.out.println("\nEnded cycle cronometer task" );
+//        }
+//    };
+
 
     public static int getAvailableControllerAID(AID disabledControllerAID){
 

@@ -1,6 +1,5 @@
 package GEngine;
 
-import Controlling.IntersectionController;
 import Nucleus.CoreAgent;
 import Utility.*;
 import com.jme3.app.SimpleApplication;
@@ -36,6 +35,7 @@ import com.jme3.scene.Spatial;
 import com.jme3.shadow.SpotLightShadowFilter;
 import com.jme3.shadow.SpotLightShadowRenderer;
 import com.jme3.util.SkyFactory;
+import com.jogamp.common.util.InterruptSource;
 import de.lessvoid.nifty.Nifty;
 import de.lessvoid.nifty.builder.*;
 import de.lessvoid.nifty.controls.*;
@@ -50,6 +50,8 @@ import org.bushe.swing.event.EventTopicSubscriber;
 
 import java.util.*;
 
+import static Controlling.IntersectionController.cicleInterval;
+import static Utility.Helper.*;
 import static com.jme3.math.ColorRGBA.Green;
 import static com.jme3.math.ColorRGBA.Red;
 import static jade.tools.sniffer.Message.offset;
@@ -59,9 +61,18 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     // Intersection members
     public static int numberOfIntersections = 5;
-    public static int numberOfSensorperLane = 2;
-    public static int maxCarsPerSensingArea = 4;
+    public static int numberOfSensorperLane = 3;
+    public static int maxCarsPerSensingArea = 3;
     public static IntersectionActing[] intersectionActings= new IntersectionActing[numberOfIntersections];
+
+    //  TIMER TASK VARIABLES
+    public static int carWidth = 4;
+    public static int carSpeed = 13; // Km/h
+    public static int carDecrementDelay = 0;
+    public static boolean changedUISpeed = true;
+    Timer timerdelay[] = new Timer[numberOfIntersections];
+
+    Timer timerdelayNormal[] = new Timer[numberOfIntersections];
 
     // Graphic UI members
     public static boolean startApplication = false;
@@ -182,6 +193,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     // Cycle time for intersection states
     public static boolean expiredCycleTime[] = new boolean[numberOfIntersections];
+    public static boolean normalCycleTimer[] = new boolean[numberOfIntersections];
 
     public LinkedList<IntersectionItem> Intersections;
 
@@ -366,58 +378,136 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
         doneCreatingWorldNet = true;
 
     }
-boolean doneInitCreatingCarSimulation = false;
-    private void UpdateSimulationCars(){
-        if(CoreAgent.doneProcessingNucleusesLocation && !doneInitCreatingCarSimulation) { // World intersection net is not intialized in intersection sensing point of view.
 
-            IntersectionSensing intersectionSensing = new IntersectionSensing();
-            Random randomGenerator = new Random();
+    private void UpdateSimulationCars1() {
+        if(this.intersectionSensingDensity == null) {
+            intersectionSensingDensity = new IntersectionSensing[numberOfIntersections];
 
-            int  result;
-
-                for (int i = 0; i < numberOfIntersections; i++) {
-                    for (int j = 0; j < 4; j++) {
-
-                        int numberOfCarsperSensorArea = randomGenerator.nextInt(numberOfSensorperLane*maxCarsPerSensingArea);
-                        for (int k = 0; k < numberOfSensorperLane; k++) {
-
-                            if(numberOfCarsperSensorArea <= maxCarsPerSensingArea)
-                                result = numberOfCarsperSensorArea;
-                            else
-                                result =  maxCarsPerSensingArea;
-                            numberOfCarsperSensorArea = numberOfCarsperSensorArea - result;
-
-                            intersectionSensing.setLaneDensityPerObj(j, k, result);
-                        }
-                    }
-
-                    CoreAgent.LocationGraph.get(i).setIntersectionSensing(intersectionSensing);
-                }
-
-            doneInitCreatingCarSimulation = true;
         }
-        else // Update number of cars for the Core Global Net of intersections with their states.
-        {
-            if(doneInitCreatingCarSimulation){
-                for(int i= 0; i< CoreAgent.LocationGraph.size(); i++){
-                    boolean UpState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[0];
-                    boolean RightState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[1];
-                    boolean DownState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[2];
-                    boolean LeftState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[3];
-                    if(UpState){
-                        //CoreAgent.LocationGraph.get(i).getIntersectionSensing().DecrementNumberofCars
-                        //if(CoreAgent.LocationGraph.get(i).)
-
-                    }
-                }
-            }
-        }
-
-
     }
+
+boolean doneInitCreatingCarSimulation = false;
+
+    private void UpdateSimulationCars() {
+             // Update number of cars for the Core Global Net of intersections with their states.
+
+                if (doneInitCreatingCarSimulation) {
+
+                    int decrementNumberofCars;
+                    int remainingCars = 0;
+
+                    for (int i = 0; i < CoreAgent.LocationGraph.size(); i++) {
+                        if (CoreAgent.LocationGraph.get(i).getIntersectionActing() != null) {
+                            boolean UpState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[0];
+                            boolean RightState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[1];
+                            boolean DownState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[2];
+                            boolean LeftState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[3];
+
+
+                            //decrementNumberofCars = new Random().nextInt(maxCarsPerSensingArea * numberOfSensorperLane);//Math.abs(CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(i)));
+
+                            if (UpState ) {
+                                if(CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0) > 0) {
+
+                                    if (CoreAgent.LocationGraph.get(i).isUpNeighbour() != null) {
+                                        if (!CoreAgent.LocationGraph.get(i).isUpNeighbour().getIntersectionSensing().IntersectionLaneDensityISFULL(2)) { // check if neighbour lane is full
+
+                                            CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(0, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0) - 1); // fill up neighbour with cars on up lane
+
+                                            CoreAgent.LocationGraph.get(i).isUpNeighbour().getIntersectionSensing().setLaneDensity(0, CoreAgent.LocationGraph.get(i).isUpNeighbour().getIntersectionSensing().getDensity(0) - 1); // fill up neighbour with cars on up lane
+                                        }
+                                    } else
+                                        CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(0, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0) - 1); // fill up neighbour with cars on up lane
+                                }
+                                Helper.LogDebugUseData(i, (System.currentTimeMillis() - tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3),  expiredCycleTime[1], 0);
+                                Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+                            }
+
+                            if (RightState) {
+                                if(CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1) > 0) {
+
+                                    if (CoreAgent.LocationGraph.get(i).isRightNeighbour() != null) {
+                                        if (!CoreAgent.LocationGraph.get(i).isRightNeighbour().getIntersectionSensing().IntersectionLaneDensityISFULL(2)) {
+
+                                            CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(1, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1) - 1); // fill up neighbour with cars on up lane
+
+                                            CoreAgent.LocationGraph.get(i).isRightNeighbour().getIntersectionSensing().setLaneDensity(1, CoreAgent.LocationGraph.get(i).isRightNeighbour().getIntersectionSensing().getDensity(1) - 1); // fill up neighbour with cars on up lane
+                                        }
+                                    } else
+                                        CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(1, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1) - 1); // fill up neighbour with cars on up lane
+                                }
+                                Helper.LogDebugUseData(i, (System.currentTimeMillis() - tStart)/1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3),  expiredCycleTime[1], 1);
+                                Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+
+                            }
+
+                            if (DownState) {
+                                if(CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2) > 0) {
+
+                                    if (CoreAgent.LocationGraph.get(i).isDownNeighbour() != null) { // CHECK NEGATIVE DENSITY!!!
+                                        {
+                                            if (!CoreAgent.LocationGraph.get(i).isDownNeighbour().getIntersectionSensing().IntersectionLaneDensityISFULL(2)) {
+
+                                                CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(2, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2) - 1); // fill up neighbour with cars on up lane
+
+                                                CoreAgent.LocationGraph.get(i).isDownNeighbour().getIntersectionSensing().setLaneDensity(2, CoreAgent.LocationGraph.get(i).isDownNeighbour().getIntersectionSensing().getDensity(2) - 1); // fill up neighbour with cars on up lane
+                                            }
+                                        }
+                                    } else {
+                                        CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(2, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2) - 1); // fill up neighbour with cars on up lane
+                                    }
+                                }
+
+                                Helper.LogDebugUseData(i, (System.currentTimeMillis() - tStart)/1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3),  expiredCycleTime[1], 2);
+                                Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+                            }
+
+                            if (LeftState) {
+                                if(CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3) > 0) {
+
+                                    if (CoreAgent.LocationGraph.get(i).isLeftNeighbour() != null) {
+                                        if (!CoreAgent.LocationGraph.get(i).isLeftNeighbour().getIntersectionSensing().IntersectionLaneDensityISFULL(3)) {
+
+                                            CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(3, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3) - 1); // fill up neighbour with cars on up lane
+
+                                            CoreAgent.LocationGraph.get(i).isLeftNeighbour().getIntersectionSensing().setLaneDensity(3, CoreAgent.LocationGraph.get(i).isLeftNeighbour().getIntersectionSensing().getDensity(3) + 1); // fill up neighbour with cars on up lane
+                                        }
+                                    } else {
+                                        CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(3, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3) - 1); // fill up neighbour with cars on up lane
+                                    }
+                                }
+                                Helper.LogDebugUseData(i, (System.currentTimeMillis() - tStart)/1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3),  expiredCycleTime[1], 3);
+                                Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+                            }
+
+                        }
+
+//                        Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+
+
+                    }
+
+                    expiredCycleTime[1] = false;
+                }
+        Helper.go = false;
+    }
+
+
+
+
 
     @Override
     public void simpleInitApp() {
+
+        for(int i=0; i<4; i++) {
+            timerdelay[i] = new Timer();
+        }
+
+        for(int i=0; i<numberOfIntersections; i++){
+
+            timerdelayNormal[i] = new Timer();
+        }
+
 
         intersectionSensingDensity = new IntersectionSensing[numberOfIntersections];
 
@@ -446,11 +536,97 @@ boolean doneInitCreatingCarSimulation = false;
         setUpKeys();
 
         // INIT COUNTER!!!
-        Timer tm = new Timer();
-        tm.scheduleAtFixedRate(Helper.tmtsk, 0, IntersectionController.cicleInterval);
+        Timer tm[] = new Timer[4];
+        for(int i=0; i<4;i++) {
+            tm[i] = new Timer();
+        }
+
+        tmtsk[0] = new TimerTask() {
+            @Override
+            public void run() {
+                expiredCycleTime[0] = true;
+            }
+        };
+
+        tmtsk[1] = new TimerTask() {
+            @Override
+            public void run() {
+                expiredCycleTime[1] = true;
+            }
+        };
+
+        tmtsk[2] = new TimerTask() {
+            @Override
+            public void run() {
+                expiredCycleTime[2] = true;
+            }
+        };
+
+        tmtsk[3]= new TimerTask() {
+            @Override
+            public void run() {
+                expiredCycleTime[3] = true;
+            }
+        };
+
+
+        // INIT COUNTER!!!
+        Timer normalCycle[] = new Timer[numberOfIntersections];
+        for(int i=0; i<numberOfIntersections;i++) {
+            normalCycle[i] = new Timer();
+        }
+
+        tmtskNormal[0] = new TimerTask() {
+            @Override
+            public void run() {
+                normalCycleTimer[0] = true;
+            }
+        };
+
+        tmtskNormal[1] = new TimerTask() {
+            @Override
+            public void run() {
+                normalCycleTimer[1] = true;
+            }
+        };
+
+        tmtskNormal[2] = new TimerTask() {
+            @Override
+            public void run() {
+                normalCycleTimer[2] = true;
+            }
+        };
+
+        tmtskNormal[3]= new TimerTask() {
+            @Override
+            public void run() {
+                normalCycleTimer[3] = true;
+            }
+        };
+
+        tmtskNormal[4]= new TimerTask() {
+            @Override
+            public void run() {
+                normalCycleTimer[4] = true;
+            }
+        };
+//
+//        for(int i=0; i<4;i++) {
+//            tm[i].schedule(Helper.tmtsk[i], 0, cicleInterval);
+//        }
+
+
+
+
+
+        // INIT COUNTER!!!
+        Timer tm1 = new Timer();
+        tm1.schedule(Helper.globalSimulator, 0, cicleInterval); // decrementing delay for one care per lane
 
         // DEBUG
         //response.add(new sensingHandler("Intersection", index, intersectionLaneValues));
+
+        Helper.tStart = System.currentTimeMillis();
 
 
     }
@@ -595,6 +771,25 @@ boolean doneInitCreatingCarSimulation = false;
     @Override
     public void simpleUpdate(float tpf) {
 
+        if(changedUISpeed){
+
+            int cycleTimeforLaneDecreasing;
+            cycleTimeforLaneDecreasing = 1000 * ((3600 * carWidth ) / (carSpeed * 1000)); // ms for car to run for it's width size
+            for(int i=0; i<4;i++) {
+                timerdelay[i].scheduleAtFixedRate(Helper.tmtsk[i], 0, cycleTimeforLaneDecreasing);
+            }
+
+            for(int i=0; i<numberOfIntersections; i++){
+                timerdelayNormal[i].schedule(tmtskNormal[i], cycleTimeforLaneDecreasing, cicleInterval);
+            }
+
+            changedUISpeed = false;
+        }
+
+        InitCreateIntersectionSensing();
+
+
+
         hudText.setText("GPS: " + (int) cam.getLocation().getX() + "x" + " " + (int) cam.getLocation().getY() + "y" + " " + (int) cam.getLocation().getZ() + "z");
 //
         if (!camera) {
@@ -621,54 +816,109 @@ boolean doneInitCreatingCarSimulation = false;
             {
                 flyCam.setDragToRotate(false);
             }
-//
+
 //            player.setWalkDirection(walkDirection); !!!!!!!
 //            cam.setLocation(new Vector3f(player.getPhysicsLocation().getX(), player.getPhysicsLocation().getY() - 4, player.getPhysicsLocation().getZ()));
         }
 
         ///!!! Sensing on the Graphic Engine !!!
         UpdateIntersectionState();
-        UpdateSimulationCars();
+
+
 
         ///!!! Acting on the Graphic Engine !!!
         if (!request.isEmpty()) {
-//            actingHandler x = request.get(0); // Vehicle Agent!!!
-//            if (x.getType() == "vehicleMovement") {
-//                vehicle.accelerate(40);
-//            }
 
-//            try {
-//                //Thread.sleep(500);
+            if(normalCycleTimer[0]){
+                for(int i = 0; i<numberOfIntersections; i++){
+                    outerloop:
+                    for(int j=0; j< request.size(); j++){
+                        if (CoreAgent.LocationGraph.get(i).getComponentID() == request.get(j).getComponentID()) {
+                            if(CoreAgent.LocationGraph.get(i).getIntersectionActing() != null) {
+
+                                if (!CoreAgent.LocationGraph.get(i).getIntersectionActing().Equals(request.get(j).getObjToHandle())) {
+                                    CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
+                                    request.remove(j);
+                                    System.out.println("Found another state for intersection ID = " + i + "dimensiune request: " + request.size());
+                                    break outerloop;
+                                }
+                                else
+                                {
+                                    System.out.println("Same state for intersection ID = " + i + "dimensiune request: " + request.size());
+                                }
+
+                            }
+                            else
+                            {
+                                CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
+                                request.remove(j);
+                                break outerloop;
+                            }
+                        }
 
 
-    // !!! INTERSECTION ACTING
-                actingHandler act = request.get(0);
-                if(expiredCycleTime[act.getComponentID()])
-                {
-                    actOnTrafficLights(act);
-                    request.remove(0);
+                    }
                 }
 
+                normalCycleTimer[0] = false;
+
+            }
         }
 
 
-//        //CarGoTo(destination);
-        if(counter%10000 == 0) {
-            CarMoveAt(destination);
-           // destination = null;
+        if(expiredCycleTime[1])
+            UpdateSimulationCars();
 
-        }
-        counter++;
 
         createEventLogEntry();
 
 
+        try {
+            InterruptSource.Thread.sleep(20);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
+
+    public void InitCreateIntersectionSensing(){
+        if (CoreAgent.doneProcessingNucleusesLocation && !doneInitCreatingCarSimulation) { // World intersection net is not intialized in intersection sensing point of view.
+
+            IntersectionSensing intersectionSensing;
+            Random randomGenerator = new Random();
+
+            int result;
+
+            for (int i = 0; i < numberOfIntersections; i++) {
+                intersectionSensing = new IntersectionSensing();
+                for (int j = 0; j < 4; j++) {
+
+                    int numberOfCarsperSensorArea = randomGenerator.nextInt(numberOfSensorperLane * maxCarsPerSensingArea);
+                    for (int k = 0; k < numberOfSensorperLane; k++) {
+
+                        if (numberOfCarsperSensorArea <= maxCarsPerSensingArea)
+                            result = numberOfCarsperSensorArea;
+                        else
+                            result = maxCarsPerSensingArea;
+                        numberOfCarsperSensorArea = numberOfCarsperSensorArea - result;
+
+                        intersectionSensing.setLaneDensityPerObj(j, k, result);
+                    }
+                }
+
+                CoreAgent.LocationGraph.get(i).setIntersectionSensing(intersectionSensing);
+                Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+            }
+
+            doneInitCreatingCarSimulation = true;
+        }
+    }
+
     int counter = 0;
 
     public void actOnTrafficLights(actingHandler act) { //throws InterruptedException {
-        expiredCycleTime[act.getComponentID()] = false;
-        System.out.println("\nStarted normal cycle for intersection " + act.getComponentID() );
+        //Helper.go = false;
+        //System.out.println("\nStarted normal cycle for intersection " + act.getComponentID() );
 
         CoreAgent.LocationGraph.get(act.getComponentID()).setIntersectionActing(act.getObjToHandle());
 
@@ -693,35 +943,44 @@ boolean doneInitCreatingCarSimulation = false;
     }
 
     private void UpdateIntersectionState(){
-        int index = 0;
-        boolean contains = false;
-        for ( IntersectionItem intersectionItem: Intersections )
-        {
-            IntersectionSensing intersectionLaneValues;
-            intersectionLaneValues = GetIntersectionState(intersectionItem);
-            // to delete increment after creating GetIntersectionState method!!!
-            indexIntesection ++;
+        sensingHandler currentResponse;
 
-            sensingHandler currentResponse = new sensingHandler("Intersection", index++, intersectionLaneValues);
-//            if(response.size()>0) {  // !!! To check if time per frame is very low, then the agent behaviour time-outs!
-//
-////               if(response.contains(currentResponse))
-////                   //response.add(currentResponse);
-////                   break;
-////               else
-////                   response.add(currentResponse);
-//           // synchronized (response) {
-//                for (int i = 0; i < response.size(); i++) {
-//                    if (response.get(i).equals(currentResponse))
-//                        contains = true;
-//                }
-//                if (!contains)
-//                    response.add(currentResponse);
-//           // }
-//            }
-//            else
-                response.add(currentResponse);
+        for(int i=0; i<numberOfIntersections; i++) {
+            if(CoreAgent.LocationGraph.size()>0) {
+                if (CoreAgent.LocationGraph.get(i).getIntersectionSensing() != null) {
+                    currentResponse = new sensingHandler("Intersection", i, CoreAgent.LocationGraph.get(i).getIntersectionSensing());
+                    response.add(currentResponse);
+                }
+            }
         }
+
+//        for ( IntersectionItem intersectionItem: Intersections )
+//        {
+//            IntersectionSensing intersectionLaneValues;
+//            intersectionLaneValues = GetIntersectionState(intersectionItem);
+//            // to delete increment after creating GetIntersectionState method!!!
+//            indexIntesection ++;
+//
+
+////            if(response.size()>0) {  // !!! To check if time per frame is very low, then the agent behaviour time-outs!
+////
+//////               if(response.contains(currentResponse))
+//////                   //response.add(currentResponse);
+//////                   break;
+//////               else
+//////                   response.add(currentResponse);
+////           // synchronized (response) {
+////                for (int i = 0; i < response.size(); i++) {
+////                    if (response.get(i).equals(currentResponse))
+////                        contains = true;
+////                }
+////                if (!contains)
+////                    response.add(currentResponse);
+////           // }
+////            }
+////            else
+//                response.add(currentResponse);
+//        }
     }
 
     private void load_interfata() {
@@ -1668,6 +1927,15 @@ boolean doneInitCreatingCarSimulation = false;
             }
         }
         return null;
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+
+        long currentTimeElapse = (System.currentTimeMillis() - Helper.tStart) / 1000;
+
+        System.out.println( "Running simulation time is: " + currentTimeElapse + " s");
     }
 }
 

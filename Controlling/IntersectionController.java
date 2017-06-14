@@ -38,7 +38,7 @@ public class IntersectionController extends Agent implements IController {
     boolean RightLeft;
 
     // Graphic Engine variables
-    public static int cicleInterval = 3000; // to be set from UI
+    public static int cicleInterval = 8000; // to be set from UI
 
     private long wakeupTime;
 
@@ -108,14 +108,13 @@ public class IntersectionController extends Agent implements IController {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //block();
         }
     };
 
     CyclicBehaviour normalCycle = new CyclicBehaviour() {
         @Override
         public void action() {
-            if(detectedWorld) {
+            if (detectedWorld) {
 
                 if (normalState) {
                     int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
@@ -126,16 +125,11 @@ public class IntersectionController extends Agent implements IController {
                     ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                     AID r;
                     if (serviceControllerAID != null) {
-                        // r = serviceControllerAID;
                         int controllerID = Integer.parseInt(serviceControllerAID.getLocalName().substring(serviceControllerAID.getLocalName().length() - 1));
                         r = new AID("IntersectionActing" + controllerID + "@" + platforma, AID.ISGUID);
-                    }
-                    else
+                    } else
                         r = new AID("IntersectionActing" + thisID + "@" + platforma, AID.ISGUID);
                     r.addAddresses(adresa);
-                    //if (intersectionActing != null) {
-//                        try {
-//                            Thread.sleep(cicleInterval);
 
                     if (ActiveIntersectionControllers[thisID] || serviceControllerAID != null) {
                         messageToSend.setConversationId("ActingNormalCycle");
@@ -150,39 +144,26 @@ public class IntersectionController extends Agent implements IController {
                     } // to add any condition?
 
                     messageToSend.addReceiver(r);
-                    //Thread.sleep(50*(thisID+1));
                     myAgent.send(messageToSend);
 
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-//                        } catch (InterruptedException e) {
-//
-//                        }
-                    // }
                 }
             }
-            //block();
+
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
         }
     };
 
     CyclicBehaviour receiver = new CyclicBehaviour() { // Disabled intersection
         @Override
         public void action() { // Receive world feedback
-            if(myAgent.getCurQueueSize()>0) {
+            if (myAgent.getCurQueueSize() > 0) {
                 for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
                     ACLMessage mesaj_receptionat = myAgent.receive();
-                    if (mesaj_receptionat != null)
-                    {
+                    if (mesaj_receptionat != null) {
                         myAgent.getCurQueueSize();
                         if (detectedWorld) {
                             if (mesaj_receptionat.getConversationId() == "Sensing") { // Data from Sensors
@@ -234,64 +215,9 @@ public class IntersectionController extends Agent implements IController {
                                 e.printStackTrace();
                             }
                         }
-
-                        //System.out.println("Controllerul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
                     }
-//                    else {
-//                        block();
-//                        break;
-//                    }
                 }
             }
-//            ACLMessage mesaj_receptionat = myAgent.receive();
-//            if (mesaj_receptionat != null)
-//             {
-//                 myAgent.getCurQueueSize();
-//                 if (detectedWorld) {
-//                    if (mesaj_receptionat.getConversationId() == "Sensing") { // Data from Sensors
-//                        try {
-//                            intersectionSensing = (IntersectionSensing) mesaj_receptionat.getContentObject();
-//                        } catch (UnreadableException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//
-//                     if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Sensors
-//                         try {
-//                             setPoint = (int) mesaj_receptionat.getContentObject();
-//                         } catch (UnreadableException e) {
-//                             e.printStackTrace();
-//                         }
-//                     }
-//
-//                    if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
-//                        try {
-//                            normalState = (boolean) mesaj_receptionat.getContentObject();
-//                        } catch (UnreadableException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//
-//                    if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
-//                        try {
-//                            serviceControllerAID = (AID) mesaj_receptionat.getContentObject();
-//                        } catch (UnreadableException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//
-//                }
-//                     if (mesaj_receptionat.getConversationId() == "WorldDetector") { // Data from Nucleus
-//                     try {
-//                         wd = (WorldDetector) mesaj_receptionat.getContentObject();
-//                         EventLogEntries.add(this.myAgent.getLocalName() + " a primit worldDetect");
-//                     } catch (UnreadableException e) {
-//                         e.printStackTrace();
-//                     }
-//                 }
-//            }
-            //block();
-
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
