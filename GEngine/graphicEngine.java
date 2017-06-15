@@ -545,6 +545,11 @@ boolean doneInitCreatingCarSimulation = false;
             @Override
             public void run() {
                 expiredCycleTime[0] = true;
+//                if(changedUISpeed){
+//                    this.cancel();
+////                    this = new TimerTask();
+//
+//                }
             }
         };
 
@@ -776,10 +781,15 @@ boolean doneInitCreatingCarSimulation = false;
             int cycleTimeforLaneDecreasing;
             cycleTimeforLaneDecreasing = 1000 * ((3600 * carWidth ) / (carSpeed * 1000)); // ms for car to run for it's width size
             for(int i=0; i<4;i++) {
+//                timerdelay[i].cancel();
+//                timerdelay[i].purge();
+//                timerdelay[i] = new Timer();
                 timerdelay[i].scheduleAtFixedRate(Helper.tmtsk[i], 0, cycleTimeforLaneDecreasing);
             }
-
             for(int i=0; i<numberOfIntersections; i++){
+//                timerdelayNormal[i].cancel();
+//                timerdelayNormal[i].purge();
+//                timerdelayNormal[i] = new Timer();
                 timerdelayNormal[i].schedule(tmtskNormal[i], cycleTimeforLaneDecreasing, cicleInterval);
             }
 
@@ -1015,7 +1025,7 @@ boolean doneInitCreatingCarSimulation = false;
                                 //childLayoutAbsoluteInside();
                                 width("300px");
                                 style("nifty-panel-no-shadow");
-                                height("450px");
+                                height("500px");
                                 valignBottom();
                                 alignRight();
                                 control(new ButtonBuilder("GoOnline", "Start") {{
@@ -1030,7 +1040,7 @@ boolean doneInitCreatingCarSimulation = false;
                                         childLayoutVertical();
                                         alignCenter();
                                         width("90%");
-                                        height("40%");
+                                        height("50%");
 
                                         control(new ButtonBuilder("referintaLabel", "Referinta Nucleu Global:") {{
                                             alignCenter();
@@ -1051,7 +1061,7 @@ boolean doneInitCreatingCarSimulation = false;
                                         }});
 
 
-                                        control(new ButtonBuilder("nrMasiniLabel", "Numar total de masini:") {{
+                                        control(new ButtonBuilder("carAverageSpeed", "Viteza medie de circulatie:") {{
                                             alignCenter();
                                             height("30px");
                                             width("100%");
@@ -1059,14 +1069,34 @@ boolean doneInitCreatingCarSimulation = false;
                                             this.focusable(false);
                                         }});
 
-                                        control(new SliderBuilder("nrMasiniValue", false) {{
+                                        control(new SliderBuilder("carAverageSpeedValue", false) {{
                                             alignCenter();
                                             this.focusable(false);
                                             width("90%");
                                             height("40px");
                                             buttonStepSize(1f);
-                                            min(0);
-                                            max(30);
+                                            min(5);
+                                            max(50);
+                                            this.initial(13);
+                                        }});
+
+                                        control(new ButtonBuilder("trafficLightInterval", "Interval semafor:") {{
+                                            alignCenter();
+                                            height("30px");
+                                            width("100%");
+                                            this.onActiveEffect(new EffectBuilder("nimic"));
+                                            this.focusable(false);
+                                        }});
+
+                                        control(new SliderBuilder("trafficLightIntervalValue", false) {{
+                                            alignCenter();
+                                            this.focusable(false);
+                                            width("90%");
+                                            height("40px");
+                                            buttonStepSize(1f);
+                                            min(4);
+                                            max(20);
+                                            this.initial(8);
                                         }});
                                     }
                                 });
@@ -1077,9 +1107,10 @@ boolean doneInitCreatingCarSimulation = false;
                                         valignTop();
                                         alignCenter();
                                         width("90%");
-                                        height("200px");
+                                        height("50%");
                                         control(new ButtonBuilder("pertext", "Stari controllere semafor") {{
                                             alignCenter();
+                                            valignTop();
                                             height("40");
                                             width("100%");
                                             this.onActiveEffect(new EffectBuilder("nimic"));
@@ -1097,7 +1128,7 @@ boolean doneInitCreatingCarSimulation = false;
 
                                                     control(new CheckboxBuilder("activeIntersectionControllerUP") {{
                                                     alignCenter();
-                                                    valignCenter();
+                                                    valignTop();
                                                     this.focusable(false);
                                                     this.checked(true);
                                                     width("40px");
@@ -1379,9 +1410,9 @@ boolean doneInitCreatingCarSimulation = false;
         }}.build(nifty));
 
         nifty.subscribe(nifty.getCurrentScreen(), "GoOnline", ButtonClickedEvent.class, eventHandler1);
-        nifty.subscribe(nifty.getCurrentScreen(), "nrMasiniValue", SliderChangedEvent.class, eventHandler2);
-        nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor1Value", CheckBoxStateChangedEvent.class, eventHandler3);
-        nifty.subscribe(nifty.getCurrentScreen(), "disableSemafor2Value", CheckBoxStateChangedEvent.class, eventHandler4);
+        nifty.subscribe(nifty.getCurrentScreen(), "carAverageSpeedValue", SliderChangedEvent.class, eventHandler2);
+        nifty.subscribe(nifty.getCurrentScreen(), "trafficLightIntervalValue", SliderChangedEvent.class, eventHandler3);
+
 
         nifty.subscribe(nifty.getCurrentScreen(), "addRecklessCarValue", SliderChangedEvent.class, eventHandler5);
         nifty.subscribe(nifty.getCurrentScreen(), "referintaValue", SliderChangedEvent.class, eventHandler6);
@@ -1568,16 +1599,21 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<SliderChangedEvent> eventHandler2 = new EventTopicSubscriber<SliderChangedEvent>() {
         @Override
         public void onEvent(final String topic, final SliderChangedEvent event) {
-            numberOfCars = (int) nifty.getCurrentScreen().findNiftyControl("nrMasiniValue", Slider.class).getValue();
-            String value = String.valueOf(numberOfCars);
-            nifty.getCurrentScreen().findNiftyControl("nrMasiniLabel", Button.class).setText("Numar total de masini: " + value);
+            carSpeed = (int) nifty.getCurrentScreen().findNiftyControl("carAverageSpeedValue", Slider.class).getValue();
+            String value = String.valueOf(carSpeed);
+            changedUISpeed = true;
+            nifty.getCurrentScreen().findNiftyControl("carAverageSpeed", Button.class).setText("Viteza medie de circulatie: " + value);
         }
     };
 
-    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler3 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
+    EventTopicSubscriber<SliderChangedEvent> eventHandler3 = new EventTopicSubscriber<SliderChangedEvent>() {
         @Override
-        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //disableTrafficSystemIndex[0] = true;
+        public void onEvent(final String topic, final SliderChangedEvent event) {
+            cicleInterval = (int) nifty.getCurrentScreen().findNiftyControl("trafficLightIntervalValue", Slider.class).getValue();
+            String value = String.valueOf(cicleInterval);
+            cicleInterval = cicleInterval * 1000;
+            changedUISpeed = true; // ok for timer
+            nifty.getCurrentScreen().findNiftyControl("trafficLightInterval", Button.class).setText("Interval semafor: " + value);
         }
     };
 
