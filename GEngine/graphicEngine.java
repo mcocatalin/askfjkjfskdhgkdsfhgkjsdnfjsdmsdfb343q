@@ -69,7 +69,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public static int carWidth = 4;
     public static int carSpeed = 13; // Km/h
     public static int carDecrementDelay = 0;
-    public static boolean changedUISpeed = true;
+    public static boolean changedUISpeed = false;
     Timer timerdelay[] = new Timer[numberOfIntersections];
 
     Timer timerdelayNormal[] = new Timer[numberOfIntersections];
@@ -776,20 +776,20 @@ boolean doneInitCreatingCarSimulation = false;
     @Override
     public void simpleUpdate(float tpf) {
 
+        try {
+            InterruptSource.Thread.sleep(30);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         if(changedUISpeed){
 
             int cycleTimeforLaneDecreasing;
-            cycleTimeforLaneDecreasing = 1000 * ((3600 * carWidth ) / (carSpeed * 1000)); // ms for car to run for it's width size
+            cycleTimeforLaneDecreasing = 3600 * carWidth  / carSpeed; // ms for car to run for it's width size
             for(int i=0; i<4;i++) {
-//                timerdelay[i].cancel();
-//                timerdelay[i].purge();
-//                timerdelay[i] = new Timer();
                 timerdelay[i].scheduleAtFixedRate(Helper.tmtsk[i], 0, cycleTimeforLaneDecreasing);
             }
             for(int i=0; i<numberOfIntersections; i++){
-//                timerdelayNormal[i].cancel();
-//                timerdelayNormal[i].purge();
-//                timerdelayNormal[i] = new Timer();
                 timerdelayNormal[i].schedule(tmtskNormal[i], cycleTimeforLaneDecreasing, cicleInterval);
             }
 
@@ -839,7 +839,7 @@ boolean doneInitCreatingCarSimulation = false;
         ///!!! Acting on the Graphic Engine !!!
         if (!request.isEmpty()) {
 
-            if(normalCycleTimer[0]){
+            if(normalCycleTimer[0] && request.size()>=2*numberOfIntersections){
                 for(int i = 0; i<numberOfIntersections; i++){
                     outerloop:
                     for(int j=0; j< request.size(); j++){
@@ -848,6 +848,7 @@ boolean doneInitCreatingCarSimulation = false;
 
                                 if (!CoreAgent.LocationGraph.get(i).getIntersectionActing().Equals(request.get(j).getObjToHandle())) {
                                     CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
+                                    actOnTrafficLights(request.get(j));
                                     request.remove(j);
                                     System.out.println("Found another state for intersection ID = " + i + "dimensiune request: " + request.size());
                                     break outerloop;
@@ -861,6 +862,7 @@ boolean doneInitCreatingCarSimulation = false;
                             else
                             {
                                 CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
+                                actOnTrafficLights(request.get(j));
                                 request.remove(j);
                                 break outerloop;
                             }
@@ -883,11 +885,6 @@ boolean doneInitCreatingCarSimulation = false;
         createEventLogEntry();
 
 
-        try {
-            InterruptSource.Thread.sleep(20);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
     }
 
@@ -924,13 +921,8 @@ boolean doneInitCreatingCarSimulation = false;
         }
     }
 
-    int counter = 0;
-
-    public void actOnTrafficLights(actingHandler act) { //throws InterruptedException {
-        //Helper.go = false;
+    public void actOnTrafficLights(actingHandler act) {
         //System.out.println("\nStarted normal cycle for intersection " + act.getComponentID() );
-
-        CoreAgent.LocationGraph.get(act.getComponentID()).setIntersectionActing(act.getObjToHandle());
 
         if(act.waitCycle == true){
             if(act.getObjToHandle().getIntersectionState()[0] && act.getObjToHandle().getIntersectionState()[2]){
@@ -940,7 +932,6 @@ boolean doneInitCreatingCarSimulation = false;
             if(act.getObjToHandle().getIntersectionState()[1] && act.getObjToHandle().getIntersectionState()[3]){
                 // Intersection Item position are ok, clockwise starting from UP, where UP means from main perspective the lane to go UP, results the intersection item from the bottom!!!
             }
-            //Thread.sleep(IntersectionController.cicleInterval);
 
         }
     }
@@ -963,34 +954,6 @@ boolean doneInitCreatingCarSimulation = false;
                 }
             }
         }
-
-//        for ( IntersectionItem intersectionItem: Intersections )
-//        {
-//            IntersectionSensing intersectionLaneValues;
-//            intersectionLaneValues = GetIntersectionState(intersectionItem);
-//            // to delete increment after creating GetIntersectionState method!!!
-//            indexIntesection ++;
-//
-
-////            if(response.size()>0) {  // !!! To check if time per frame is very low, then the agent behaviour time-outs!
-////
-//////               if(response.contains(currentResponse))
-//////                   //response.add(currentResponse);
-//////                   break;
-//////               else
-//////                   response.add(currentResponse);
-////           // synchronized (response) {
-////                for (int i = 0; i < response.size(); i++) {
-////                    if (response.get(i).equals(currentResponse))
-////                        contains = true;
-////                }
-////                if (!contains)
-////                    response.add(currentResponse);
-////           // }
-////            }
-////            else
-//                response.add(currentResponse);
-//        }
     }
 
     private void load_interfata() {
@@ -1025,10 +988,18 @@ boolean doneInitCreatingCarSimulation = false;
                                 //childLayoutAbsoluteInside();
                                 width("300px");
                                 style("nifty-panel-no-shadow");
-                                height("500px");
+                                height("530px");
                                 valignBottom();
                                 alignRight();
-                                control(new ButtonBuilder("GoOnline", "Start") {{
+
+                                control(new ButtonBuilder("startMASinit", "Start MAS") {{
+                                    //style("nifty-panel-red");
+                                    width("100%");
+                                    height("40px");
+                                    focusable(false);
+                                }});
+
+                                control(new ButtonBuilder("StartSimulation", "Simulate") {{
                                     //style("nifty-panel-red");
                                     width("100%");
                                     height("40px");
@@ -1040,7 +1011,7 @@ boolean doneInitCreatingCarSimulation = false;
                                         childLayoutVertical();
                                         alignCenter();
                                         width("90%");
-                                        height("50%");
+                                        height("210px");
 
                                         control(new ButtonBuilder("referintaLabel", "Referinta Nucleu Global:") {{
                                             alignCenter();
@@ -1107,11 +1078,11 @@ boolean doneInitCreatingCarSimulation = false;
                                         valignTop();
                                         alignCenter();
                                         width("90%");
-                                        height("50%");
+                                        height("240px");
                                         control(new ButtonBuilder("pertext", "Stari controllere semafor") {{
                                             alignCenter();
                                             valignTop();
-                                            height("40");
+                                            height("40px");
                                             width("100%");
                                             this.onActiveEffect(new EffectBuilder("nimic"));
                                             this.focusable(false);
@@ -1409,16 +1380,13 @@ boolean doneInitCreatingCarSimulation = false;
 
         }}.build(nifty));
 
-        nifty.subscribe(nifty.getCurrentScreen(), "GoOnline", ButtonClickedEvent.class, eventHandler1);
+        nifty.subscribe(nifty.getCurrentScreen(), "startMASinit", ButtonClickedEvent.class, eventHandler1);
         nifty.subscribe(nifty.getCurrentScreen(), "carAverageSpeedValue", SliderChangedEvent.class, eventHandler2);
         nifty.subscribe(nifty.getCurrentScreen(), "trafficLightIntervalValue", SliderChangedEvent.class, eventHandler3);
-
+        nifty.subscribe(nifty.getCurrentScreen(), "StartSimulation", ButtonClickedEvent.class, eventHandler4);
 
         nifty.subscribe(nifty.getCurrentScreen(), "addRecklessCarValue", SliderChangedEvent.class, eventHandler5);
         nifty.subscribe(nifty.getCurrentScreen(), "referintaValue", SliderChangedEvent.class, eventHandler6);
-
-        nifty.subscribe(nifty.getCurrentScreen(), "activeSemafor0Valu", CheckBoxStateChangedEvent.class, eventHandler7);
-        nifty.subscribe(nifty.getCurrentScreen(), "activeSemafor1Value", CheckBoxStateChangedEvent.class, eventHandler8);
 
         nifty.subscribe(nifty.getCurrentScreen(), "activeIntersectionControllerUP", CheckBoxStateChangedEvent.class, eventHandler9);
         nifty.subscribe(nifty.getCurrentScreen(), "activeIntersectionSensorUP", CheckBoxStateChangedEvent.class, eventHandler91);
@@ -1443,20 +1411,6 @@ boolean doneInitCreatingCarSimulation = false;
         nifty.gotoScreen("test");
 
     }
-
-    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler7 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
-        @Override
-        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //disableTrafficSystemIndex[0] = true;
-        }
-    };
-
-    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler8 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
-        @Override
-        public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //disableTrafficSystemIndex[0] = true;
-        }
-    };
 
 
     // UP INTERSECTION !!!
@@ -1593,6 +1547,7 @@ boolean doneInitCreatingCarSimulation = false;
         public void onEvent(String s, ButtonClickedEvent checkBoxStateChangedEvent) {
 
             startApplication = true;
+
         }
     };
 
@@ -1601,7 +1556,7 @@ boolean doneInitCreatingCarSimulation = false;
         public void onEvent(final String topic, final SliderChangedEvent event) {
             carSpeed = (int) nifty.getCurrentScreen().findNiftyControl("carAverageSpeedValue", Slider.class).getValue();
             String value = String.valueOf(carSpeed);
-            changedUISpeed = true;
+//            changedUISpeed = !changedUISpeed;
             nifty.getCurrentScreen().findNiftyControl("carAverageSpeed", Button.class).setText("Viteza medie de circulatie: " + value);
         }
     };
@@ -1612,15 +1567,17 @@ boolean doneInitCreatingCarSimulation = false;
             cicleInterval = (int) nifty.getCurrentScreen().findNiftyControl("trafficLightIntervalValue", Slider.class).getValue();
             String value = String.valueOf(cicleInterval);
             cicleInterval = cicleInterval * 1000;
-            changedUISpeed = true; // ok for timer
+//            changedUISpeed = true; // ok for timer
             nifty.getCurrentScreen().findNiftyControl("trafficLightInterval", Button.class).setText("Interval semafor: " + value);
         }
     };
 
-    EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler4 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
+    EventTopicSubscriber<ButtonClickedEvent> eventHandler4 = new EventTopicSubscriber<ButtonClickedEvent>() {
         @Override
-        public void onEvent(final String topic, final CheckBoxStateChangedEvent event) {
-            //disableTrafficSystemIndex[1] = true;
+        public void onEvent(final String topic, final ButtonClickedEvent event) {
+
+            normalCycleTimer[0] = false;
+            changedUISpeed = !changedUISpeed;
         }
     };
 

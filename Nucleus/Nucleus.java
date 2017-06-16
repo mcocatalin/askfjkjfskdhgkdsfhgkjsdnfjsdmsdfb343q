@@ -1,6 +1,5 @@
 package Nucleus;
 
-import GEngine.graphicEngine;
 import Utility.WorldDetector;
 import jade.core.AID;
 import jade.core.Agent;
@@ -32,6 +31,7 @@ public class Nucleus extends Agent {
     private boolean inRange; // Check setpoint
     private AID serviceController;
     private boolean defectRequest;
+    private int priority;
 
     WorldDetector wd;
     boolean detectedWorld;
@@ -81,11 +81,6 @@ public class Nucleus extends Agent {
                     e.printStackTrace();
                 }
                 messageToSend.addReceiver(r);
-                try {
-                    Thread.sleep(50*(thisID+1));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
                 myAgent.send(messageToSend);
                 detectedWorld = true;
 
@@ -94,7 +89,7 @@ public class Nucleus extends Agent {
             }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -112,18 +107,21 @@ public class Nucleus extends Agent {
 
             home = this.myAgent.getContainerController();
 
-            for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
+            priority = 0;
 
+//            for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
+//
 //                // Controlling Agents
-//                try {
-//                    rmaNucleus = home.createNewAgent("IntersectionController" + i,
-//                            "Controlling.IntersectionController", new Object[0]);
+//                    try {
+//                        rmaNucleus = home.createNewAgent("IntersectionController" + i,
+//                                "Controlling.IntersectionController", new Object[0]);
 //                    rmaNucleus.start();
 //                    // to print in console!!!
 //                    graphicEngine.EventLogEntries.add("Started Intersection Controller " + i + " agent.");
-//                } catch (StaleProxyException e) {
-//                    e.printStackTrace();
-//                }
+//                    } catch (StaleProxyException e) {
+//                        e.printStackTrace();
+//                    }
+//
 //
 //                // Acting Agents
 //                try {
@@ -147,10 +145,10 @@ public class Nucleus extends Agent {
 //                } catch (StaleProxyException e) {
 //                    e.printStackTrace();
 //                }
-            }
+//            }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -169,8 +167,6 @@ public class Nucleus extends Agent {
             if(detectedWorld) {
 
                 if (!inRange && maxDensity != null) {
-                    Iterator it = getAID().getAllAddresses();
-                    String adresa = (String) it.next();
                     String platforma = getAID().getName().split("@")[1];
 
                     int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
@@ -185,23 +181,14 @@ public class Nucleus extends Agent {
                         e.printStackTrace();
                     }
                     messageToSend.addReceiver(r);
-                    try {
-                        Thread.sleep(50*(thisID+1));
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     myAgent.send(messageToSend);
                 }
-
-
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            //block();
         }
     };
 
@@ -211,8 +198,6 @@ public class Nucleus extends Agent {
             if (detectedWorld) {
                 if (defectRequest) {
                     int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
-                    Iterator it = getAID().getAllAddresses();
-                    String adresa = (String) it.next();
                     String platforma = getAID().getName().split("@")[1];
 
                     ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
@@ -228,7 +213,7 @@ public class Nucleus extends Agent {
                     }
                     messageToSend.addReceiver(r);
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(10);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -236,20 +221,13 @@ public class Nucleus extends Agent {
 
                     defectRequest=false; // sent Defect Request, waiting for answer
                 }
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
             }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            //block();
         }
     };
 
@@ -262,22 +240,23 @@ public class Nucleus extends Agent {
                     ACLMessage mesaj_receptionat = myAgent.receive();
                     if (mesaj_receptionat != null) {
                         if (detectedWorld) {
-//                            if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // In range calculus done in Controller now!!!
-//                                try {
-//                                    maxDensity = (int[]) mesaj_receptionat.getContentObject();
-//                                } catch (UnreadableException e) {
-//                                    e.printStackTrace();
-//                                }
-//
-//                                if ((maxDensity[0] <= setPoint) || (maxDensity[1] <= setPoint)) {
-//                                    inRange = true;
-//                                } else
-//                                    inRange = false;
-//                            }
+                            if (mesaj_receptionat.getConversationId() == "UpdatePriority") {
+                                priority = 0;
+                                try {
+                                    maxDensity = (int[]) mesaj_receptionat.getContentObject();
+                                    for(int k=0; i<maxDensity.length;i++)
+                                    {
+                                        priority = maxDensity[k] + priority;
+                                    }
+
+                                } catch (UnreadableException e) {
+                                    e.printStackTrace();
+                                }
+                            }
 
                             if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") {
                                 try {
-                                    setPoint = (Integer) mesaj_receptionat.getContentObject();
+                                    setPoint = (int) mesaj_receptionat.getContentObject();
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();
                                 }
@@ -310,21 +289,13 @@ public class Nucleus extends Agent {
 
                         //System.out.println("Nucleul " + this.myAgent.getLocalName() + " a primit mesaj: " + mesaj_receptionat.getConversationId());
                     }
-//                    else {
-//                        block();
-//                        break;
-//                    }
                 }
-
-
-
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //block();
         }
     };
 
@@ -359,11 +330,6 @@ public class Nucleus extends Agent {
                     }
                 }
                 messageToSend.addReceiver(r);
-//                try {
-//                    Thread.sleep(3000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
                 myAgent.send(messageToSend);
 
                 try {
@@ -377,11 +343,10 @@ public class Nucleus extends Agent {
             }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //block();
         }
     };
 

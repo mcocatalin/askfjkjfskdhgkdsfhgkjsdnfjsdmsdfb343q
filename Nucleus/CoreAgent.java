@@ -133,7 +133,7 @@ public class CoreAgent extends Agent {
                 }
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -173,7 +173,7 @@ public class CoreAgent extends Agent {
             EventLogEntries.add("Core Agent initialized!");
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -214,21 +214,14 @@ public class CoreAgent extends Agent {
                         e.printStackTrace();
                     }
                     myAgent.send(messageToSend);
-
-//                    try {
-//                        Thread.sleep(3000);
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
                 }
             }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            //block();
         }
     };
 
@@ -354,14 +347,11 @@ public class CoreAgent extends Agent {
             }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-//            else
 //                graphicEngine.createEventLogEntry("Initiated Global Nucleus!");
-            //block();
         }
     };
 
@@ -418,12 +408,10 @@ public class CoreAgent extends Agent {
             }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-
-            //block();
         }
     };
 
@@ -453,10 +441,9 @@ public class CoreAgent extends Agent {
                 }
                 requestedServiceController--;
             }
-            //block();
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

@@ -25,7 +25,7 @@ public class IntersectionController extends Agent implements IController {
     IntersectionSensing intersectionSensing;
     IntersectionActing intersectionActing;
 
-    boolean normalState;
+    boolean normalState; // Check if the Global refence is in range
     boolean defectState;
     AID serviceControllerAID;
     Timer timer;
@@ -93,18 +93,13 @@ public class IntersectionController extends Agent implements IController {
                     }
 
                     messageToSend.addReceiver(r);
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     myAgent.send(messageToSend);
 
                 }
             }
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -175,19 +170,20 @@ public class IntersectionController extends Agent implements IController {
                             }
 
                             if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Nucleus
-//                                try {
-////                                    setPoint = (int) mesaj_receptionat.getContentObject();
-////                                    if(intersectionSensing.getMaxDensity()[0] <= setPoint || intersectionSensing.getMaxDensity()[1] <= setPoint){
-////                                        normalState = true;
-////                                    }
-////                                    else {
-////                                        normalState = false;
-////
-////                                    }
-//
-//                                } catch (UnreadableException e) {
-//                                    e.printStackTrace();
-//                                }
+                                try {
+                                    setPoint = (int) mesaj_receptionat.getContentObject();
+                                    if(intersectionSensing != null) {
+                                        if (intersectionSensing.getMaxDensity()[0] <= 2 * setPoint && intersectionSensing.getMaxDensity()[1] <= 2 * setPoint) {
+                                            normalState = true;
+                                        } else {
+                                            normalState = false;
+                                        }
+                                    }
+
+                                } catch (UnreadableException e) {
+                                    e.printStackTrace();
+                                }
+
                             }
 
 //                            if (mesaj_receptionat.getConversationId() == "StatusUpdate") { // Data from Nucleus
@@ -219,7 +215,7 @@ public class IntersectionController extends Agent implements IController {
                 }
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -243,6 +239,14 @@ public class IntersectionController extends Agent implements IController {
                     for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
                         if (intersectionSensing != null) {
                             if (ActiveIntersectionControllers[thisID]) {
+
+                                messageToSend.setConversationId("UpdatePriority"); // No status update needed in nucleus!!!
+                                try {
+                                messageToSend.setContentObject(intersectionSensing.getMaxDensity());
+                                } catch (IOException e) {
+                                e.printStackTrace();
+                                }
+
 //                                                        messageToSend.setConversationId("StatusUpdate"); // No status update needed in nucleus!!!
 //
 //                                                        try {
@@ -283,7 +287,7 @@ public class IntersectionController extends Agent implements IController {
             //block();
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

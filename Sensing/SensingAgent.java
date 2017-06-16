@@ -130,22 +130,13 @@ public class SensingAgent extends Agent implements Sensing.ISensing {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-
-                        try {
-                            Thread.sleep(50*(toHandle.getComponentID()+1));
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
                         myAgent.send(messageToSend);
                     }
-                    //}
                 }
-
             }
-            //block();
 
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

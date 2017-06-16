@@ -19,8 +19,6 @@ public class ActingAgent extends Agent implements IActing {
         @Override
         public void action() {
             ACLMessage mesaj_receptionat = myAgent.receive();
-//            if(myAgent.getCurQueueSize()>0) {
-//                for (int j = 0; j < myAgent.getCurQueueSize(); j++) {
                     if (mesaj_receptionat != null) {
                         int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1)); // Send Feedback to IntersectionController
                         if (mesaj_receptionat.getConversationId() == "ActingNormalCycle") {
@@ -40,41 +38,12 @@ public class ActingAgent extends Agent implements IActing {
                                         break;
                                 }
                                 if (!equals) {
-//                            try {
-//                                Thread.sleep(IntersectionController.cicleInterval);
                                         graphicEngine.request.add(act);
-//                                        if (normalCycleTimer[thisID] || CoreAgent.LocationGraph.get(thisID).getIntersectionActing() == null) {
-//                                            CoreAgent.LocationGraph.get(thisID).setIntersectionActing(act.getObjToHandle());
-//                                            normalCycleTimer[thisID] = false;
-//                                        }
                                 }
-//                            } catch (InterruptedException e) {
-//                                e.printStackTrace();
-//                            }
                             } else {
                                 graphicEngine.request.add(act);
-//
-//                                if (normalCycleTimer[thisID] || CoreAgent.LocationGraph.get(thisID).getIntersectionActing() == null) {
-//                                    CoreAgent.LocationGraph.get(thisID).setIntersectionActing(act.getObjToHandle());
-//                                    normalCycleTimer[thisID] = false;
-//                                }
                             }
-
-//                            if(CoreAgent.LocationGraph.get(thisID).getIntersectionActing() != null) {
-//                                boolean equals = false;
-//
-//                                    equals = intersectionActing.Equals(CoreAgent.LocationGraph.get(thisID).getIntersectionActing());
-//
-//                                if(!equals){
-//                                    CoreAgent.LocationGraph.get(thisID).setIntersectionActing(intersectionActing);
-//                                }
-//                            }
-//                            else
-//                                CoreAgent.LocationGraph.get(thisID).setIntersectionActing(intersectionActing);
                         }
-
-
-
                     }
 
             try {
@@ -82,9 +51,6 @@ public class ActingAgent extends Agent implements IActing {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-//                }
-//            }
-
         }
     };
 
@@ -94,7 +60,7 @@ CyclicBehaviour centralizedControl =  new CyclicBehaviour() {
         ACLMessage mesaj_receptionat = myAgent.receive();
         if(mesaj_receptionat!=null)
         {
-            int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length()-1)); // Send Feedback to IntersectionController
+            int thisID = Integer.parseInt(mesaj_receptionat.getSender().getLocalName().substring(mesaj_receptionat.getSender().getLocalName().length()-1));
             if(mesaj_receptionat.getConversationId()=="ActingCentralizedControl") {
                 try {
                     intersectionActing = (IntersectionActing) mesaj_receptionat.getContentObject();
@@ -120,7 +86,7 @@ CyclicBehaviour centralizedControl =  new CyclicBehaviour() {
         }
 
         try {
-            Thread.sleep(100);
+            Thread.sleep(10);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
