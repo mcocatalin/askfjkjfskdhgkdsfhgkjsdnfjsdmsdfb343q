@@ -98,8 +98,6 @@ public class IntersectionSensing implements Serializable { // Has information ab
                         aux = laneDensity[i][j];
                         laneDensity[i][j] = laneDensity[i][k];
                         laneDensity[i][k] = aux;
-
-
                     }
                 }
             }

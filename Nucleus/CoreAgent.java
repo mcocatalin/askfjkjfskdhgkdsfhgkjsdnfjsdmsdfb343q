@@ -30,16 +30,20 @@ import static GEngine.graphicEngine.numberOfIntersections;
 public class CoreAgent extends Agent {
 
     public static int GlobalNucleusSetPoint;
+    public static boolean automaticMode;
+
+    // intern state for automatic/manual switch
+    boolean doneCreatingManualActuators;
+
     public static LinkedList<AID> availableNucleus;
     public static LinkedList<AID> disabledControllers;
     private int NucleusIndex;
-    private boolean DoneCreatingAgents;
+    private boolean doneCreatingAgents;
     private boolean doneInitBehaviour;
     private static int requestedServiceController;
     ContainerController home = null;
 
     public static LinkedList<IntersectionItemGraph> LocationGraph;
-
 
     LinkedList<WorldDetector> wd;
     int detectedWorldItems;
@@ -63,7 +67,6 @@ public class CoreAgent extends Agent {
                 SearchConstraints c = new SearchConstraints();
                 c.setMaxResults ( new Long(-1) );
                 agents = AMSService.search( myAgent, new AMSAgentDescription (), c );
-                //AMSService.
             }
             catch (Exception e) {
 
@@ -129,6 +132,8 @@ public class CoreAgent extends Agent {
 //
 //                        }
                             doneProcessingNucleusesLocation = true;
+
+                        EventLogEntries.add("Agentul Core a detectat reteaua de intersectii.");
                     }
                 }
             }
@@ -149,9 +154,12 @@ public class CoreAgent extends Agent {
         public void action() {
             availableNucleus = new LinkedList<AID>();
             NucleusIndex = 0;
-            DoneCreatingAgents = false;
+            doneCreatingAgents = false;
             disabledControllers = new LinkedList<AID>();
             requestedServiceController = 0;
+            automaticMode= false;
+
+            doneCreatingManualActuators = false;
 
             home = this.myAgent.getContainerController();
 
@@ -166,11 +174,7 @@ public class CoreAgent extends Agent {
             doneDetecting = false;
             doneProcessingNucleusesLocation = false;
 
-            //doneInitBehaviour = true;
-
-            //AgentCreator ac = new AgentCreator();
-
-            EventLogEntries.add("Core Agent initialized!");
+            EventLogEntries.add("Agentul Core principal este lansat in executie!");
 
             try {
                 Thread.sleep(10);
@@ -191,7 +195,7 @@ public class CoreAgent extends Agent {
     Behaviour updateStates = new CyclicBehaviour() { // Send data to Nucleus to update setpoint
         @Override
         public void action() {
-            if (DoneCreatingAgents && doneDetecting) {
+            if (doneCreatingAgents && doneDetecting && automaticMode ) {
                 for(NucleusIndex = 0; NucleusIndex< numberOfIntersections; NucleusIndex++) {
 
                     Iterator it = getAID().getAllAddresses();
@@ -250,10 +254,8 @@ public class CoreAgent extends Agent {
         @Override
         public void action() {
 
-            if(graphicEngine.startApplication && !DoneCreatingAgents) {
+            if(graphicEngine.startApplication ) {
 
-                Iterator it = getAID().getAllAddresses();
-                String adresa = (String) it.next();
                 String platforma = getAID().getName().split("@")[1];
 
 
@@ -297,53 +299,59 @@ public class CoreAgent extends Agent {
                 if(graphicEngine.numberOfIntersections>0) {
 
                     for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
+
                         // Start number of Intersections # to continue!
-                        // Nucleus Agents
-                        try {
-                            AgentController rma = home.createNewAgent("IntersectionNucleus" + i,
-                                    "Nucleus.Nucleus", new Object[0]);
-                            rma.start();
-                            availableNucleus.add(new AID("IntersectionNucleus" + i + "@" + platforma, AID.ISGUID));
-                            graphicEngine.EventLogEntries.add("Started Intersection Nucleus " + i + " agent.");
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
-                        }
-                        // Controlling Agents
-                        try {
-                            rma = home.createNewAgent("IntersectionController" + i,
-                                    "Controlling.IntersectionController", new Object[0]);
-                            rma.start();
-                            // to print in console!!!
-                            graphicEngine.EventLogEntries.add("Started Intersection Controller " + i + " agent.");
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
-                        }
-
                         // Acting Agents
-                        try {
-                            rma = home.createNewAgent("IntersectionActing" + i,
-                                    "Acting.ActingAgent", new Object[0]);
-                            rma.start();
-                            // to print in console!!!
-                            graphicEngine.EventLogEntries.add("Started Intersection Acting " + i + " agent.");
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
+                        if(!doneCreatingManualActuators) {
+                            try {
+                                rma = home.createNewAgent("IntersectionActing" + i,
+                                        "Acting.ActingAgent", new Object[0]);
+                                rma.start();
+                                // to print in console!!!
+                                graphicEngine.EventLogEntries.add("Agent element de actionare cu ID-ul " + i + " este lansat\n  in executie.");
+                            } catch (StaleProxyException e) {
+                                e.printStackTrace();
+                            }
                         }
-
-                        // Sensing Agents
-                        try {
-                            // home.getAgent("IntersectionSensing" + i);
-                            rma = home.createNewAgent("IntersectionSensing" + i,
-                                    "Sensing.SensingAgent", new Object[0]);
-                            rma.start();
-                            // to print in console!!!
-                            graphicEngine.EventLogEntries.add("Started Intersection Sensing " + i + " agent.");
-                        } catch (StaleProxyException e) {
-                            e.printStackTrace();
+                        if(automaticMode) {
+                            if (!doneCreatingAgents) {
+                                // Nucleus Agents
+                                try {
+                                    AgentController rma = home.createNewAgent("IntersectionNucleus" + i,
+                                            "Nucleus.Nucleus", new Object[0]);
+                                    rma.start();
+                                    availableNucleus.add(new AID("IntersectionNucleus" + i + "@" + platforma, AID.ISGUID));
+                                    graphicEngine.EventLogEntries.add("Agent nucleu celula cu ID-ul " + i + " este lansat in executie.");
+                                } catch (StaleProxyException e) {
+                                    e.printStackTrace();
+                                }
+                                // Controlling Agents
+                                try {
+                                    rma = home.createNewAgent("IntersectionController" + i,
+                                            "Controlling.IntersectionController", new Object[0]);
+                                    rma.start();
+                                    // to print in console!!!
+                                    graphicEngine.EventLogEntries.add("Agent controller cu ID-ul " + i + " este lansat in executie.");
+                                } catch (StaleProxyException e) {
+                                    e.printStackTrace();
+                                }
+                                // Sensing Agents
+                                try {
+                                    // home.getAgent("IntersectionSensing" + i);
+                                    rma = home.createNewAgent("IntersectionSensing" + i,
+                                            "Sensing.SensingAgent", new Object[0]);
+                                    rma.start();
+                                    // to print in console!!!
+                                    graphicEngine.EventLogEntries.add("Agent senzor cu ID-ul " + i + " este lansat in executie.");
+                                } catch (StaleProxyException e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         }
                     }
+                    doneCreatingManualActuators = true;
+                    doneCreatingAgents = true;
                 }
-                DoneCreatingAgents = true;
             }
 
             try {
@@ -351,7 +359,6 @@ public class CoreAgent extends Agent {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-//                graphicEngine.createEventLogEntry("Initiated Global Nucleus!");
         }
     };
 
@@ -360,15 +367,10 @@ public class CoreAgent extends Agent {
         @Override
         public void action() {
 
-            Iterator it = getAID().getAllAddresses();
-            String adresa = (String) it.next();
-            String platforma = getAID().getName().split("@")[1];
-
             ACLMessage mesaj_receptionat = myAgent.receive();
             if (mesaj_receptionat != null) {
                 if(doneDetecting) {
                     // !!! Assign another controller to defected ones.
-
 
                         if (mesaj_receptionat.getConversationId() == "Defect") {
                             try {
@@ -378,7 +380,6 @@ public class CoreAgent extends Agent {
                             } catch (UnreadableException e) {
                                 e.printStackTrace();
                             }
-
                             requestedServiceController++;
                         }
 

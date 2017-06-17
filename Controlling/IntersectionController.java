@@ -1,5 +1,6 @@
 package Controlling;
 
+import GEngine.graphicEngine;
 import Utility.IntersectionActing;
 import Utility.IntersectionSensing;
 import Utility.WorldDetector;
@@ -125,21 +126,38 @@ public class IntersectionController extends Agent implements IController {
                     } else
                         r = new AID("IntersectionActing" + thisID + "@" + platforma, AID.ISGUID);
                     r.addAddresses(adresa);
+                    if (intersectionSensing != null) {
+                        if (ActiveIntersectionControllers[thisID] || serviceControllerAID != null) {
+                            messageToSend.setConversationId("ActingNormalCycle");
 
-                    if (ActiveIntersectionControllers[thisID] || serviceControllerAID != null) {
-                        messageToSend.setConversationId("ActingNormalCycle");
-                        try {
-                            intersectionActing.setLaneDirection(Updown, RightLeft);
-                            messageToSend.setContentObject(intersectionActing);
-                            Updown = !Updown;
-                            RightLeft = !RightLeft;
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } // to add any condition?
+                                if (graphicEngine.controllerPairedState) {
+                                    if (intersectionSensing.getMaxDensity()[0] > intersectionSensing.getMaxDensity()[1]) {
+                                        intersectionActing.setLaneDirection(true, false);
+                                    } else {
+                                        intersectionActing.setLaneDirection(false, true);
+                                    }
+                                } else {
+                                    int maxLaneDensityID = 0;
+                                    for (int i = 1; i < 4; i++) {
+                                            if (intersectionSensing.getDensity(maxLaneDensityID) <= intersectionSensing.getDensity(i)) {
+                                                maxLaneDensityID = i;
+                                            }
 
-                    messageToSend.addReceiver(r);
-                    myAgent.send(messageToSend);
+                                    }
+                                    intersectionActing.setLaneByTrafficLightID(maxLaneDensityID);
+                                }
+
+                                try {
+                                    messageToSend.setContentObject(intersectionActing);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+
+                            messageToSend.addReceiver(r);
+                            myAgent.send(messageToSend);
+                    }
 
                 }
             }
@@ -172,13 +190,13 @@ public class IntersectionController extends Agent implements IController {
                             if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Nucleus
                                 try {
                                     setPoint = (int) mesaj_receptionat.getContentObject();
-                                    if(intersectionSensing != null) {
-                                        if (intersectionSensing.getMaxDensity()[0] <= 2 * setPoint && intersectionSensing.getMaxDensity()[1] <= 2 * setPoint) {
-                                            normalState = true;
-                                        } else {
-                                            normalState = false;
-                                        }
-                                    }
+//                                    if(intersectionSensing != null) {
+//                                        if (intersectionSensing.getMaxDensity()[0] <= 2 * setPoint && intersectionSensing.getMaxDensity()[1] <= 2 * setPoint) {
+//                                            normalState = true;
+//                                        } else {
+////                                            normalState = false;
+//                                        }
+//                                    }
 
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();
@@ -201,7 +219,6 @@ public class IntersectionController extends Agent implements IController {
                                     e.printStackTrace();
                                 }
                             }
-
                         }
                         if (mesaj_receptionat.getConversationId() == "WorldDetector") { // Data from Nucleus
                             try {

@@ -15,6 +15,21 @@ public class IntersectionActing implements Serializable {
         }
     }
 
+    public void setLaneByTrafficLightID(int ID){
+        if(ID == 0)
+            this.setIntersectionState(true, false,false,false);
+
+        if(ID == 1)
+            this.setIntersectionState(false,true, false,false);
+
+        if(ID == 2)
+            this.setIntersectionState( false,false,true,false);
+
+        if(ID == 3)
+            this.setIntersectionState(false,false,false,true );
+
+    }
+
     public void setLaneDirection(boolean UpDown, boolean RightLeft){
         if(UpDown){
             intersectionState[0] = true;

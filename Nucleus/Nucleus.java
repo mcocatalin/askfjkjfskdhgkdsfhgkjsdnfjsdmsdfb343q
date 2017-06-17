@@ -32,6 +32,7 @@ public class Nucleus extends Agent {
     private AID serviceController;
     private boolean defectRequest;
     private int priority;
+    private boolean mostSemnificativePriority;
 
     WorldDetector wd;
     boolean detectedWorld;
@@ -71,6 +72,7 @@ public class Nucleus extends Agent {
                 int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
                 ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                 AID r = new AID("CoreAgent" + "@" + platforma, AID.ISGUID);
+                r.addAddresses(adresa);
 
                 messageToSend.setConversationId("WorldDetector");
 
@@ -108,6 +110,8 @@ public class Nucleus extends Agent {
             home = this.myAgent.getContainerController();
 
             priority = 0;
+
+            mostSemnificativePriority = false;
 
 //            for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
 //
@@ -167,6 +171,9 @@ public class Nucleus extends Agent {
             if(detectedWorld) {
 
                 if (!inRange && maxDensity != null) {
+
+                    Iterator it = getAID().getAllAddresses();
+                    String adresa = (String) it.next();
                     String platforma = getAID().getName().split("@")[1];
 
                     int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
@@ -198,10 +205,14 @@ public class Nucleus extends Agent {
             if (detectedWorld) {
                 if (defectRequest) {
                     int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
+
+                    Iterator it = getAID().getAllAddresses();
+                    String adresa = (String) it.next();
                     String platforma = getAID().getName().split("@")[1];
 
                     ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                     AID r = new AID("CoreAgent" + "@" + platforma, AID.ISGUID);
+                    r.addAddresses(adresa);
 
                     messageToSend.setConversationId("Defect");
 
@@ -240,6 +251,7 @@ public class Nucleus extends Agent {
                     ACLMessage mesaj_receptionat = myAgent.receive();
                     if (mesaj_receptionat != null) {
                         if (detectedWorld) {
+
                             if (mesaj_receptionat.getConversationId() == "UpdatePriority") {
                                 priority = 0;
                                 try {
@@ -248,6 +260,8 @@ public class Nucleus extends Agent {
                                     {
                                         priority = maxDensity[k] + priority;
                                     }
+
+
 
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();

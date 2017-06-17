@@ -33,7 +33,7 @@ public class CitySCAPE extends Agent{
         @Override
         public void action() {
 
-            EventLogEntries.add("Environement loaded.");
+            EventLogEntries.add("Mediul a fost initializat.");
 
         }
 
@@ -55,6 +55,7 @@ public class CitySCAPE extends Agent{
 
                 ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                 AID r = new AID("CoreAgent" + "@" + platforma, AID.ISGUID);
+                r.addAddresses(adresa);
 
                 messageToSend.setConversationId("WorldDetect");
 

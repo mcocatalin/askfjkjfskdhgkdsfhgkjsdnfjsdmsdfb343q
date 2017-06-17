@@ -46,6 +46,7 @@ import de.lessvoid.nifty.controls.listbox.builder.ListBoxBuilder;
 import de.lessvoid.nifty.controls.scrollpanel.builder.ScrollPanelBuilder;
 import de.lessvoid.nifty.controls.slider.builder.SliderBuilder;
 import de.lessvoid.nifty.screen.DefaultScreenController;
+import de.lessvoid.nifty.tools.Color;
 import org.bushe.swing.event.EventTopicSubscriber;
 
 import java.util.*;
@@ -77,7 +78,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     // Graphic UI members
     public static boolean startApplication = false;
     public static int numberOfCars;
-    private boolean gui=false;
+    private boolean gui = false;
+    public static boolean controllerPairedState = false;
     public static boolean[] ActiveIntersectionControllers = new boolean[numberOfIntersections];
 
 
@@ -172,6 +174,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     final String[] modelPaths = {"Models/Ferrari/Car.scene", "src/assets/Models/Ford.zip"};
 
     final Vector3f[] valideLocations = {
+            new Vector3f(98, 0, 81),
             new Vector3f(46, 18.2f, 97),
             new Vector3f(37, 18.2f, -119),
             new Vector3f(46, 18.2f, -119),
@@ -214,7 +217,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     static final Quaternion ROTATE_RIGHT = new Quaternion().fromAngleAxis(FastMath.HALF_PI, Vector3f.UNIT_Y);
     private Plane plane = new Plane();
 
-    private float speed = 800f;
+    private float speed = -800f;
 
     Spatial map;
 
@@ -487,7 +490,7 @@ boolean doneInitCreatingCarSimulation = false;
 
                     }
 
-                    expiredCycleTime[1] = false;
+                    expiredCycleTime[0] = false;
                 }
         Helper.go = false;
     }
@@ -626,7 +629,7 @@ boolean doneInitCreatingCarSimulation = false;
 
         // INIT COUNTER!!!
         Timer tm1 = new Timer();
-        tm1.schedule(Helper.globalSimulator, 0, cicleInterval); // decrementing delay for one care per lane
+        tm1.schedule(Helper.globalSimulator, 0, cicleInterval); // decrementing delay for one car per lane
 
         // DEBUG
         //response.add(new sensingHandler("Intersection", index, intersectionLaneValues));
@@ -722,12 +725,11 @@ boolean doneInitCreatingCarSimulation = false;
                 }
                 //backwards
                 if (dot > 1) {
-                    dot *= -1;
                     anglemult *= -1;
                     speedmult *=-1;
                 }
                 vehicle.steer(angle * anglemult );
-                vehicle.accelerate(-speed * speedmult);
+                vehicle.accelerate(speed * speedmult);
                 vehicle.brake(0);
             }
     }
@@ -786,9 +788,10 @@ boolean doneInitCreatingCarSimulation = false;
 
             int cycleTimeforLaneDecreasing;
             cycleTimeforLaneDecreasing = 3600 * carWidth  / carSpeed; // ms for car to run for it's width size
-            for(int i=0; i<4;i++) {
+            for(int i=0; i<3;i++) {
                 timerdelay[i].scheduleAtFixedRate(Helper.tmtsk[i], 0, cycleTimeforLaneDecreasing);
             }
+            timerdelay[3].scheduleAtFixedRate(Helper.tmtsk[3], 0, 3000);
             for(int i=0; i<numberOfIntersections; i++){
                 timerdelayNormal[i].schedule(tmtskNormal[i], cycleTimeforLaneDecreasing, cicleInterval);
             }
@@ -834,52 +837,57 @@ boolean doneInitCreatingCarSimulation = false;
         ///!!! Sensing on the Graphic Engine !!!
         UpdateIntersectionState();
 
-
-
         ///!!! Acting on the Graphic Engine !!!
         if (!request.isEmpty()) {
 
-            if(normalCycleTimer[0] && request.size()>=2*numberOfIntersections){
-                for(int i = 0; i<numberOfIntersections; i++){
-                    outerloop:
-                    for(int j=0; j< request.size(); j++){
-                        if (CoreAgent.LocationGraph.get(i).getComponentID() == request.get(j).getComponentID()) {
-                            if(CoreAgent.LocationGraph.get(i).getIntersectionActing() != null) {
+            if(normalCycleTimer[0]) {
+                if ((controllerPairedState && request.size() >= 2 * numberOfIntersections) || (!controllerPairedState && request.size() >= numberOfIntersections)) {
+                    for (int i = 0; i < numberOfIntersections; i++) {
+                        outerloop:
+                        for (int j = 0; j < request.size(); j++) {
+                            if (CoreAgent.LocationGraph.get(i).getComponentID() == request.get(j).getComponentID()) {
+                                if (CoreAgent.LocationGraph.get(i).getIntersectionActing() != null) {
 
-                                if (!CoreAgent.LocationGraph.get(i).getIntersectionActing().Equals(request.get(j).getObjToHandle())) {
+                                    if (!CoreAgent.LocationGraph.get(i).getIntersectionActing().Equals(request.get(j).getObjToHandle())) {
+                                        CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
+                                        actOnTrafficLights(request.get(j));
+                                        request.remove(j);
+                                        System.out.println("Found another state for intersection ID = " + i + "dimensiune request: " + request.size());
+                                        break outerloop;
+                                    } else {
+                                        System.out.println("Same state for intersection ID = " + i + "dimensiune request: " + request.size());
+                                    }
+
+                                } else {
                                     CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
                                     actOnTrafficLights(request.get(j));
                                     request.remove(j);
-                                    System.out.println("Found another state for intersection ID = " + i + "dimensiune request: " + request.size());
                                     break outerloop;
                                 }
-                                else
-                                {
-                                    System.out.println("Same state for intersection ID = " + i + "dimensiune request: " + request.size());
-                                }
+                            }
 
-                            }
-                            else
-                            {
-                                CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
-                                actOnTrafficLights(request.get(j));
-                                request.remove(j);
-                                break outerloop;
-                            }
+
                         }
-
-
                     }
+
+                    normalCycleTimer[0] = false;
+
                 }
-
-                normalCycleTimer[0] = false;
-
             }
         }
 
 
-        if(expiredCycleTime[1])
+        if(expiredCycleTime[0]) {
             UpdateSimulationCars();
+        }
+
+//        if(expiredCycleTime[3])
+//        {
+//            CarMoveAt(valideLocations[0].add(-100,0,0));
+//            expiredCycleTime[3] = false;
+//        }
+
+
 
 
         createEventLogEntry();
@@ -944,13 +952,15 @@ boolean doneInitCreatingCarSimulation = false;
     }
 
     private void UpdateIntersectionState(){
-        sensingHandler currentResponse;
+        if(CoreAgent.automaticMode) {
+            sensingHandler currentResponse;
 
-        for(int i=0; i<numberOfIntersections; i++) {
-            if(CoreAgent.LocationGraph.size()>0) {
-                if (CoreAgent.LocationGraph.get(i).getIntersectionSensing() != null) {
-                    currentResponse = new sensingHandler("Intersection", i, CoreAgent.LocationGraph.get(i).getIntersectionSensing());
-                    response.add(currentResponse);
+            for (int i = 0; i < numberOfIntersections; i++) {
+                if (CoreAgent.LocationGraph.size() == numberOfIntersections) {
+                    if (CoreAgent.LocationGraph.get(i).getIntersectionSensing() != null) {
+                        currentResponse = new sensingHandler("Intersection", i, CoreAgent.LocationGraph.get(i).getIntersectionSensing());
+                        response.add(currentResponse);
+                    }
                 }
             }
         }
@@ -985,25 +995,55 @@ boolean doneInitCreatingCarSimulation = false;
                         panel(new PanelBuilder("Botton Right Screen Panel") {
                             {
                                 childLayoutVertical(); // panel properties, add more...
-                                //childLayoutAbsoluteInside();
                                 width("300px");
                                 style("nifty-panel-no-shadow");
-                                height("530px");
+                                height("610px");
                                 valignBottom();
                                 alignRight();
 
+                                panel(new PanelBuilder("controllerManualAutomaticModePanel") { // Panel for Manual / Automatic control
+                                    {
+                                        //childLayoutVertical(); // panel properties, add more...
+                                        childLayoutHorizontal();
+                                        width("100%");
+                                        height("80");
+                                        valignTop();
+                                        alignCenter();
+
+                                        control(new ButtonBuilder("manualMode", "Manual") {{
+                                            //style("nifty-panel-red");
+                                            width("50%");
+                                            height("40px");
+                                            focusable(true);
+                                            this.onClickEffect(new EffectBuilder("nimic"));
+                                            //this.onActiveEffect(new EffectBuilder("nimic"));
+                                            //this.onCustomEffect();
+                                        }});
+
+                                        control(new ButtonBuilder("automaticMode", "Automat") {{
+                                            //style("nifty-panel-red");
+                                            width("50%");
+                                            height("40px");
+                                            focusable(false);
+                                        }});
+                                    }});
+//
                                 control(new ButtonBuilder("startMASinit", "Start MAS") {{
                                     //style("nifty-panel-red");
                                     width("100%");
                                     height("40px");
                                     focusable(false);
+                                    color(Color.randomColor());
+
+                                    //this.style("nifty-panel-red");
                                 }});
 
-                                control(new ButtonBuilder("StartSimulation", "Simulate") {{
+                                control(new ButtonBuilder("StartSimulation", "Start simulare") {{
                                     //style("nifty-panel-red");
                                     width("100%");
                                     height("40px");
                                     focusable(false);
+
                                 }});
 
                                 panel(new PanelBuilder("Interface for agents") {
@@ -1384,8 +1424,9 @@ boolean doneInitCreatingCarSimulation = false;
         nifty.subscribe(nifty.getCurrentScreen(), "carAverageSpeedValue", SliderChangedEvent.class, eventHandler2);
         nifty.subscribe(nifty.getCurrentScreen(), "trafficLightIntervalValue", SliderChangedEvent.class, eventHandler3);
         nifty.subscribe(nifty.getCurrentScreen(), "StartSimulation", ButtonClickedEvent.class, eventHandler4);
+        nifty.subscribe(nifty.getCurrentScreen(), "manualMode", ButtonClickedEvent.class, eventHandler5);
+        nifty.subscribe(nifty.getCurrentScreen(), "automaticMode", ButtonClickedEvent.class, eventHandler7);
 
-        nifty.subscribe(nifty.getCurrentScreen(), "addRecklessCarValue", SliderChangedEvent.class, eventHandler5);
         nifty.subscribe(nifty.getCurrentScreen(), "referintaValue", SliderChangedEvent.class, eventHandler6);
 
         nifty.subscribe(nifty.getCurrentScreen(), "activeIntersectionControllerUP", CheckBoxStateChangedEvent.class, eventHandler9);
@@ -1545,9 +1586,8 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<ButtonClickedEvent> eventHandler1 = new EventTopicSubscriber<ButtonClickedEvent>() {
         @Override
         public void onEvent(String s, ButtonClickedEvent checkBoxStateChangedEvent) {
-
             startApplication = true;
-
+//            nifty.getCurrentScreen().findNiftyControl("startMASinit", Button.class).setStyle("nifty-panel-red");
         }
     };
 
@@ -1581,10 +1621,19 @@ boolean doneInitCreatingCarSimulation = false;
         }
     };
 
-    EventTopicSubscriber<SliderChangedEvent> eventHandler5 = new EventTopicSubscriber<SliderChangedEvent>() {
+    EventTopicSubscriber<ButtonClickedEvent> eventHandler5 = new EventTopicSubscriber<ButtonClickedEvent>() {
         @Override
-        public void onEvent(final String topic, final SliderChangedEvent event) {
-            buildVehicle(modelPaths[0],valideLocations[0], valideRotations[0]);
+        public void onEvent(final String topic, final ButtonClickedEvent event) {
+            CoreAgent.automaticMode = false;
+            EventLogEntries.add("Modul controller-ului este manual.");
+        }
+    };
+
+    EventTopicSubscriber<ButtonClickedEvent> eventHandler7 = new EventTopicSubscriber<ButtonClickedEvent>() {
+        @Override
+        public void onEvent(final String topic, final ButtonClickedEvent event) {
+            CoreAgent.automaticMode = true;
+            EventLogEntries.add("Modul controller-ului este automat.");
         }
     };
 
@@ -1623,8 +1672,6 @@ boolean doneInitCreatingCarSimulation = false;
         guiNode.attachChild(hudText);
 
         setDisplayStatView(true);
-
-
     }
 
     public void setSun() {
@@ -1706,8 +1753,8 @@ boolean doneInitCreatingCarSimulation = false;
         inputManager.addMapping("Jump", new KeyTrigger(KeyInput.KEY_SPACE));
         inputManager.addMapping("Change_camera", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
         inputManager.addMapping("Teleport", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
-        inputManager.addMapping("fire1", new KeyTrigger(KeyInput.KEY_1));
-        inputManager.addMapping("fire2", new KeyTrigger(KeyInput.KEY_2));
+        inputManager.addMapping("useSingleLaneState", new KeyTrigger(KeyInput.KEY_1));
+        inputManager.addMapping("usePairedLaneState", new KeyTrigger(KeyInput.KEY_2));
         inputManager.addMapping("fire3", new KeyTrigger(KeyInput.KEY_3));
         inputManager.addMapping("fire4", new KeyTrigger(KeyInput.KEY_4));
         inputManager.addMapping("fire5", new KeyTrigger(KeyInput.KEY_5));
@@ -1723,12 +1770,6 @@ boolean doneInitCreatingCarSimulation = false;
         inputManager.addMapping("Space", new KeyTrigger(KeyInput.KEY_SPACE));
         inputManager.addMapping("Reset", new KeyTrigger(KeyInput.KEY_I));
         inputManager.addMapping("Teleport", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
-        inputManager.addListener(this, "Lefts");
-        inputManager.addListener(this, "Rights");
-        inputManager.addListener(this, "Ups");
-        inputManager.addListener(this, "Downs");
-        inputManager.addListener(this, "Space");
-        inputManager.addListener(this, "Reset");
 
         inputManager.addListener(this, "Teleport");
         inputManager.addListener(this, "Left");
@@ -1743,6 +1784,8 @@ boolean doneInitCreatingCarSimulation = false;
         inputManager.addListener(this, "Space");
         inputManager.addListener(this, "Reset");
         inputManager.addListener(this, "gui");
+        inputManager.addListener(this, "useSingleLaneState");
+        inputManager.addListener(this, "usePairedLaneState");
     }
 
     public void attachChildNodes(Node node) {
@@ -1785,7 +1828,7 @@ boolean doneInitCreatingCarSimulation = false;
             if (isPressed) {
                 System.out.println("Reset");
                 carNode.addControl(vehicle);
-                vehicle.setPhysicsLocation(new Vector3f(0, 100, 0));
+                vehicle.setPhysicsLocation(new Vector3f(98, 0, 81));
                 vehicle.setPhysicsRotation(new Matrix3f());
                 vehicle.setLinearVelocity(Vector3f.ZERO);
                 vehicle.setAngularVelocity(Vector3f.ZERO);
@@ -1822,6 +1865,19 @@ boolean doneInitCreatingCarSimulation = false;
                 gui=!gui;
             }
         }
+        else if (binding.equals("useSingleLaneState")) { // if the controller has access to act paired lane traffic light
+            if (isPressed) {
+                controllerPairedState=false;
+                EventLogEntries.add("Controller-ul este setat pe un singur semafor.");
+            }
+        }
+        else if (binding.equals("usePairedLaneState")) { // if the controller has access to act paired lane traffic light
+            if (isPressed) {
+                controllerPairedState=true;
+                EventLogEntries.add("Controller-ul este setat pe doua semafoare.");
+            }
+        }
+
     }
 
     private void buildVehicle(String modelPath, Vector3f physLocatcation, Matrix3f rotation) {
@@ -1931,5 +1987,3 @@ boolean doneInitCreatingCarSimulation = false;
         System.out.println( "Running simulation time is: " + currentTimeElapse + " s");
     }
 }
-
-
