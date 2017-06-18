@@ -9,13 +9,16 @@ import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.UnreadableException;
 
+import java.util.Random;
+
 /**
  * Created by Catalin on 5/29/2017.
  */
 public class ActingAgent extends Agent implements IActing {
 
     IntersectionActing intersectionActing;
-    boolean state = false; // Alternate between South-Nord and East-West
+    boolean state = (new Random()).nextInt(1) != 1; // Alternate between South-Nord and East-West
+    int index = (new Random()).nextInt(4);
 
     CyclicBehaviour normalCycle = new CyclicBehaviour() {
         @Override
@@ -102,33 +105,44 @@ CyclicBehaviour manualCycle = new CyclicBehaviour() {
     public void action() {
 
         try {
-            Thread.sleep(10);
+            Thread.sleep(40);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         if(!CoreAgent.automaticMode) {
 
+            index = index % 4;
+
             int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1)); // Send Feedback to IntersectionController
 
             intersectionActing = new IntersectionActing();
-            intersectionActing.setLaneDirection(state,!state);
-            state = !state;
+            if(!graphicEngine.controllerPairedState) {
+                intersectionActing.setLaneByTrafficLightID(index);
+            }else{
+                intersectionActing.setLaneDirection(state, !state);
+                state = !state;
+            }
 
             actingHandler act = new actingHandler("Intersection", thisID, intersectionActing, true);
+            if(graphicEngine.request != null) {
+                if (graphicEngine.request.size() > 0) {
+                    boolean equals = false;
+                    for (int i = 0; i < graphicEngine.request.size(); i++) {
 
-            if (graphicEngine.request.size() != 0) {
-                boolean equals = false;
-                for (int i = 0; i < graphicEngine.request.size(); i++) {
-
-                    equals = equals || graphicEngine.request.get(i).Equals(act);
-                    if (equals)
-                        break;
-                }
-                if (!equals)
+                        equals = equals || graphicEngine.request.get(i).Equals(act);
+                        if (equals)
+                            break;
+                    }
+                    if (!equals) {
+                        graphicEngine.request.add(act);
+                        index++;
+                    }
+                } else {
                     graphicEngine.request.add(act);
-            } else
-                graphicEngine.request.add(act);
+                    index++;
+                }
+            }
         }
     }
 };

@@ -21,8 +21,7 @@ import jade.wrapper.StaleProxyException;
 import java.io.IOException;
 import java.util.LinkedList;
 
-import static GEngine.graphicEngine.EventLogEntries;
-import static GEngine.graphicEngine.numberOfIntersections;
+import static GEngine.graphicEngine.*;
 
 /**
  * Created by Catalin on 5/22/2017.
@@ -38,7 +37,7 @@ public class CoreAgent extends Agent {
     public static LinkedList<AID> availableNucleus;
     public static LinkedList<AID> disabledControllers;
     private int NucleusIndex;
-    private boolean doneCreatingAgents;
+    private boolean doneCreatingInfrastructureAgents;
     private boolean doneInitBehaviour;
     private static int requestedServiceController;
     ContainerController home = null;
@@ -154,7 +153,7 @@ public class CoreAgent extends Agent {
         public void action() {
             availableNucleus = new LinkedList<AID>();
             NucleusIndex = 0;
-            doneCreatingAgents = false;
+            doneCreatingInfrastructureAgents = false;
             disabledControllers = new LinkedList<AID>();
             requestedServiceController = 0;
             automaticMode= false;
@@ -195,7 +194,7 @@ public class CoreAgent extends Agent {
     Behaviour updateStates = new CyclicBehaviour() { // Send data to Nucleus to update setpoint
         @Override
         public void action() {
-            if (doneCreatingAgents && doneDetecting && automaticMode ) {
+            if (doneCreatingInfrastructureAgents && doneDetecting && automaticMode ) {
                 for(NucleusIndex = 0; NucleusIndex< numberOfIntersections; NucleusIndex++) {
 
                     Iterator it = getAID().getAllAddresses();
@@ -254,10 +253,7 @@ public class CoreAgent extends Agent {
         @Override
         public void action() {
 
-            if(graphicEngine.startApplication ) {
-
-                String platforma = getAID().getName().split("@")[1];
-
+            if (graphicEngine.startApplication && !automaticMode && !doneCreatingManualActuators) {
 
                 // Start number of vehicles # to continue!
 //                if(graphicEngine.numberOfCars >0) {
@@ -296,13 +292,13 @@ public class CoreAgent extends Agent {
 //                    }
 //                }
 
-                if(graphicEngine.numberOfIntersections>0) {
+                if (graphicEngine.numberOfIntersections > 0) {
 
                     for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
 
                         // Start number of Intersections # to continue!
                         // Acting Agents
-                        if(!doneCreatingManualActuators) {
+                        if (!doneCreatingManualActuators) {
                             try {
                                 rma = home.createNewAgent("IntersectionActing" + i,
                                         "Acting.ActingAgent", new Object[0]);
@@ -313,51 +309,81 @@ public class CoreAgent extends Agent {
                                 e.printStackTrace();
                             }
                         }
-                        if(automaticMode) {
-                            if (!doneCreatingAgents) {
-                                // Nucleus Agents
+
+                    }
+
+                    doneCreatingManualActuators = true;
+                }
+
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (startApplication && automaticMode && !doneCreatingInfrastructureAgents) {
+
+
+                String platforma = getAID().getName().split("@")[1];
+                if (graphicEngine.numberOfIntersections > 0) {
+
+
+                    for (int i = 0; i < graphicEngine.numberOfIntersections; i++) {
+
+                            // Start number of Intersections # to continue!
+                            // Acting Agents
+                            if (!doneCreatingManualActuators) {
                                 try {
-                                    AgentController rma = home.createNewAgent("IntersectionNucleus" + i,
-                                            "Nucleus.Nucleus", new Object[0]);
-                                    rma.start();
-                                    availableNucleus.add(new AID("IntersectionNucleus" + i + "@" + platforma, AID.ISGUID));
-                                    graphicEngine.EventLogEntries.add("Agent nucleu celula cu ID-ul " + i + " este lansat in executie.");
-                                } catch (StaleProxyException e) {
-                                    e.printStackTrace();
-                                }
-                                // Controlling Agents
-                                try {
-                                    rma = home.createNewAgent("IntersectionController" + i,
-                                            "Controlling.IntersectionController", new Object[0]);
+                                    rma = home.createNewAgent("IntersectionActing" + i,
+                                            "Acting.ActingAgent", new Object[0]);
                                     rma.start();
                                     // to print in console!!!
-                                    graphicEngine.EventLogEntries.add("Agent controller cu ID-ul " + i + " este lansat in executie.");
-                                } catch (StaleProxyException e) {
-                                    e.printStackTrace();
-                                }
-                                // Sensing Agents
-                                try {
-                                    // home.getAgent("IntersectionSensing" + i);
-                                    rma = home.createNewAgent("IntersectionSensing" + i,
-                                            "Sensing.SensingAgent", new Object[0]);
-                                    rma.start();
-                                    // to print in console!!!
-                                    graphicEngine.EventLogEntries.add("Agent senzor cu ID-ul " + i + " este lansat in executie.");
+                                    graphicEngine.EventLogEntries.add("Agent element de actionare cu ID-ul " + i + " este lansat\n  in executie.");
                                 } catch (StaleProxyException e) {
                                     e.printStackTrace();
                                 }
                             }
+
+
+                        // Nucleus Agents
+                        try {
+                            AgentController rma = home.createNewAgent("IntersectionNucleus" + i,
+                                    "Nucleus.Nucleus", new Object[0]);
+                            rma.start();
+                            availableNucleus.add(new AID("IntersectionNucleus" + i + "@" + platforma, AID.ISGUID));
+                            graphicEngine.EventLogEntries.add("Agent nucleu celula cu ID-ul " + i + " este lansat in executie.");
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
+                        // Controlling Agents
+                        try {
+                            rma = home.createNewAgent("IntersectionController" + i,
+                                    "Controlling.IntersectionController", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                            graphicEngine.EventLogEntries.add("Agent controller cu ID-ul " + i + " este lansat in executie.");
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
+                        }
+                        // Sensing Agents
+                        try {
+                            // home.getAgent("IntersectionSensing" + i);
+                            rma = home.createNewAgent("IntersectionSensing" + i,
+                                    "Sensing.SensingAgent", new Object[0]);
+                            rma.start();
+                            // to print in console!!!
+                            graphicEngine.EventLogEntries.add("Agent senzor cu ID-ul " + i + " este lansat in executie.");
+                        } catch (StaleProxyException e) {
+                            e.printStackTrace();
                         }
                     }
-                    doneCreatingManualActuators = true;
-                    doneCreatingAgents = true;
+                    if(!doneCreatingManualActuators){
+                        doneCreatingManualActuators = true;
+                    }
+                    doneCreatingInfrastructureAgents = true;
                 }
-            }
 
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         }
     };
@@ -422,18 +448,38 @@ public class CoreAgent extends Agent {
             if (disabledControllers.size() > 0 && availableNucleus.size() > 0 && requestedServiceController>0 && doneDetecting) {
                 for (int i=0; i<disabledControllers.size(); i++) {
 
+                    int defectID = Integer.parseInt(disabledControllers.get(i).getLocalName().substring(disabledControllers.get(i).getLocalName().length()-1));
+                    int defectSolverID = 0;
+
                     Iterator it = getAID().getAllAddresses();
                     String adresa = (String) it.next();
                     String platforma = getAID().getName().split("@")[1];
 
                     ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                    AID r = new AID(Helper.IntersectionNucleus + disabledControllers.get(i).getLocalName().substring(disabledControllers.get(i).getLocalName().length()-1) + "@" + platforma, AID.ISGUID);
+                    AID r = new AID(Helper.IntersectionNucleus + defectID + "@" + platforma, AID.ISGUID);
                     disabledControllers.get(i).addAddresses(adresa);
                     messageToSend.setConversationId("DefectSolver");
                     messageToSend.addReceiver(r);
 
+                    for(int count = 0; count < LocationGraph.size(); count ++) {
+                        if (LocationGraph.get(count).getComponentID() == defectID){
+                            if(LocationGraph.get(count).isUpNeighbour()!= null)
+                                defectSolverID = LocationGraph.get(count).isUpNeighbour().getComponentID();
+                            else
+                            if(LocationGraph.get(count).isLeftNeighbour()!= null)
+                                defectSolverID = LocationGraph.get(count).isLeftNeighbour().getComponentID();
+                            else
+                            if(LocationGraph.get(count).isRightNeighbour()!= null)
+                                defectSolverID = LocationGraph.get(count).isRightNeighbour().getComponentID();
+                            else
+                            if(LocationGraph.get(count).isDownNeighbour()!= null)
+                                defectSolverID = LocationGraph.get(count).isDownNeighbour().getComponentID();
+                        }
+                    }
+
+
                     try {
-                        messageToSend.setContentObject( new AID(Helper.IntersectionController + Helper.getAvailableControllerAID(disabledControllers.get(i)) + "@" + platforma, AID.ISGUID)); // send first AID available - !!! to create a new fesable method for this
+                        messageToSend.setContentObject( new AID(Helper.IntersectionController + defectSolverID + "@" + platforma, AID.ISGUID));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

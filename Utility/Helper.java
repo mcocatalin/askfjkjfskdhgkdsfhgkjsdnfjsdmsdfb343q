@@ -31,7 +31,7 @@ public class Helper {
 
     public static boolean DoneDecrementDelay[] = new boolean[4];
 
-    public static long tStart;
+    public static long tStart = -1;
 
 
     public static void LogDebugUseData(int ID, long time, int UpLaneIntersectionValue, int RightIntersectionValue, int DownLaneIntersectionValue, int LeftLaneIntersectionValue, boolean state1, int state2){

@@ -133,10 +133,12 @@ public class IntersectionController extends Agent implements IController {
                                 if (graphicEngine.controllerPairedState) {
                                     if (intersectionSensing.getMaxDensity()[0] > intersectionSensing.getMaxDensity()[1]) {
                                         intersectionActing.setLaneDirection(true, false);
+                                       // EventLogEntries.add("Controller-ul cu ID-ul " + thisID + " a schimbat directia de mers pe Nord-Sud");
                                     } else {
                                         intersectionActing.setLaneDirection(false, true);
+                                       // EventLogEntries.add("Controller-ul cu ID-ul " + thisID + " a schimbat directia de mers pe Vest-Est");
                                     }
-                                } else {
+                                } else { // SINGLE LANE !!
                                     int maxLaneDensityID = 0;
                                     for (int i = 1; i < 4; i++) {
                                             if (intersectionSensing.getDensity(maxLaneDensityID) <= intersectionSensing.getDensity(i)) {
@@ -154,7 +156,6 @@ public class IntersectionController extends Agent implements IController {
                                 }
 
                             }
-
                             messageToSend.addReceiver(r);
                             myAgent.send(messageToSend);
                     }
@@ -174,6 +175,7 @@ public class IntersectionController extends Agent implements IController {
         @Override
         public void action() { // Receive world feedback
             if (myAgent.getCurQueueSize() > 0) {
+                int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
                 for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
                     ACLMessage mesaj_receptionat = myAgent.receive();
                     if (mesaj_receptionat != null) {
@@ -215,6 +217,8 @@ public class IntersectionController extends Agent implements IController {
                             if (mesaj_receptionat.getConversationId() == "DefectSolver") { // Data from Nucleus
                                 try {
                                     serviceControllerAID = (AID) mesaj_receptionat.getContentObject();
+                                    int serviceControllerID = Integer.parseInt(serviceControllerAID.getLocalName().substring(serviceControllerAID.getLocalName().length() - 1));
+                                    EventLogEntries.add("Controller-ului defect cu ID-ul " + thisID + " i s-au asociat atributiile controllerului " + serviceControllerID);
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();
                                 }

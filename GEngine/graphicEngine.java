@@ -64,7 +64,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public static int numberOfIntersections = 5;
     public static int numberOfSensorperLane = 3;
     public static int maxCarsPerSensingArea = 3;
-    public static IntersectionActing[] intersectionActings= new IntersectionActing[numberOfIntersections];
+    public static IntersectionActing[] intersectionActings= new IntersectionActing[numberOfIntersections]; // surpressed in LocationGraph
+
 
     //  TIMER TASK VARIABLES
     public static int carWidth = 4;
@@ -81,6 +82,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     private boolean gui = false;
     public static boolean controllerPairedState = false;
     public static boolean[] ActiveIntersectionControllers = new boolean[numberOfIntersections];
+    public static boolean[] ActiveIntersectionSensors = new boolean[numberOfIntersections];
+    public static boolean[] ActiveIntersectionActuators = new boolean[numberOfIntersections];
 
 
     public BitmapText hudText;
@@ -174,6 +177,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     final String[] modelPaths = {"Models/Ferrari/Car.scene", "src/assets/Models/Ford.zip"};
 
     final Vector3f[] valideLocations = {
+            new Vector3f(27, 0, 66),
             new Vector3f(98, 0, 81),
             new Vector3f(46, 18.2f, 97),
             new Vector3f(37, 18.2f, -119),
@@ -201,8 +205,8 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
     public LinkedList<IntersectionItem> Intersections;
 
     // Communication members
-    public static List<actingHandler> request = new ArrayList<actingHandler>();
-    public static List<sensingHandler> response = new ArrayList<sensingHandler>();
+    public static List<actingHandler> request = Collections.synchronizedList(new ArrayList<actingHandler>());
+    public static List<sensingHandler> response = Collections.synchronizedList(new ArrayList<sensingHandler>());
 
     // Test Motion Path
     private MotionPath path;
@@ -406,9 +410,6 @@ boolean doneInitCreatingCarSimulation = false;
                             boolean DownState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[2];
                             boolean LeftState = CoreAgent.LocationGraph.get(i).getIntersectionActing().getIntersectionState()[3];
 
-
-                            //decrementNumberofCars = new Random().nextInt(maxCarsPerSensingArea * numberOfSensorperLane);//Math.abs(CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(i)));
-
                             if (UpState ) {
                                 if(CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0) > 0) {
 
@@ -485,9 +486,10 @@ boolean doneInitCreatingCarSimulation = false;
 
                         }
 
-//                        Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+                        int randomLaneGenerator = (new Random()).nextInt(4);
+                            CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(randomLaneGenerator, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(randomLaneGenerator) + 1);
 
-
+                        //                       Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
                     }
 
                     expiredCycleTime[0] = false;
@@ -511,6 +513,30 @@ boolean doneInitCreatingCarSimulation = false;
             timerdelayNormal[i] = new Timer();
         }
 
+        // Create some sample data
+        double[] x = new double[100]; x[0] = 1;
+        double[] y1 = new double[100]; y1[0] = 200;
+        double[] y2 = new double[100]; y2[0] = 300;
+        for(int i = 1; i < x.length; i++){
+            x[i] = i+1;
+            y1[i] = y1[i-1] + Math.random()*10 - 4;
+            y2[i] = y2[i-1] + Math.random()*10 - 6;
+        }
+
+        // JAVA:                             // MATLAB:
+        JavaPlotter fig = new JavaPlotter(); // figure('Position',[100 100 640 480]);
+        fig.plot(x, y1, "-r", 2.0f, "AAPL"); // plot(x,y1,'-r','LineWidth',2);
+        fig.plot(x, y2, ":k", 3.0f, "BAC");  // plot(x,y2,':k','LineWidth',3);
+        fig.RenderPlot();                    // First render plot before modifying
+        fig.title("Stock 1 vs. Stock 2");    // title('Stock 1 vs. Stock 2');
+        fig.xlim(10, 100);                   // xlim([10 100]);
+        fig.ylim(200, 300);                  // ylim([200 300]);
+        fig.xlabel("Days");                  // xlabel('Days');
+        fig.ylabel("Price");                 // ylabel('Price');
+        fig.grid("on","on");                 // grid on;
+        fig.legend("northeast");             // legend('AAPL','BAC','Location','northeast')
+        fig.font("Helvetica",15);            // .. 'FontName','Helvetica','FontSize',15
+        fig.saveas("MyPlot1.jpeg",640,480);   // saveas(gcf,'MyPlot','jpeg');
 
         intersectionSensingDensity = new IntersectionSensing[numberOfIntersections];
 
@@ -523,7 +549,7 @@ boolean doneInitCreatingCarSimulation = false;
         setHudText();
         setSun();
         load_sky();
-        buildVehicle(modelPaths[0], valideLocations[0], valideRotations[3]);
+        buildVehicle(modelPaths[0], valideLocations[0], map.getWorldRotation().toRotationMatrix());
         //LoadIntersectionlights();
 
         flyCam.setEnabled(true);
@@ -532,7 +558,7 @@ boolean doneInitCreatingCarSimulation = false;
 
 
         cameraSetup();
-        load_player();
+        //load_player();
 
         SetIntersections();
 
@@ -634,7 +660,6 @@ boolean doneInitCreatingCarSimulation = false;
         // DEBUG
         //response.add(new sensingHandler("Intersection", index, intersectionLaneValues));
 
-        Helper.tStart = System.currentTimeMillis();
 
 
     }
@@ -796,6 +821,8 @@ boolean doneInitCreatingCarSimulation = false;
                 timerdelayNormal[i].schedule(tmtskNormal[i], cycleTimeforLaneDecreasing, cicleInterval);
             }
 
+            Helper.tStart = System.currentTimeMillis();
+
             changedUISpeed = false;
         }
 
@@ -841,7 +868,7 @@ boolean doneInitCreatingCarSimulation = false;
         if (!request.isEmpty()) {
 
             if(normalCycleTimer[0]) {
-                if ((controllerPairedState && request.size() >= 2 * numberOfIntersections) || (!controllerPairedState && request.size() >= numberOfIntersections)) {
+                if ((controllerPairedState && request.size() >= numberOfIntersections) || (!controllerPairedState && request.size() >= numberOfIntersections)) {
                     for (int i = 0; i < numberOfIntersections; i++) {
                         outerloop:
                         for (int j = 0; j < request.size(); j++) {
@@ -881,11 +908,11 @@ boolean doneInitCreatingCarSimulation = false;
             UpdateSimulationCars();
         }
 
-//        if(expiredCycleTime[3])
-//        {
-//            CarMoveAt(valideLocations[0].add(-100,0,0));
-//            expiredCycleTime[3] = false;
-//        }
+        if(expiredCycleTime[3])
+        {
+            CarMoveAt(valideLocations[0].add(-100,0,0));
+            expiredCycleTime[3] = false;
+        }
 
 
 
@@ -947,7 +974,7 @@ boolean doneInitCreatingCarSimulation = false;
     public static void createEventLogEntry(){
         if(!EventLogEntries.isEmpty()) {
             String event = EventLogEntries.remove(0);
-            nifty.getCurrentScreen().findNiftyControl("myListBox", ListBox.class).addItem(">>" + " " + event);
+            nifty.getCurrentScreen().findNiftyControl("myListBox", ListBox.class).addItem( ">>" + " " + event);
         }
     }
 
@@ -959,7 +986,24 @@ boolean doneInitCreatingCarSimulation = false;
                 if (CoreAgent.LocationGraph.size() == numberOfIntersections) {
                     if (CoreAgent.LocationGraph.get(i).getIntersectionSensing() != null) {
                         currentResponse = new sensingHandler("Intersection", i, CoreAgent.LocationGraph.get(i).getIntersectionSensing());
-                        response.add(currentResponse);
+
+                        if (graphicEngine.response.size() != 0) {
+                            boolean equals = false;
+                            for (int k = 0; k < graphicEngine.response.size(); k++) {
+
+                                equals = equals || graphicEngine.response.get(k).equals(currentResponse);
+                                if (equals)
+                                    break;
+                            }
+                            if (!equals) {
+                                graphicEngine.response.add(currentResponse);
+                            }
+                        } else {
+                            graphicEngine.response.add(currentResponse);
+                        }
+
+
+                        //graphicEngine.response.add(currentResponse);
                     }
                 }
             }
@@ -1459,7 +1503,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler9 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-             ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+             ActiveIntersectionControllers[1] = !ActiveIntersectionControllers[1];
         }
     };
 
@@ -1467,7 +1511,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler91 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionSensors[1] = !ActiveIntersectionSensors[1];
         }
     };
 
@@ -1475,7 +1519,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler92 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionActuators[1] = !ActiveIntersectionActuators[1];
         }
     };
 
@@ -1486,7 +1530,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler10 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            ActiveIntersectionControllers[1] = !ActiveIntersectionControllers[1];
+            ActiveIntersectionControllers[2] = !ActiveIntersectionControllers[2];
         }
     };
 
@@ -1494,7 +1538,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler101 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionSensors[2] = !ActiveIntersectionSensors[2];
         }
     };
 
@@ -1502,7 +1546,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler102 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionActuators[2] = !ActiveIntersectionActuators[2];
         }
     };
 
@@ -1511,7 +1555,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler11 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            ActiveIntersectionControllers[2] = !ActiveIntersectionControllers[2];
+            ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
         }
     };
 
@@ -1519,7 +1563,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler111 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionSensors[0] = !ActiveIntersectionSensors[0];
         }
     };
 
@@ -1527,7 +1571,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler112 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionActuators[0] = !ActiveIntersectionActuators[0];
         }
     };
 
@@ -1537,7 +1581,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler12 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            ActiveIntersectionControllers[3] = !ActiveIntersectionControllers[3];
+            ActiveIntersectionControllers[4] = !ActiveIntersectionControllers[4];
         }
     };
 
@@ -1545,7 +1589,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler121 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionSensors[4] = !ActiveIntersectionSensors[4];
         }
     };
 
@@ -1553,7 +1597,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler122 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionActuators[4] = !ActiveIntersectionActuators[4];
         }
     };
 
@@ -1563,7 +1607,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler13 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            ActiveIntersectionControllers[4] = !ActiveIntersectionControllers[4];
+            ActiveIntersectionControllers[3] = !ActiveIntersectionControllers[3];
         }
     };
 
@@ -1571,7 +1615,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler131 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionSensors[3] = !ActiveIntersectionSensors[3];
         }
     };
 
@@ -1579,7 +1623,7 @@ boolean doneInitCreatingCarSimulation = false;
     EventTopicSubscriber<CheckBoxStateChangedEvent> eventHandler132 = new EventTopicSubscriber<CheckBoxStateChangedEvent>() {
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
-            //ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            ActiveIntersectionActuators[3] = !ActiveIntersectionActuators[3];
         }
     };
 
@@ -1587,7 +1631,6 @@ boolean doneInitCreatingCarSimulation = false;
         @Override
         public void onEvent(String s, ButtonClickedEvent checkBoxStateChangedEvent) {
             startApplication = true;
-//            nifty.getCurrentScreen().findNiftyControl("startMASinit", Button.class).setStyle("nifty-panel-red");
         }
     };
 
@@ -1596,7 +1639,6 @@ boolean doneInitCreatingCarSimulation = false;
         public void onEvent(final String topic, final SliderChangedEvent event) {
             carSpeed = (int) nifty.getCurrentScreen().findNiftyControl("carAverageSpeedValue", Slider.class).getValue();
             String value = String.valueOf(carSpeed);
-//            changedUISpeed = !changedUISpeed;
             nifty.getCurrentScreen().findNiftyControl("carAverageSpeed", Button.class).setText("Viteza medie de circulatie: " + value);
         }
     };
@@ -1607,7 +1649,6 @@ boolean doneInitCreatingCarSimulation = false;
             cicleInterval = (int) nifty.getCurrentScreen().findNiftyControl("trafficLightIntervalValue", Slider.class).getValue();
             String value = String.valueOf(cicleInterval);
             cicleInterval = cicleInterval * 1000;
-//            changedUISpeed = true; // ok for timer
             nifty.getCurrentScreen().findNiftyControl("trafficLightInterval", Button.class).setText("Interval semafor: " + value);
         }
     };
@@ -1625,7 +1666,12 @@ boolean doneInitCreatingCarSimulation = false;
         @Override
         public void onEvent(final String topic, final ButtonClickedEvent event) {
             CoreAgent.automaticMode = false;
-            EventLogEntries.add("Modul controller-ului este manual.");
+            if(tStart == -1) {
+                EventLogEntries.add("Initializare: Modul controller-ului este manual.");
+            }
+            else {
+                EventLogEntries.add("Timp de simulare: "+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controller-ului este manual.");
+            }
         }
     };
 
@@ -1633,7 +1679,12 @@ boolean doneInitCreatingCarSimulation = false;
         @Override
         public void onEvent(final String topic, final ButtonClickedEvent event) {
             CoreAgent.automaticMode = true;
-            EventLogEntries.add("Modul controller-ului este automat.");
+            if(tStart == -1) {
+                EventLogEntries.add("Initializare: Modul controller-ului este automat.");
+            }
+            else {
+                EventLogEntries.add("TS: " + String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controller-ului este automat.");
+            }
         }
     };
 
@@ -1868,13 +1919,27 @@ boolean doneInitCreatingCarSimulation = false;
         else if (binding.equals("useSingleLaneState")) { // if the controller has access to act paired lane traffic light
             if (isPressed) {
                 controllerPairedState=false;
-                EventLogEntries.add("Controller-ul este setat pe un singur semafor.");
+                if(tStart == -1) {
+                    EventLogEntries.add("Init: Modul controller-ulului este setat pe un singur semafor.");
+                }
+                else {
+                    EventLogEntries.add("TS: "+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controller-ulului este setat pe un singur semafor.");
+                }
+//                EventLogEntries.add("Controller-ul este setat pe un singur semafor.");
             }
         }
         else if (binding.equals("usePairedLaneState")) { // if the controller has access to act paired lane traffic light
             if (isPressed) {
                 controllerPairedState=true;
-                EventLogEntries.add("Controller-ul este setat pe doua semafoare.");
+                if(tStart == -1) {
+                    EventLogEntries.add("Init: Modul controller-ulului este setat pe doua semafoare.");
+                }
+                else {
+                    long currentSimulationTime = System.currentTimeMillis() - tStart;
+                    if(currentSimulationTime <= 1000)
+                        currentSimulationTime = currentSimulationTime % 1000;
+                    EventLogEntries.add("TS :"+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controller-ulului este setat pe doua semafoare.");
+                }
             }
         }
 

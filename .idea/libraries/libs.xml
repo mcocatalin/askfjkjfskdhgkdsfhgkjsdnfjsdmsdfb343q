@@ -7,6 +7,9 @@
     <JAVADOC />
     <SOURCES>
       <root url="file://$PROJECT_DIR$/libs" />
+      <root url="file://$PROJECT_DIR$/libs/source" />
+      <root url="file://$PROJECT_DIR$/libs/src/main/java" />
+      <root url="file://$PROJECT_DIR$/libs/src/test/java" />
     </SOURCES>
     <jarDirectory url="file://$PROJECT_DIR$/libs" recursive="false" />
     <jarDirectory url="file://$PROJECT_DIR$/libs" recursive="false" type="SOURCES" />
