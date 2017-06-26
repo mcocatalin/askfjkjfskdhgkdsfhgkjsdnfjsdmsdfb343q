@@ -40,7 +40,9 @@ public class CoreAgent extends Agent {
     private boolean doneCreatingInfrastructureAgents;
     private boolean doneInitBehaviour;
     private static int requestedServiceController;
-    ContainerController home = null;
+
+    private ContainerController home;
+    private AgentController AMS;
 
     public static LinkedList<IntersectionItemGraph> LocationGraph;
 
@@ -55,7 +57,6 @@ public class CoreAgent extends Agent {
 
     private boolean centralControl;
 
-    public static AgentController rma; // Same as CoreAgent setted in iniBehaviour
 
     Behaviour discoverAgents = new Behaviour() {
         @Override
@@ -233,11 +234,9 @@ public class CoreAgent extends Agent {
         public void action() {
 
             try {
-                rma = home.createNewAgent("Environment" ,
+                AMS = home.createNewAgent("Environment" ,
                         "src.CitySCAPE", new Object[0]);
-                rma.start();
-                //graphicEngine.EventLogEntries.add("Created " )
-                // to print in console!!!
+                AMS.start();
             } catch (StaleProxyException e) {
                 e.printStackTrace();
             }
@@ -261,9 +260,9 @@ public class CoreAgent extends Agent {
 //                        // Sensing Agents
 //                        //if(AMSService.)
 //                        try {
-//                            rma = home.createNewAgent("VehicleSensing" + i,
+//                            AMS = home.createNewAgent("VehicleSensing" + i,
 //                                    "Sensing.SensingAgent", new Object[0]);
-//                            rma.start();
+//                            AMS.start();
 //                            //graphicEngine.EventLogEntries.add("Created " )
 //                            // to print in console!!!
 //                        } catch (StaleProxyException e) {
@@ -272,9 +271,9 @@ public class CoreAgent extends Agent {
 //
 //                        // Controlling Agents
 //                        try {
-//                            rma = home.createNewAgent("VehicleController" + i,
+//                            AMS = home.createNewAgent("VehicleController" + i,
 //                                    "Controlling.VehicleController", new Object[0]);
-//                            rma.start();
+//                            AMS.start();
 //                            // to print in console!!!
 //                        } catch (StaleProxyException e) {
 //                            e.printStackTrace();
@@ -282,9 +281,9 @@ public class CoreAgent extends Agent {
 //
 //                        // Acting Agents
 //                        try {
-//                            rma = home.createNewAgent("VehicleActing" + i,
+//                            AMS = home.createNewAgent("VehicleActing" + i,
 //                                    "Acting.ActingAgent", new Object[0]);
-//                            rma.start();
+//                            AMS.start();
 //                            // to print in console!!!
 //                        } catch (StaleProxyException e) {
 //                            e.printStackTrace();
@@ -300,9 +299,9 @@ public class CoreAgent extends Agent {
                         // Acting Agents
                         if (!doneCreatingManualActuators) {
                             try {
-                                rma = home.createNewAgent("IntersectionActing" + i,
+                                AMS = home.createNewAgent("IntersectionActing" + i,
                                         "Acting.ActingAgent", new Object[0]);
-                                rma.start();
+                                AMS.start();
                                 // to print in console!!!
                                 graphicEngine.EventLogEntries.add("Agent element de actionare cu ID-ul " + i + " este lansat\n  in executie.");
                             } catch (StaleProxyException e) {
@@ -325,7 +324,7 @@ public class CoreAgent extends Agent {
             if (startApplication && automaticMode && !doneCreatingInfrastructureAgents) {
 
 
-                String platforma = getAID().getName().split("@")[1];
+                String platforma = getAID().getName().split("@")[1]; // Core Agent platform name.
                 if (graphicEngine.numberOfIntersections > 0) {
 
 
@@ -335,9 +334,9 @@ public class CoreAgent extends Agent {
                             // Acting Agents
                             if (!doneCreatingManualActuators) {
                                 try {
-                                    rma = home.createNewAgent("IntersectionActing" + i,
+                                    AMS = home.createNewAgent("IntersectionActing" + i,
                                             "Acting.ActingAgent", new Object[0]);
-                                    rma.start();
+                                    AMS.start();
                                     // to print in console!!!
                                     graphicEngine.EventLogEntries.add("Agent element de actionare cu ID-ul " + i + " este lansat\n  in executie.");
                                 } catch (StaleProxyException e) {
@@ -358,20 +357,20 @@ public class CoreAgent extends Agent {
                         }
                         // Controlling Agents
                         try {
-                            rma = home.createNewAgent("IntersectionController" + i,
+                            AMS = home.createNewAgent("IntersectionController" + i,
                                     "Controlling.IntersectionController", new Object[0]);
-                            rma.start();
+                            AMS.start();
                             // to print in console!!!
-                            graphicEngine.EventLogEntries.add("Agent controller cu ID-ul " + i + " este lansat in executie.");
+                            graphicEngine.EventLogEntries.add("Agent controler cu ID-ul " + i + " este lansat in executie.");
                         } catch (StaleProxyException e) {
                             e.printStackTrace();
                         }
                         // Sensing Agents
                         try {
                             // home.getAgent("IntersectionSensing" + i);
-                            rma = home.createNewAgent("IntersectionSensing" + i,
+                            AMS = home.createNewAgent("IntersectionSensing" + i,
                                     "Sensing.SensingAgent", new Object[0]);
-                            rma.start();
+                            AMS.start();
                             // to print in console!!!
                             graphicEngine.EventLogEntries.add("Agent senzor cu ID-ul " + i + " este lansat in executie.");
                         } catch (StaleProxyException e) {
@@ -461,21 +460,63 @@ public class CoreAgent extends Agent {
                     messageToSend.setConversationId("DefectSolver");
                     messageToSend.addReceiver(r);
 
-                    for(int count = 0; count < LocationGraph.size(); count ++) {
-                        if (LocationGraph.get(count).getComponentID() == defectID){
-                            if(LocationGraph.get(count).isUpNeighbour()!= null)
-                                defectSolverID = LocationGraph.get(count).isUpNeighbour().getComponentID();
-                            else
-                            if(LocationGraph.get(count).isLeftNeighbour()!= null)
-                                defectSolverID = LocationGraph.get(count).isLeftNeighbour().getComponentID();
-                            else
-                            if(LocationGraph.get(count).isRightNeighbour()!= null)
-                                defectSolverID = LocationGraph.get(count).isRightNeighbour().getComponentID();
-                            else
-                            if(LocationGraph.get(count).isDownNeighbour()!= null)
-                                defectSolverID = LocationGraph.get(count).isDownNeighbour().getComponentID();
-                        }
+
+                    if(uncontrolledNegociation) {
+                            if (LocationGraph.get(defectID).isUpNeighbour() != null)
+                                defectSolverID = LocationGraph.get(defectID).isUpNeighbour().getComponentID();
+                            else if (LocationGraph.get(defectID).isLeftNeighbour() != null)
+                                defectSolverID = LocationGraph.get(defectID).isLeftNeighbour().getComponentID();
+                            else if (LocationGraph.get(defectID).isRightNeighbour() != null)
+                                defectSolverID = LocationGraph.get(defectID).isRightNeighbour().getComponentID();
+                            else if (LocationGraph.get(defectID).isDownNeighbour() != null)
+                                defectSolverID = LocationGraph.get(defectID).isDownNeighbour().getComponentID();
+                            try {
+                                Thread.sleep(4000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                     }
+
+                    else{
+                        int priority = 100000;
+                                if (LocationGraph.get(defectID).isUpNeighbour() != null) {
+
+                                    if (priority >= LocationGraph.get(defectID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(defectID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[1]) {
+                                        priority = LocationGraph.get(defectID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(defectID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[1];
+                                        defectSolverID = LocationGraph.get(defectID).isUpNeighbour().getComponentID();
+                                    }
+                                }
+                                if (LocationGraph.get(defectID).isLeftNeighbour() != null) {
+
+                                    if (priority >= LocationGraph.get(defectID).isLeftNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(defectID).isLeftNeighbour().getIntersectionSensing().getMaxDensity()[1]) {
+                                        priority = LocationGraph.get(defectID).isLeftNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(defectID).isLeftNeighbour().getIntersectionSensing().getMaxDensity()[1];
+                                        defectSolverID = LocationGraph.get(defectID).isLeftNeighbour().getComponentID();
+                                    }
+
+                                }
+                                if (LocationGraph.get(defectID).isRightNeighbour() != null) {
+
+                                    if (priority >= LocationGraph.get(defectID).isRightNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(defectID).isRightNeighbour().getIntersectionSensing().getMaxDensity()[1]) {
+                                        priority = LocationGraph.get(defectID).isRightNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(defectID).isRightNeighbour().getIntersectionSensing().getMaxDensity()[1];
+                                        defectSolverID = LocationGraph.get(defectID).isRightNeighbour().getComponentID();
+                                    }
+
+                                }
+                                if (LocationGraph.get(defectID).isDownNeighbour() != null) {
+
+                                    if (priority >= LocationGraph.get(defectID).isDownNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(defectID).isDownNeighbour().getIntersectionSensing().getMaxDensity()[1]) {
+                                        priority = LocationGraph.get(defectID).isDownNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(defectID).isDownNeighbour().getIntersectionSensing().getMaxDensity()[1];
+                                        defectSolverID = LocationGraph.get(defectID).isDownNeighbour().getComponentID();
+                                    }
+
+                                }
+
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
 
 
                     try {
@@ -496,6 +537,28 @@ public class CoreAgent extends Agent {
             }
         }
     };
+
+
+    private int getLowestComponentPriority(IntersectionItemGraph neighbour, IntersectionItemGraph parent){
+
+        int resultID;
+
+        if(neighbour.isDownNeighbour() != null && neighbour.isDownNeighbour() != parent){
+            resultID = getLowestComponentPriority(neighbour.isDownNeighbour(), neighbour);
+        }
+        if(neighbour.isUpNeighbour() != null && neighbour.isUpNeighbour() != parent){
+            resultID = getLowestComponentPriority(neighbour.isUpNeighbour(), neighbour);
+        }
+        if(neighbour.isLeftNeighbour() != null && neighbour.isLeftNeighbour() != parent){
+            resultID = getLowestComponentPriority(neighbour.isLeftNeighbour(), neighbour);
+        }
+        if(neighbour.isRightNeighbour() != null && neighbour.isRightNeighbour() != parent){
+            resultID = getLowestComponentPriority(neighbour.isRightNeighbour(), neighbour);
+        }
+
+        return -1;
+    }
+
 
     @Override
     protected void setup() {

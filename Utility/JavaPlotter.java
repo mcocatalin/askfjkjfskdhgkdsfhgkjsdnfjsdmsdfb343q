@@ -204,6 +204,8 @@ public class JavaPlotter {
             stroke = new BasicStroke(lineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10.0f, dash, 0.0f);
         else if (spec.contains("."))
             stroke = new BasicStroke(lineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 2.0f, dot, 0.0f);
+        else if (spec.contains("/"))
+            stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER, 5.0f, dot, 0.0f);
         if (spec.contains("y"))
             color = Color.YELLOW;
         else if (spec.contains("m"))

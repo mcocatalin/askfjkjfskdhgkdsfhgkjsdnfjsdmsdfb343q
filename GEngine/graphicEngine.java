@@ -46,19 +46,31 @@ import de.lessvoid.nifty.controls.listbox.builder.ListBoxBuilder;
 import de.lessvoid.nifty.controls.scrollpanel.builder.ScrollPanelBuilder;
 import de.lessvoid.nifty.controls.slider.builder.SliderBuilder;
 import de.lessvoid.nifty.screen.DefaultScreenController;
-import de.lessvoid.nifty.tools.Color;
 import org.bushe.swing.event.EventTopicSubscriber;
 
 import java.util.*;
 
 import static Controlling.IntersectionController.cicleInterval;
-import static Utility.Helper.*;
+import static Utility.Helper.tStart;
+import static Utility.Helper.tmtskNormal;
 import static com.jme3.math.ColorRGBA.Green;
 import static com.jme3.math.ColorRGBA.Red;
 import static jade.tools.sniffer.Message.offset;
 
 public class graphicEngine extends SimpleApplication implements ActionListener {
 
+    // Type of negociation
+    public static boolean uncontrolledNegociation = true;
+
+    // Plot variables
+    private double timeVector[];
+    private int simulationTime;
+    private double intersectionDensityPlotVector[][];
+    private double intersectionLanePlotVector[][][];
+    private int plotIndex;
+
+    // Mem er used for vehicle flow simulation
+    private int cycleTimeforLaneDecreasing;
 
     // Intersection members
     public static int numberOfIntersections = 5;
@@ -68,7 +80,7 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
 
     //  TIMER TASK VARIABLES
-    public static int carWidth = 4;
+    public static int carWidth = 5;
     public static int carSpeed = 13; // Km/h
     public static int carDecrementDelay = 0;
     public static boolean changedUISpeed = false;
@@ -333,9 +345,9 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
             //control(cs);
             // Using the builder pattern
             control(new ListBoxBuilder("myListBox") {{
-                displayItems(35);
+                displayItems(24); // 43 for fullHD!!! 35 for 1600x900!!!!
                 selectionModeDisabled();
-                height("80%");
+                height("100%");
                 width("100%"); // standard nifty width attribute
             }});
 
@@ -386,22 +398,12 @@ public class graphicEngine extends SimpleApplication implements ActionListener {
 
     }
 
-    private void UpdateSimulationCars1() {
-        if(this.intersectionSensingDensity == null) {
-            intersectionSensingDensity = new IntersectionSensing[numberOfIntersections];
-
-        }
-    }
-
 boolean doneInitCreatingCarSimulation = false;
 
     private void UpdateSimulationCars() {
              // Update number of cars for the Core Global Net of intersections with their states.
 
                 if (doneInitCreatingCarSimulation) {
-
-                    int decrementNumberofCars;
-                    int remainingCars = 0;
 
                     for (int i = 0; i < CoreAgent.LocationGraph.size(); i++) {
                         if (CoreAgent.LocationGraph.get(i).getIntersectionActing() != null) {
@@ -425,6 +427,9 @@ boolean doneInitCreatingCarSimulation = false;
                                 }
                                 Helper.LogDebugUseData(i, (System.currentTimeMillis() - tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3),  expiredCycleTime[1], 0);
                                 Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+
+//                                int randomLaneGenerator = (new Random()).nextInt(4);
+//                                CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(randomLaneGenerator, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(randomLaneGenerator) + 1);
                             }
 
                             if (RightState) {
@@ -443,12 +448,15 @@ boolean doneInitCreatingCarSimulation = false;
                                 Helper.LogDebugUseData(i, (System.currentTimeMillis() - tStart)/1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3),  expiredCycleTime[1], 1);
                                 Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
 
+//                                int randomLaneGenerator = (new Random()).nextInt(4);
+//                                CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(randomLaneGenerator, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(randomLaneGenerator) + 1);
+
                             }
 
                             if (DownState) {
                                 if(CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2) > 0) {
 
-                                    if (CoreAgent.LocationGraph.get(i).isDownNeighbour() != null) { // CHECK NEGATIVE DENSITY!!!
+                                    if (CoreAgent.LocationGraph.get(i).isDownNeighbour() != null) {
                                         {
                                             if (!CoreAgent.LocationGraph.get(i).isDownNeighbour().getIntersectionSensing().IntersectionLaneDensityISFULL(2)) {
 
@@ -464,6 +472,10 @@ boolean doneInitCreatingCarSimulation = false;
 
                                 Helper.LogDebugUseData(i, (System.currentTimeMillis() - tStart)/1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3),  expiredCycleTime[1], 2);
                                 Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+
+//                                int randomLaneGenerator = (new Random()).nextInt(4);
+//                                CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(randomLaneGenerator, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(randomLaneGenerator) + 1);
+
                             }
 
                             if (LeftState) {
@@ -482,12 +494,16 @@ boolean doneInitCreatingCarSimulation = false;
                                 }
                                 Helper.LogDebugUseData(i, (System.currentTimeMillis() - tStart)/1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3),  expiredCycleTime[1], 3);
                                 Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
+
+//                                int randomLaneGenerator = (new Random()).nextInt(4);
+//                                CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(randomLaneGenerator, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(randomLaneGenerator) + 1);
+
                             }
 
                         }
 
                         int randomLaneGenerator = (new Random()).nextInt(4);
-                            CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(randomLaneGenerator, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(randomLaneGenerator) + 1);
+                        CoreAgent.LocationGraph.get(i).getIntersectionSensing().setLaneDensity(randomLaneGenerator, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(randomLaneGenerator) + 1);
 
                         //                       Helper.LogFileData(i, (System.currentTimeMillis() - Helper.tStart) / 1000, CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(0), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(1), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(2), CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(3));
                     }
@@ -513,6 +529,30 @@ boolean doneInitCreatingCarSimulation = false;
             timerdelayNormal[i] = new Timer();
         }
 
+        // Plot variables
+        plotIndex = 0;
+
+        simulationTime = 100;
+        EventLogEntries.add("Timpul de analiza este: " + simulationTime + " secunde.");
+
+//        timeVector = new double[simulationTime];
+//        intersectionDensityPlotVector = new double[numberOfIntersections][simulationTime];
+//
+//        for(int i=0;i<numberOfIntersections;i++){
+//            for(int j=0;j<simulationTime;j++){
+//                intersectionDensityPlotVector[i][j] = 0;
+//            }
+//        }
+//
+//        intersectionLanePlotVector = new double[numberOfIntersections][4][simulationTime];
+//        for(int i=0;i<numberOfIntersections;i++){
+//            for(int j=0;j<4;j++){ // lanes
+//                for(int k=0;k<simulationTime;k++) { // values
+//                    intersectionLanePlotVector[i][j][k] = 0;
+//                }
+//            }
+//        }
+
         // Create some sample data
         double[] x = new double[100]; x[0] = 1;
         double[] y1 = new double[100]; y1[0] = 200;
@@ -536,7 +576,7 @@ boolean doneInitCreatingCarSimulation = false;
         fig.grid("on","on");                 // grid on;
         fig.legend("northeast");             // legend('AAPL','BAC','Location','northeast')
         fig.font("Helvetica",15);            // .. 'FontName','Helvetica','FontSize',15
-        fig.saveas("MyPlot1.jpeg",640,480);   // saveas(gcf,'MyPlot','jpeg');
+        fig.saveas("MyPlot1.jpeg",800,600);   // saveas(gcf,'MyPlot','jpeg');
 
         intersectionSensingDensity = new IntersectionSensing[numberOfIntersections];
 
@@ -570,38 +610,38 @@ boolean doneInitCreatingCarSimulation = false;
             tm[i] = new Timer();
         }
 
-        tmtsk[0] = new TimerTask() {
-            @Override
-            public void run() {
-                expiredCycleTime[0] = true;
-//                if(changedUISpeed){
-//                    this.cancel();
-////                    this = new TimerTask();
+//        tmtsk[0] = new TimerTask() {
+//            @Override
+//            public void run() {
+//                expiredCycleTime[0] = true;
+////                if(changedUISpeed){
+////                    this.cancel();
+//////                    this = new TimerTask();
+////
+////                }
+//            }
+//        };
 //
-//                }
-            }
-        };
-
-        tmtsk[1] = new TimerTask() {
-            @Override
-            public void run() {
-                expiredCycleTime[1] = true;
-            }
-        };
-
-        tmtsk[2] = new TimerTask() {
-            @Override
-            public void run() {
-                expiredCycleTime[2] = true;
-            }
-        };
-
-        tmtsk[3]= new TimerTask() {
-            @Override
-            public void run() {
-                expiredCycleTime[3] = true;
-            }
-        };
+//        tmtsk[1] = new TimerTask() {
+//            @Override
+//            public void run() {
+//                expiredCycleTime[1] = true;
+//            }
+//        };
+//
+//        tmtsk[2] = new TimerTask() {
+//            @Override
+//            public void run() {
+//                expiredCycleTime[2] = true;
+//            }
+//        };
+//
+//        tmtsk[3]= new TimerTask() {
+//            @Override
+//            public void run() {
+//                expiredCycleTime[3] = true;
+//            }
+//        };
 
 
         // INIT COUNTER!!!
@@ -798,7 +838,54 @@ boolean doneInitCreatingCarSimulation = false;
 
     }
 
-    Vector3f destination = new Vector3f(-62.5f, -5.5f, -17.2f);
+    private void StartSimulationTimer(){
+        if(changedUISpeed){
+
+            cycleTimeforLaneDecreasing = 3600 * carWidth  / carSpeed; // ms for car to run for it's width size
+//            for(int i=0; i<3;i++) {
+            timerdelay[0].scheduleAtFixedRate(Helper.tmtsk, 0, cycleTimeforLaneDecreasing);
+//            }
+
+            EventLogEntries.add("Viteza medie statistica este de " + carSpeed + " km/h.");
+            EventLogEntries.add("Faza minima este de " + cicleInterval/1000 + " secunde");
+
+
+            for(int i=0; i<numberOfIntersections; i++){
+                timerdelayNormal[i].schedule(tmtskNormal[i], cycleTimeforLaneDecreasing, cicleInterval);
+            }
+
+
+            int samples = 0;
+            if((float)cycleTimeforLaneDecreasing/1000 <= 1)
+                samples = 1000*simulationTime/cycleTimeforLaneDecreasing;
+            else
+                samples = simulationTime;
+            timeVector = new double[samples];
+
+            intersectionDensityPlotVector = new double[numberOfIntersections][samples];
+
+            for(int i=0;i<numberOfIntersections;i++){
+                for(int j=0;j<samples;j++){
+                    intersectionDensityPlotVector[i][j] = 0;
+                }
+            }
+
+            intersectionLanePlotVector = new double[numberOfIntersections][4][samples];
+            for(int i=0;i<numberOfIntersections;i++){
+                for(int j=0;j<4;j++){ // lanes
+                    for(int k=0;k<samples;k++) { // values
+                        intersectionLanePlotVector[i][j][k] = 0;
+                    }
+                }
+            }
+
+            Helper.tStart = System.currentTimeMillis();
+
+            EventLogEntries.add("Perioada de esantionare a fluxului de trafic este\n de " + (float)cycleTimeforLaneDecreasing/1000+" secunde.");
+
+            changedUISpeed = false;
+        }
+    }
 
     @Override
     public void simpleUpdate(float tpf) {
@@ -809,29 +896,10 @@ boolean doneInitCreatingCarSimulation = false;
             e.printStackTrace();
         }
 
-        if(changedUISpeed){
-
-            int cycleTimeforLaneDecreasing;
-            cycleTimeforLaneDecreasing = 3600 * carWidth  / carSpeed; // ms for car to run for it's width size
-            for(int i=0; i<3;i++) {
-                timerdelay[i].scheduleAtFixedRate(Helper.tmtsk[i], 0, cycleTimeforLaneDecreasing);
-            }
-            timerdelay[3].scheduleAtFixedRate(Helper.tmtsk[3], 0, 3000);
-            for(int i=0; i<numberOfIntersections; i++){
-                timerdelayNormal[i].schedule(tmtskNormal[i], cycleTimeforLaneDecreasing, cicleInterval);
-            }
-
-            Helper.tStart = System.currentTimeMillis();
-
-            changedUISpeed = false;
-        }
-
-        InitCreateIntersectionSensing();
-
-
+        StartSimulationTimer();
 
         hudText.setText("GPS: " + (int) cam.getLocation().getX() + "x" + " " + (int) cam.getLocation().getY() + "y" + " " + (int) cam.getLocation().getZ() + "z");
-//
+
         if (!camera) {
             camDir.set(cam.getDirection()).multLocal(0.6f);
             camLeft.set(cam.getLeft()).multLocal(0.4f);
@@ -862,9 +930,78 @@ boolean doneInitCreatingCarSimulation = false;
         }
 
         ///!!! Sensing on the Graphic Engine !!!
-        UpdateIntersectionState();
+        SenseOnTrafficFlow();
 
         ///!!! Acting on the Graphic Engine !!!
+        ActOnTrafficPhase();
+
+        ///!!! Traffic Flow Simulations !!!
+        SimulateTrafficFlow();
+
+        ///!!! Autonomous Car Simulation !!!
+        if(expiredCycleTime[3])
+        {
+            CarMoveAt(valideLocations[0].add(-100,0,0));
+            expiredCycleTime[3] = false;
+        }
+
+        createEventLogEntry();
+
+
+
+        if(timeVector != null) {
+            // Create stats
+            if (plotIndex >= timeVector.length && !donePlotting) {
+                // JAVA:                             // MATLAB:
+                JavaPlotter fig = new JavaPlotter(); // figure('Position',[100 100 640 480]);
+                fig.plot(timeVector, intersectionDensityPlotVector[0], "-r", 2.0f, "Intersectia 1"); // plot(x,y1,'-r','LineWidth',2);
+                fig.plot(timeVector, intersectionDensityPlotVector[1], "-k", 3.0f, "Intersectia 2");  // plot(x,y2,':k','LineWidth',3);
+                fig.plot(timeVector, intersectionDensityPlotVector[2], "-y", 3.0f, "Intersectia 3");  // plot(x,y2,':k','LineWidth',3);
+                fig.plot(timeVector, intersectionDensityPlotVector[3], "-m", 3.0f, "Intersectia 4");  // plot(x,y2,':k','LineWidth',3);
+                fig.plot(timeVector, intersectionDensityPlotVector[4], "-g", 3.0f, "Intersectia 5");  // plot(x,y2,':k','LineWidth',3);
+                fig.RenderPlot();                    // First render plot before modifying
+                fig.title("Evolutia in timp a prioritatilor");    // title('Stock 1 vs. Stock 2');
+                fig.xlim(0, simulationTime);                   // xlim([10 100]);
+                fig.ylim(0, 40);                  // ylim([200 300]);
+                fig.xlabel("Timp");                  // xlabel('Days');
+                fig.ylabel("Prioritate");                 // ylabel('Price');
+                fig.grid("on", "on");                 // grid on;
+                fig.legend("northeast");             // legend('AAPL','BAC','Location','northeast')
+                fig.font("Helvetica", 23);            // .. 'FontName','Helvetica','FontSize',15
+                fig.saveas("nonControlOneStateWorldPriority.PNG", 850, 600);   // saveas(gcf,'MyPlot','jpeg');
+
+//            for(int j=0;j<4;j++) {
+
+                // JAVA:                             // MATLAB:
+                JavaPlotter fig1 = new JavaPlotter(); // figure('Position',[100 100 640 480]);
+                fig1.plot(timeVector, intersectionLanePlotVector[0][0], "-r", 2.0f, "Tronson Sud"); // plot(x,y1,'-r','LineWidth',2);
+                fig1.plot(timeVector, intersectionLanePlotVector[0][1], "-k", 3.0f, "Tronson Vest");  // plot(x,y2,':k','LineWidth',3);
+                fig1.plot(timeVector, intersectionLanePlotVector[0][2], "-y", 3.0f, "Tronson Nord");  // plot(x,y2,':k','LineWidth',3);
+                fig1.plot(timeVector, intersectionLanePlotVector[0][3], "-m", 3.0f, "Tronson Est");  // plot(x,y2,':k','LineWidth',3);
+//                fig1.plot(timeVector, intersectionDensityPlotVector[4], "-g", 3.0f, "Intersectia 5");  // plot(x,y2,':k','LineWidth',3);
+                fig1.RenderPlot();                    // First render plot before modifying
+                fig1.title("Evolutia in timp a densitatii pe tronsoane");    // title('Stock 1 vs. Stock 2');
+                fig1.xlim(0, simulationTime);                   // xlim([10 100]);
+                fig1.ylim(0, 40);                  // ylim([200 300]);
+                fig1.xlabel("Timp");                  // xlabel('Days');
+                fig1.ylabel("Densitate");                 // ylabel('Price');
+                fig1.grid("on", "on");                 // grid on;
+                fig1.legend("northeast");             // legend('AAPL','BAC','Location','northeast')
+                fig1.font("Helvetica", 23);            // .. 'FontName','Helvetica','FontSize',15
+                fig1.saveas("nonControlOneStateIntersection0.PNG", 850, 600);   // saveas(gcf,'MyPlot','jpeg');
+//            }
+                donePlotting = true;
+
+                EventLogEntries.add("Plotare finalizata.");
+
+            }
+        }
+
+    }
+
+    boolean donePlotting = false;
+
+    private void ActOnTrafficPhase(){
         if (!request.isEmpty()) {
 
             if(normalCycleTimer[0]) {
@@ -876,7 +1013,7 @@ boolean doneInitCreatingCarSimulation = false;
                                 if (CoreAgent.LocationGraph.get(i).getIntersectionActing() != null) {
 
                                     if (!CoreAgent.LocationGraph.get(i).getIntersectionActing().Equals(request.get(j).getObjToHandle())) {
-                                        CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
+//                                        CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
                                         actOnTrafficLights(request.get(j));
                                         request.remove(j);
                                         System.out.println("Found another state for intersection ID = " + i + "dimensiune request: " + request.size());
@@ -886,7 +1023,7 @@ boolean doneInitCreatingCarSimulation = false;
                                     }
 
                                 } else {
-                                    CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
+//                                    CoreAgent.LocationGraph.get(i).setIntersectionActing(request.get(j).getObjToHandle());
                                     actOnTrafficLights(request.get(j));
                                     request.remove(j);
                                     break outerloop;
@@ -902,25 +1039,33 @@ boolean doneInitCreatingCarSimulation = false;
                 }
             }
         }
+    }
 
+    private void SimulateTrafficFlow(){
 
+        InitCreateIntersectionSensing();
         if(expiredCycleTime[0]) {
             UpdateSimulationCars();
+            if(plotIndex == 0) {
+                timeVector[plotIndex] = 0;
+            }
+            else
+                if( /*timeVector[plotIndex-1] < simulationTime && */plotIndex-1 < timeVector.length  && !donePlotting) {
+
+                    timeVector[plotIndex] = timeVector[plotIndex - 1] + (double) cycleTimeforLaneDecreasing / 1000;
+                    for (int i = 0; i < numberOfIntersections; i++) {
+                        int maxDensity = CoreAgent.LocationGraph.get(i).getIntersectionSensing().getMaxDensity()[0] + CoreAgent.LocationGraph.get(i).getIntersectionSensing().getMaxDensity()[1];
+                        intersectionDensityPlotVector[i][plotIndex] = (double) maxDensity;//.getDensity(i);
+
+                        for (int j = 0; j < 4; j++) {
+                            intersectionLanePlotVector[i][j][plotIndex] = CoreAgent.LocationGraph.get(i).getIntersectionSensing().getDensity(j);
+                        }
+                    }
+                }
+
+
+            plotIndex++;
         }
-
-        if(expiredCycleTime[3])
-        {
-            CarMoveAt(valideLocations[0].add(-100,0,0));
-            expiredCycleTime[3] = false;
-        }
-
-
-
-
-        createEventLogEntry();
-
-
-
     }
 
     public void InitCreateIntersectionSensing(){
@@ -959,6 +1104,9 @@ boolean doneInitCreatingCarSimulation = false;
     public void actOnTrafficLights(actingHandler act) {
         //System.out.println("\nStarted normal cycle for intersection " + act.getComponentID() );
 
+        // Update Core Agent sensing objects
+        CoreAgent.LocationGraph.get(act.getComponentID()).setIntersectionActing(act.getObjToHandle());
+
         if(act.waitCycle == true){
             if(act.getObjToHandle().getIntersectionState()[0] && act.getObjToHandle().getIntersectionState()[2]){
                 // Intersection Item position are ok, clockwise starting from UP, where UP means from main perspective the lane to go UP, results the intersection item from the bottom!!!
@@ -975,37 +1123,41 @@ boolean doneInitCreatingCarSimulation = false;
         if(!EventLogEntries.isEmpty()) {
             String event = EventLogEntries.remove(0);
             nifty.getCurrentScreen().findNiftyControl("myListBox", ListBox.class).addItem( ">>" + " " + event);
+            nifty.getCurrentScreen().findNiftyControl("myListBox", ListBox.class).addItem( "");
         }
     }
 
-    private void UpdateIntersectionState(){
-        if(CoreAgent.automaticMode) {
-            sensingHandler currentResponse;
+    private void SenseOnTrafficFlow() {
+        synchronized (response) {
+            if (CoreAgent.automaticMode) {
+                sensingHandler currentResponse;
 
-            for (int i = 0; i < numberOfIntersections; i++) {
-                if (CoreAgent.LocationGraph.size() == numberOfIntersections) {
-                    if (CoreAgent.LocationGraph.get(i).getIntersectionSensing() != null) {
-                        currentResponse = new sensingHandler("Intersection", i, CoreAgent.LocationGraph.get(i).getIntersectionSensing());
+                for (int i = 0; i < numberOfIntersections; i++) {
+                    if (CoreAgent.LocationGraph.size() == numberOfIntersections) {
+                        if (CoreAgent.LocationGraph.get(i).getIntersectionSensing() != null) {
+                            currentResponse = new sensingHandler("Intersection", i, CoreAgent.LocationGraph.get(i).getIntersectionSensing());
 
-                        if (graphicEngine.response.size() != 0) {
-                            boolean equals = false;
-                            for (int k = 0; k < graphicEngine.response.size(); k++) {
+                            if (graphicEngine.response.size() != 0) {
+                                boolean equals = false;
+                                for (int k = 0; k < graphicEngine.response.size(); k++) {
 
-                                equals = equals || graphicEngine.response.get(k).equals(currentResponse);
-                                if (equals)
-                                    break;
-                            }
-                            if (!equals) {
+                                    equals = equals || graphicEngine.response.get(k).equals(currentResponse);
+                                    if (equals)
+                                        break;
+                                }
+                                if (!equals) {
+                                    graphicEngine.response.add(currentResponse);
+                                }
+                            } else {
                                 graphicEngine.response.add(currentResponse);
                             }
-                        } else {
-                            graphicEngine.response.add(currentResponse);
+
+
+                            //graphicEngine.response.add(currentResponse);
                         }
-
-
-                        //graphicEngine.response.add(currentResponse);
                     }
                 }
+
             }
         }
     }
@@ -1041,7 +1193,7 @@ boolean doneInitCreatingCarSimulation = false;
                                 childLayoutVertical(); // panel properties, add more...
                                 width("300px");
                                 style("nifty-panel-no-shadow");
-                                height("610px");
+                                height("500px");
                                 valignBottom();
                                 alignRight();
 
@@ -1050,17 +1202,14 @@ boolean doneInitCreatingCarSimulation = false;
                                         //childLayoutVertical(); // panel properties, add more...
                                         childLayoutHorizontal();
                                         width("100%");
-                                        height("80");
+                                        height("40");
                                         valignTop();
                                         alignCenter();
 
                                         control(new ButtonBuilder("manualMode", "Manual") {{
-                                            //style("nifty-panel-red");
                                             width("50%");
                                             height("40px");
                                             focusable(true);
-                                            this.onClickEffect(new EffectBuilder("nimic"));
-                                            //this.onActiveEffect(new EffectBuilder("nimic"));
                                             //this.onCustomEffect();
                                         }});
 
@@ -1068,7 +1217,7 @@ boolean doneInitCreatingCarSimulation = false;
                                             //style("nifty-panel-red");
                                             width("50%");
                                             height("40px");
-                                            focusable(false);
+                                            focusable(true);
                                         }});
                                     }});
 //
@@ -1077,7 +1226,7 @@ boolean doneInitCreatingCarSimulation = false;
                                     width("100%");
                                     height("40px");
                                     focusable(false);
-                                    color(Color.randomColor());
+                                    //color(Color.randomColor());
 
                                     //this.style("nifty-panel-red");
                                 }});
@@ -1097,23 +1246,23 @@ boolean doneInitCreatingCarSimulation = false;
                                         width("90%");
                                         height("210px");
 
-                                        control(new ButtonBuilder("referintaLabel", "Referinta Nucleu Global:") {{
-                                            alignCenter();
-                                            height("30px");
-                                            width("100%");
-                                            this.onActiveEffect(new EffectBuilder("nimic"));
-                                            this.focusable(false);
-                                        }});
-
-                                        control(new SliderBuilder("referintaValue", false) {{
-                                            alignCenter();
-                                            this.focusable(false);
-                                            width("90%");
-                                            height("40px");
-                                            buttonStepSize(1f);
-                                            min(1);
-                                            max(15);
-                                        }});
+//                                        control(new ButtonBuilder("referintaLabel", "Referinta Nucleu Global:") {{
+//                                            alignCenter();
+//                                            height("30px");
+//                                            width("100%");
+//                                            this.onActiveEffect(new EffectBuilder("nimic"));
+//                                            this.focusable(false);
+//                                        }});
+//
+//                                        control(new SliderBuilder("referintaValue", false) {{
+//                                            alignCenter();
+//                                            this.focusable(false);
+//                                            width("90%");
+//                                            height("40px");
+//                                            buttonStepSize(1f);
+//                                            min(1);
+//                                            max(15);
+//                                        }});
 
 
                                         control(new ButtonBuilder("carAverageSpeed", "Viteza medie de circulatie:") {{
@@ -1153,155 +1302,40 @@ boolean doneInitCreatingCarSimulation = false;
                                             max(20);
                                             this.initial(8);
                                         }});
-                                    }
-                                });
 
-                                panel(new PanelBuilder("Stari controllere semafor") {
-                                    {
-                                        childLayoutVertical();
-                                        valignTop();
-                                        alignCenter();
-                                        width("90%");
-                                        height("240px");
-                                        control(new ButtonBuilder("pertext", "Stari controllere semafor") {{
-                                            alignCenter();
-                                            valignTop();
-                                            height("40px");
-                                            width("100%");
-                                            this.onActiveEffect(new EffectBuilder("nimic"));
-                                            this.focusable(false);
-
-                                        }});
-
-                                        panel(new PanelBuilder("LeftSemaforController") {
+                                        panel(new PanelBuilder("Stari controllere semafor") {
                                             {
-                                                childLayoutAbsoluteInside();
-                                                width("90%");
-                                                height("66px");
+                                                childLayoutVertical();
                                                 valignTop();
                                                 alignCenter();
-
-                                                    control(new CheckboxBuilder("activeIntersectionControllerUP") {{
+                                                width("90%");
+                                                height("240px");
+                                                control(new ButtonBuilder("pertext", "Stari controllere semafor") {{
                                                     alignCenter();
                                                     valignTop();
-                                                    this.focusable(false);
-                                                    this.checked(true);
-                                                    width("40px");
                                                     height("40px");
-                                                    this.x("34%");
+                                                    width("100%");
+                                                    this.onActiveEffect(new EffectBuilder("nimic"));
+                                                    this.focusable(false);
+
                                                 }});
 
-                                                panel(new PanelBuilder("sensorsAndActuators") {
+                                                panel(new PanelBuilder("LeftSemaforController") {
                                                     {
-                                                        //childLayoutAbsoluteInside();
-                                                        //childLayoutHorizontal();
-                                                        childLayoutVertical();
-                                                        width("40px");
-                                                        height("40px");
-                                                        // alignCenter();
-                                                        alignLeft();
+                                                        childLayoutAbsoluteInside();
+                                                        width("90%");
+                                                        height("66px");
                                                         valignTop();
-                                                        this.x("51%");
+                                                        alignCenter();
 
-                                                        control(new CheckboxBuilder("activeIntersectionSensorUP") {{
+                                                        control(new CheckboxBuilder("activeIntersectionControllerUP") {{
                                                             alignCenter();
                                                             valignTop();
                                                             this.focusable(false);
                                                             this.checked(true);
-                                                            width("50%");
-                                                            height("50%");
-                                                        }});
-
-                                                        control(new CheckboxBuilder("activeIntersectionActuatorUP") {{
-                                                            alignCenter();
-                                                            valignTop();
-                                                            this.focusable(false);
-                                                            this.checked(true);
-                                                            width("50%");
-                                                            height("50%");
-                                                        }});
-
-                                                    }});
-
-                                              }});
-
-                                        panel(new PanelBuilder("LeftSemaforController") {
-                                            {
-                                                childLayoutAbsoluteInside();
-                                                width("100%");
-                                                height("67px");
-                                                valignTop();
-                                                alignCenter();
-
-                                                panel(new PanelBuilder("LeftSemaforController") {
-                                                    {
-                                                        childLayoutAbsoluteInside();
-                                                        width("33%");
-                                                        height("100%");
-                                                        valignTop();
-                                                        alignCenter();
-
-                                                        control(new CheckboxBuilder("activeIntersectionControllerLEFT") {{
-                                                            alignCenter();
-                                                            valignCenter();
-                                                            this.focusable(false);
-                                                            this.checked(true);
                                                             width("40px");
                                                             height("40px");
-                                                            this.x("9%");
-                                                        }});
-
-                                                        panel(new PanelBuilder("sensorsAndActuators") {
-                                                            {
-                                                                childLayoutVertical();
-                                                                width("40px");
-                                                                height("40px");
-                                                                alignLeft();
-                                                                valignTop();
-                                                                this.x("100%");
-
-                                                                control(new CheckboxBuilder("activeIntersectionSensorLEFT") {{
-                                                                    alignCenter();
-                                                                    valignTop();
-                                                                    this.focusable(false);
-                                                                    this.checked(true);
-                                                                    width("50%");
-                                                                    height("50%");
-                                                                    //this.x("0%");
-                                                                }});
-
-                                                                control(new CheckboxBuilder("activeIntersectionActuatorLEFT") {{
-                                                                    alignCenter();
-                                                                    valignTop();
-                                                                    this.focusable(false);
-                                                                    this.checked(true);
-                                                                    width("50%");
-                                                                    height("50%");
-                                                                    //this.x("0%");
-                                                                }});
-
-                                                            }});
-
-                                                    }});
-
-                                                childLayoutHorizontal();
-
-                                                panel(new PanelBuilder("LeftSemaforController") {
-                                                    {
-                                                        childLayoutAbsoluteInside();
-                                                        width("33%");
-                                                        height("100%");
-                                                        valignTop();
-                                                        alignCenter();
-
-                                                        control(new CheckboxBuilder("activeIntersectionControllerMIDDLE") {{
-                                                            alignCenter();
-                                                            valignCenter();
-                                                            this.focusable(false);
-                                                            this.checked(true);
-                                                            width("40px");
-                                                            height("40px");
-                                                            this.x("9%");
+                                                            this.x("34%");
                                                         }});
 
                                                         panel(new PanelBuilder("sensorsAndActuators") {
@@ -1314,26 +1348,24 @@ boolean doneInitCreatingCarSimulation = false;
                                                                 // alignCenter();
                                                                 alignLeft();
                                                                 valignTop();
-                                                                this.x("100%");
+                                                                this.x("51%");
 
-                                                                control(new CheckboxBuilder("activeIntersectionSensorMIDDLE") {{
+                                                                control(new CheckboxBuilder("activeIntersectionSensorUP") {{
                                                                     alignCenter();
                                                                     valignTop();
                                                                     this.focusable(false);
                                                                     this.checked(true);
                                                                     width("50%");
                                                                     height("50%");
-                                                                    //this.x("0%");
                                                                 }});
 
-                                                                control(new CheckboxBuilder("activeIntersectionActuatorMIDDLE") {{
+                                                                control(new CheckboxBuilder("activeIntersectionActuatorUP") {{
                                                                     alignCenter();
                                                                     valignTop();
                                                                     this.focusable(false);
                                                                     this.checked(true);
                                                                     width("50%");
                                                                     height("50%");
-                                                                    //this.x("0%");
                                                                 }});
 
                                                             }});
@@ -1343,31 +1375,203 @@ boolean doneInitCreatingCarSimulation = false;
                                                 panel(new PanelBuilder("LeftSemaforController") {
                                                     {
                                                         childLayoutAbsoluteInside();
-                                                        width("33%");
-                                                        height("100%");
+                                                        width("100%");
+                                                        height("67px");
                                                         valignTop();
                                                         alignCenter();
 
-                                                        control(new CheckboxBuilder("activeIntersectionControllerRIGHT") {{
+                                                        panel(new PanelBuilder("LeftSemaforController") {
+                                                            {
+                                                                childLayoutAbsoluteInside();
+                                                                width("33%");
+                                                                height("100%");
+                                                                valignTop();
+                                                                alignCenter();
+
+                                                                control(new CheckboxBuilder("activeIntersectionControllerLEFT") {{
+                                                                    alignCenter();
+                                                                    valignCenter();
+                                                                    this.focusable(false);
+                                                                    this.checked(true);
+                                                                    width("40px");
+                                                                    height("40px");
+                                                                    this.x("9%");
+                                                                }});
+
+                                                                panel(new PanelBuilder("sensorsAndActuators") {
+                                                                    {
+                                                                        childLayoutVertical();
+                                                                        width("40px");
+                                                                        height("40px");
+                                                                        alignLeft();
+                                                                        valignTop();
+                                                                        this.x("100%");
+
+                                                                        control(new CheckboxBuilder("activeIntersectionSensorLEFT") {{
+                                                                            alignCenter();
+                                                                            valignTop();
+                                                                            this.focusable(false);
+                                                                            this.checked(true);
+                                                                            width("50%");
+                                                                            height("50%");
+                                                                            //this.x("0%");
+                                                                        }});
+
+                                                                        control(new CheckboxBuilder("activeIntersectionActuatorLEFT") {{
+                                                                            alignCenter();
+                                                                            valignTop();
+                                                                            this.focusable(false);
+                                                                            this.checked(true);
+                                                                            width("50%");
+                                                                            height("50%");
+                                                                            //this.x("0%");
+                                                                        }});
+
+                                                                    }});
+
+                                                            }});
+
+                                                        childLayoutHorizontal();
+
+                                                        panel(new PanelBuilder("LeftSemaforController") {
+                                                            {
+                                                                childLayoutAbsoluteInside();
+                                                                width("33%");
+                                                                height("100%");
+                                                                valignTop();
+                                                                alignCenter();
+
+                                                                control(new CheckboxBuilder("activeIntersectionControllerMIDDLE") {{
+                                                                    alignCenter();
+                                                                    valignCenter();
+                                                                    this.focusable(false);
+                                                                    this.checked(true);
+                                                                    width("40px");
+                                                                    height("40px");
+                                                                    this.x("9%");
+                                                                }});
+
+                                                                panel(new PanelBuilder("sensorsAndActuators") {
+                                                                    {
+                                                                        //childLayoutAbsoluteInside();
+                                                                        //childLayoutHorizontal();
+                                                                        childLayoutVertical();
+                                                                        width("40px");
+                                                                        height("40px");
+                                                                        // alignCenter();
+                                                                        alignLeft();
+                                                                        valignTop();
+                                                                        this.x("100%");
+
+                                                                        control(new CheckboxBuilder("activeIntersectionSensorMIDDLE") {{
+                                                                            alignCenter();
+                                                                            valignTop();
+                                                                            this.focusable(false);
+                                                                            this.checked(true);
+                                                                            width("50%");
+                                                                            height("50%");
+                                                                            //this.x("0%");
+                                                                        }});
+
+                                                                        control(new CheckboxBuilder("activeIntersectionActuatorMIDDLE") {{
+                                                                            alignCenter();
+                                                                            valignTop();
+                                                                            this.focusable(false);
+                                                                            this.checked(true);
+                                                                            width("50%");
+                                                                            height("50%");
+                                                                            //this.x("0%");
+                                                                        }});
+
+                                                                    }});
+
+                                                            }});
+
+                                                        panel(new PanelBuilder("LeftSemaforController") {
+                                                            {
+                                                                childLayoutAbsoluteInside();
+                                                                width("33%");
+                                                                height("100%");
+                                                                valignTop();
+                                                                alignCenter();
+
+                                                                control(new CheckboxBuilder("activeIntersectionControllerRIGHT") {{
+                                                                    alignCenter();
+                                                                    valignCenter();
+                                                                    this.focusable(false);
+                                                                    this.checked(true);
+                                                                    width("40px");
+                                                                    height("40px");
+                                                                    this.x("9%");
+                                                                }});
+
+                                                                panel(new PanelBuilder("sensorsAndActuators") {
+                                                                    {
+                                                                        childLayoutVertical();
+                                                                        width("40px");
+                                                                        height("40px");
+                                                                        alignLeft();
+                                                                        valignTop();
+                                                                        this.x("100%");
+
+                                                                        control(new CheckboxBuilder("activeIntersectionSensorRIGHT") {{
+                                                                            alignCenter();
+                                                                            valignTop();
+                                                                            this.focusable(false);
+                                                                            this.checked(true);
+                                                                            width("50%");
+                                                                            height("50%");
+                                                                            //this.x("0%");
+                                                                        }});
+
+                                                                        control(new CheckboxBuilder("activeIntersectionActuatorRIGHT") {{
+                                                                            alignCenter();
+                                                                            valignTop();
+                                                                            this.focusable(false);
+                                                                            this.checked(true);
+                                                                            width("50%");
+                                                                            height("50%");
+                                                                            //this.x("0%");
+                                                                        }});
+
+                                                                    }});
+
+                                                            }});
+
+                                                    }});
+
+
+                                                panel(new PanelBuilder("LeftSemaforController") {
+                                                    {
+                                                        childLayoutAbsoluteInside();
+                                                        width("90%");
+                                                        height("66px");
+                                                        valignTop();
+                                                        alignCenter();//
+
+                                                        control(new CheckboxBuilder("activeIntersectionControllerDOWN") {{
                                                             alignCenter();
                                                             valignCenter();
                                                             this.focusable(false);
                                                             this.checked(true);
                                                             width("40px");
                                                             height("40px");
-                                                            this.x("9%");
+                                                            this.x("34%");
                                                         }});
 
                                                         panel(new PanelBuilder("sensorsAndActuators") {
                                                             {
+                                                                //childLayoutAbsoluteInside();
+                                                                //childLayoutHorizontal();
                                                                 childLayoutVertical();
                                                                 width("40px");
                                                                 height("40px");
+                                                                // alignCenter();
                                                                 alignLeft();
                                                                 valignTop();
-                                                                this.x("100%");
+                                                                this.x("51%");
 
-                                                                control(new CheckboxBuilder("activeIntersectionSensorRIGHT") {{
+                                                                control(new CheckboxBuilder("activeIntersectionSensorDOWN") {{
                                                                     alignCenter();
                                                                     valignTop();
                                                                     this.focusable(false);
@@ -1377,7 +1581,7 @@ boolean doneInitCreatingCarSimulation = false;
                                                                     //this.x("0%");
                                                                 }});
 
-                                                                control(new CheckboxBuilder("activeIntersectionActuatorRIGHT") {{
+                                                                control(new CheckboxBuilder("activeIntersectionActuatorDOWN") {{
                                                                     alignCenter();
                                                                     valignTop();
                                                                     this.focusable(false);
@@ -1390,65 +1594,12 @@ boolean doneInitCreatingCarSimulation = false;
                                                             }});
 
                                                     }});
-
-                                            }});
-
-
-                                        panel(new PanelBuilder("LeftSemaforController") {
-                                            {
-                                                childLayoutAbsoluteInside();
-                                                width("90%");
-                                                height("66px");
-                                                valignTop();
-                                                alignCenter();//
-
-                                                control(new CheckboxBuilder("activeIntersectionControllerDOWN") {{
-                                                    alignCenter();
-                                                    valignCenter();
-                                                    this.focusable(false);
-                                                    this.checked(true);
-                                                    width("40px");
-                                                    height("40px");
-                                                    this.x("34%");
-                                                }});
-
-                                                panel(new PanelBuilder("sensorsAndActuators") {
-                                                    {
-                                                        //childLayoutAbsoluteInside();
-                                                        //childLayoutHorizontal();
-                                                        childLayoutVertical();
-                                                        width("40px");
-                                                        height("40px");
-                                                        // alignCenter();
-                                                        alignLeft();
-                                                        valignTop();
-                                                        this.x("51%");
-
-                                                        control(new CheckboxBuilder("activeIntersectionSensorDOWN") {{
-                                                            alignCenter();
-                                                            valignTop();
-                                                            this.focusable(false);
-                                                            this.checked(true);
-                                                            width("50%");
-                                                            height("50%");
-                                                            //this.x("0%");
-                                                        }});
-
-                                                        control(new CheckboxBuilder("activeIntersectionActuatorDOWN") {{
-                                                            alignCenter();
-                                                            valignTop();
-                                                            this.focusable(false);
-                                                            this.checked(true);
-                                                            width("50%");
-                                                            height("50%");
-                                                            //this.x("0%");
-                                                        }});
-
-                                                    }});
-
-                                            }});
+                                            }
+                                        });
                                     }
                                 });
+
+
                             }
                         });
 
@@ -1556,6 +1707,8 @@ boolean doneInitCreatingCarSimulation = false;
         @Override
         public void onEvent(String s, CheckBoxStateChangedEvent checkBoxStateChangedEvent) {
             ActiveIntersectionControllers[0] = !ActiveIntersectionControllers[0];
+            EventLogEntries.add("TS: "+ (float)((System.currentTimeMillis() - tStart)/1000) + " s-a defectat intersectia centrala.");
+            System.out.println("TS: "+ (float)((System.currentTimeMillis() - tStart)/1000) + " s-a defectat intersectia centrala.");
         }
     };
 
@@ -1667,11 +1820,15 @@ boolean doneInitCreatingCarSimulation = false;
         public void onEvent(final String topic, final ButtonClickedEvent event) {
             CoreAgent.automaticMode = false;
             if(tStart == -1) {
-                EventLogEntries.add("Initializare: Modul controller-ului este manual.");
+                EventLogEntries.add("Initializare: Modul controler este manual.");
             }
             else {
-                EventLogEntries.add("Timp de simulare: "+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controller-ului este manual.");
+                EventLogEntries.add("Timp de simulare: "+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controler este manual.");
             }
+
+            nifty.getCurrentScreen().findNiftyControl("manualMode", Button.class).setFocusable(!CoreAgent.automaticMode);
+            nifty.getCurrentScreen().findNiftyControl("automaticMode", Button.class).setFocusable(CoreAgent.automaticMode);
+
         }
     };
 
@@ -1680,11 +1837,17 @@ boolean doneInitCreatingCarSimulation = false;
         public void onEvent(final String topic, final ButtonClickedEvent event) {
             CoreAgent.automaticMode = true;
             if(tStart == -1) {
-                EventLogEntries.add("Initializare: Modul controller-ului este automat.");
+                EventLogEntries.add("Initializare: Modul controler este automat.");
             }
             else {
-                EventLogEntries.add("TS: " + String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controller-ului este automat.");
+                EventLogEntries.add("TS: " + String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controler este automat.");
             }
+
+            nifty.getCurrentScreen().findNiftyControl("manualMode", Button.class).setFocusable(!CoreAgent.automaticMode);
+            nifty.getCurrentScreen().findNiftyControl("automaticMode", Button.class).setFocusable(CoreAgent.automaticMode);
+            nifty.getCurrentScreen().findNiftyControl("manualMode", Button.class).setFocusable(!CoreAgent.automaticMode);
+            nifty.getCurrentScreen().findNiftyControl("automaticMode", Button.class).setFocusable(CoreAgent.automaticMode);
+
         }
     };
 
@@ -1727,8 +1890,8 @@ boolean doneInitCreatingCarSimulation = false;
 
     public void setSun() {
 
-//
-//        for(int i=0;i<numberOfIntersections;i++) // GOOD TRAFFIC LIGHT INIT !!!
+
+//        for(int i=0;i<1;i++) // GOOD TRAFFIC LIGHT INIT !!!
 //            for(int j=0;j<4;j++) {
 //
 //                trafficLightSpots[i][j] = new SpotLight();
@@ -1743,18 +1906,70 @@ boolean doneInitCreatingCarSimulation = false;
 //                rootNode.addLight(trafficLightSpots[i][j]);
 //            }
 
+        // Snapshot only code block
+
+                trafficLightSpots[0][0] = new SpotLight();
+                trafficLightSpots[0][0].setSpotRange(10f);                           // distance
+                trafficLightSpots[0][0].setSpotInnerAngle(150); // inner light cone (central beam)
+                trafficLightSpots[0][0].setSpotOuterAngle(150); // outer light cone (edge of the light)
+                trafficLightSpots[0][0].setColor(ColorRGBA.Green);         // light color
+
+                trafficLightSpots[0][0].setPosition(trafficLightLocations[0][0].add(0, 2, 0));               // shine from camera loc
+                trafficLightSpots[0][0].setDirection(new Vector3f(200f, 0, 100));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
+
+                rootNode.addLight(trafficLightSpots[0][0]);
+
+
+
+                trafficLightSpots[0][1] = new SpotLight();
+                trafficLightSpots[0][1].setSpotRange(10f);                           // distance
+                trafficLightSpots[0][1].setSpotInnerAngle(150); // inner light cone (central beam)
+                trafficLightSpots[0][1].setSpotOuterAngle(150); // outer light cone (edge of the light)
+                trafficLightSpots[0][1].setColor(ColorRGBA.Red);         // light color
+
+                trafficLightSpots[0][1].setPosition(trafficLightLocations[0][1].add(0, 2, 0));               // shine from camera loc
+                trafficLightSpots[0][1].setDirection(new Vector3f(-90f, 0, 122));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
+
+                rootNode.addLight(trafficLightSpots[0][1]);
+
+
+                trafficLightSpots[0][2] = new SpotLight();
+                trafficLightSpots[0][2].setSpotRange(10f);                           // distance
+                trafficLightSpots[0][2].setSpotInnerAngle(150); // inner light cone (central beam)
+                trafficLightSpots[0][2].setSpotOuterAngle(150); // outer light cone (edge of the light)
+                trafficLightSpots[0][2].setColor(ColorRGBA.Green);         // light color
+
+                trafficLightSpots[0][2].setPosition(trafficLightLocations[0][2].add(0, 2, 0));               // shine from camera loc
+                trafficLightSpots[0][2].setDirection(new Vector3f(-200f, 0, -26));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
+
+                rootNode.addLight(trafficLightSpots[0][2]);
+
+
+                trafficLightSpots[0][3] = new SpotLight();
+                trafficLightSpots[0][3].setSpotRange(10f);                           // distance
+                trafficLightSpots[0][3].setSpotInnerAngle(150); // inner light cone (central beam)
+                trafficLightSpots[0][3].setSpotOuterAngle(150); // outer light cone (edge of the light)
+                trafficLightSpots[0][3].setColor(ColorRGBA.Red);         // light color
+
+                trafficLightSpots[0][3].setPosition(trafficLightLocations[0][3].add(0, 2, 0));               // shine from camera loc
+                trafficLightSpots[0][3].setDirection(new Vector3f(-55, 0, -150f));//trafficLightLocations[0].add(70,2,22));//new Vector3f(trafficLightLocations[0].add(4,1,0)));             // shine forward from camera loc
+
+                rootNode.addLight(trafficLightSpots[0][3]);
+
+
+
 
         ColorRGBA sun_central_color = new ColorRGBA();
         sun_central_color.set(255 / 255f, 255 / 255f, 251 / 255f, 0.5f);
         PointLight sun_central = new PointLight();
-        sun_central.setColor(sun_central_color);
-        sun_central.setRadius(1000f);
-        sun_central.setPosition(new Vector3f(0.0f, 400.0f, 0.0f));
+//        sun_central.setColor(sun_central_color);
+//        sun_central.setRadius(2000f);
+//        sun_central.setPosition(new Vector3f(0.0f, 400.0f, 0.0f));
 
         PointLight sun_up = new PointLight();
-        sun_central.setColor(sun_central_color);
-        sun_central.setRadius(1000f);
-        sun_central.setPosition(new Vector3f(0.0f, 1000.0f, 0.0f));
+        sun_up.setColor(sun_central_color);
+        sun_up.setRadius(10000f);
+        sun_up.setPosition(new Vector3f(0.0f, 1000.0f, 0.0f));
 
         rootNode.addLight(sun_central);
         rootNode.addLight(sun_up);
@@ -1806,6 +2021,12 @@ boolean doneInitCreatingCarSimulation = false;
         inputManager.addMapping("Teleport", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
         inputManager.addMapping("useSingleLaneState", new KeyTrigger(KeyInput.KEY_1));
         inputManager.addMapping("usePairedLaneState", new KeyTrigger(KeyInput.KEY_2));
+        inputManager.addMapping("controlledNegociation", new KeyTrigger(KeyInput.KEY_4));
+        inputManager.addMapping("unControlledNegociation", new KeyTrigger(KeyInput.KEY_3));
+
+
+
+
         inputManager.addMapping("fire3", new KeyTrigger(KeyInput.KEY_3));
         inputManager.addMapping("fire4", new KeyTrigger(KeyInput.KEY_4));
         inputManager.addMapping("fire5", new KeyTrigger(KeyInput.KEY_5));
@@ -1837,6 +2058,8 @@ boolean doneInitCreatingCarSimulation = false;
         inputManager.addListener(this, "gui");
         inputManager.addListener(this, "useSingleLaneState");
         inputManager.addListener(this, "usePairedLaneState");
+        inputManager.addListener(this, "controlledNegociation");
+        inputManager.addListener(this, "unControlledNegociation");
     }
 
     public void attachChildNodes(Node node) {
@@ -1920,10 +2143,10 @@ boolean doneInitCreatingCarSimulation = false;
             if (isPressed) {
                 controllerPairedState=false;
                 if(tStart == -1) {
-                    EventLogEntries.add("Init: Modul controller-ulului este setat pe un singur semafor.");
+                    EventLogEntries.add("Init: Modul controler este setat pe un singur semafor.");
                 }
                 else {
-                    EventLogEntries.add("TS: "+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controller-ulului este setat pe un singur semafor.");
+                    EventLogEntries.add("TS: "+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controler este setat pe un singur semafor.");
                 }
 //                EventLogEntries.add("Controller-ul este setat pe un singur semafor.");
             }
@@ -1932,13 +2155,39 @@ boolean doneInitCreatingCarSimulation = false;
             if (isPressed) {
                 controllerPairedState=true;
                 if(tStart == -1) {
-                    EventLogEntries.add("Init: Modul controller-ulului este setat pe doua semafoare.");
+                    EventLogEntries.add("Init: Modul controler este setat pe doua semafoare.");
                 }
                 else {
                     long currentSimulationTime = System.currentTimeMillis() - tStart;
                     if(currentSimulationTime <= 1000)
                         currentSimulationTime = currentSimulationTime % 1000;
-                    EventLogEntries.add("TS :"+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controller-ulului este setat pe doua semafoare.");
+                    EventLogEntries.add("TS :"+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Modul controler este setat pe doua semafoare.");
+                }
+            }
+        }else if (binding.equals("controlledNegociation")) { // if the controller has access to act paired lane traffic light
+            if (isPressed) {
+                uncontrolledNegociation=false;
+                if(tStart == -1) {
+                    EventLogEntries.add("Init: Nucleu: Negocierea controlata activata.");
+                }
+                else {
+                    long currentSimulationTime = System.currentTimeMillis() - tStart;
+                    if(currentSimulationTime <= 1000)
+                        currentSimulationTime = currentSimulationTime % 1000;
+                    EventLogEntries.add("TS :"+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Nucleu: Negocierea controlata activata..");
+                }
+            }
+        }else if (binding.equals("unControlledNegociation")) { // if the controller has access to act paired lane traffic light
+            if (isPressed) {
+                uncontrolledNegociation=true;
+                if(tStart == -1) {
+                    EventLogEntries.add("Init: Nucleu: Negocierea necontrolata activata.");
+                }
+                else {
+                    long currentSimulationTime = System.currentTimeMillis() - tStart;
+                    if(currentSimulationTime <= 1000)
+                        currentSimulationTime = currentSimulationTime % 1000;
+                    EventLogEntries.add("TS :"+ String.valueOf((System.currentTimeMillis() - tStart)/1000) + ". Nucleu: Negocierea necontrolata activata.");
                 }
             }
         }

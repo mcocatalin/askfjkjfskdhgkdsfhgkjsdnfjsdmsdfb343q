@@ -11,6 +11,7 @@ import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static GEngine.graphicEngine.expiredCycleTime;
 import static GEngine.graphicEngine.numberOfIntersections;
 import static Nucleus.CoreAgent.availableNucleus;
 
@@ -59,6 +60,32 @@ public class Helper {
 
     }
 
+    public static void EventsLog(int ID,  double time,  int UpLaneIntersectionValue, int RightIntersectionValue, int DownLaneIntersectionValue, int LeftLaneIntersectionValue, String event){
+        File log = new File("Event" +  ".txt");
+
+        try {
+            if (!log.exists()) {
+                System.out.println("We had to make a new file.");
+                log.createNewFile();
+            }
+
+            FileWriter fileWriter = new FileWriter(log, true);
+
+            try (BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
+                if(event != "None"){
+                    bufferedWriter.write(event);
+                }
+                bufferedWriter.write( time + " " + UpLaneIntersectionValue + " " + RightIntersectionValue + " " + DownLaneIntersectionValue + " " + LeftLaneIntersectionValue);
+                bufferedWriter.newLine();
+
+                //bufferedWriter.write("Eroare_temperatura = " + (referinta_temperatura - temperatura) + " eroare umiditate = " + (referinta_umiditate - umiditate) + "\n" + "Comenzi: racire = " + racire + "; incalzire = " + incalzire + "; umidificator = " + umidificator + "; ventilator = " + (ventilator + surplus_comanda_ventilator) + "\n\n");
+                bufferedWriter.close();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void LogFileData(int ID, long time, int UpLaneIntersectionValue, int RightIntersectionValue, int DownLaneIntersectionValue, int LeftLaneIntersectionValue){
         File log = new File("Controller" + ID + "LogFile" + ".txt");
@@ -125,11 +152,39 @@ public class Helper {
         return -1;
     }
 
-    public static TimerTask tmtsk[] = new TimerTask[4];
+    public static String getIntersectionCoordinate(int id) {
+        String intersectionCoordonateName = new String();
+
+        switch (id) {
+            case 0:
+                intersectionCoordonateName = "centrale";
+                break;
+            case 1:
+                intersectionCoordonateName = "din nord";
+                break;
+            case 2:
+                intersectionCoordonateName = "din nord";
+                break;
+            case 3:
+                intersectionCoordonateName = "din nord";
+                break;
+            case 4:
+                intersectionCoordonateName = "din nord";
+                break;
+
+        }
+
+        return intersectionCoordonateName;
+    }
+
+
+    public static TimerTask tmtsk = new TimerTask() {
+        @Override
+        public void run() {
+            expiredCycleTime[0] = true;
+        }
+    };
     public static TimerTask tmtskNormal[] = new TimerTask[numberOfIntersections];
-
-
-//    tmtsk[0] = new TimerTask();
 
     public static TimerTask decrementTask[] = new TimerTask[4];
 

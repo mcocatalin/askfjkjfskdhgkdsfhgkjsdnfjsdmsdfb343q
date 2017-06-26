@@ -1,6 +1,7 @@
 package Controlling;
 
 import GEngine.graphicEngine;
+import Utility.Helper;
 import Utility.IntersectionActing;
 import Utility.IntersectionSensing;
 import Utility.WorldDetector;
@@ -17,6 +18,7 @@ import java.util.Timer;
 
 import static GEngine.graphicEngine.ActiveIntersectionControllers;
 import static GEngine.graphicEngine.EventLogEntries;
+import static Utility.Helper.tStart;
 
 /**
  * Created by Catalin on 5/27/2017.
@@ -107,11 +109,10 @@ public class IntersectionController extends Agent implements IController {
         }
     };
 
-    CyclicBehaviour normalCycle = new CyclicBehaviour() {
+    CyclicBehaviour senderBehaviour = new CyclicBehaviour() {
         @Override
         public void action() {
             if (detectedWorld) {
-
                 if (normalState) {
                     int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
                     Iterator it = getAID().getAllAddresses();
@@ -120,31 +121,37 @@ public class IntersectionController extends Agent implements IController {
 
                     ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
                     AID r;
-                    if (serviceControllerAID != null) {
+                    if (serviceControllerAID != null) { // IF DEFECT GO IN CASCADE SOLVER !!!
                         int controllerID = Integer.parseInt(serviceControllerAID.getLocalName().substring(serviceControllerAID.getLocalName().length() - 1));
-                        r = new AID("IntersectionActing" + controllerID + "@" + platforma, AID.ISGUID);
-                    } else
+                        r = new AID(Helper.IntersectionController + controllerID + "@" + platforma, AID.ISGUID);
+                        messageToSend.setConversationId("DefectRequest");
+
+                        try {
+                            messageToSend.setContentObject(intersectionSensing);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
                         r = new AID("IntersectionActing" + thisID + "@" + platforma, AID.ISGUID);
-                    r.addAddresses(adresa);
-                    if (intersectionSensing != null) {
-                        if (ActiveIntersectionControllers[thisID] || serviceControllerAID != null) {
-                            messageToSend.setConversationId("ActingNormalCycle");
+                        r.addAddresses(adresa);
+                        if (intersectionSensing != null) {
+                            if (ActiveIntersectionControllers[thisID] || serviceControllerAID != null) {
+                                messageToSend.setConversationId("ActingNormalCycle");
 
                                 if (graphicEngine.controllerPairedState) {
                                     if (intersectionSensing.getMaxDensity()[0] > intersectionSensing.getMaxDensity()[1]) {
                                         intersectionActing.setLaneDirection(true, false);
-                                       // EventLogEntries.add("Controller-ul cu ID-ul " + thisID + " a schimbat directia de mers pe Nord-Sud");
+                                        // EventLogEntries.add("Controller-ul cu ID-ul " + thisID + " a schimbat directia de mers pe Nord-Sud");
                                     } else {
                                         intersectionActing.setLaneDirection(false, true);
-                                       // EventLogEntries.add("Controller-ul cu ID-ul " + thisID + " a schimbat directia de mers pe Vest-Est");
+                                        // EventLogEntries.add("Controller-ul cu ID-ul " + thisID + " a schimbat directia de mers pe Vest-Est");
                                     }
                                 } else { // SINGLE LANE !!
                                     int maxLaneDensityID = 0;
                                     for (int i = 1; i < 4; i++) {
-                                            if (intersectionSensing.getDensity(maxLaneDensityID) <= intersectionSensing.getDensity(i)) {
-                                                maxLaneDensityID = i;
-                                            }
-
+                                        if (intersectionSensing.getDensity(maxLaneDensityID) <= intersectionSensing.getDensity(i)) {
+                                            maxLaneDensityID = i;
+                                        }
                                     }
                                     intersectionActing.setLaneByTrafficLightID(maxLaneDensityID);
                                 }
@@ -156,20 +163,44 @@ public class IntersectionController extends Agent implements IController {
                                 }
 
                             }
-                            messageToSend.addReceiver(r);
-                            myAgent.send(messageToSend);
+
+                            else if(!ActiveIntersectionControllers[thisID] && serviceControllerAID == null){
+                                messageToSend.setConversationId("ActingNormalCycle");
+
+//                                if (graphicEngine.controllerPairedState) {
+//                                    intersectionActing.setLaneByTrafficLightID(-1);
+//                                } else { // SINGLE LANE !!
+//                                    intersectionActing.setLaneByTrafficLightID(-1);
+//                                }
+
+                                // Leave same state for intersection
+
+                                try {
+                                    messageToSend.setContentObject(intersectionActing);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                        }
+
                     }
 
-                }
-            }
 
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                    messageToSend.addReceiver(r);
+                    myAgent.send(messageToSend);
+                }
+
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     };
+
+    boolean sendedMessage = false;
 
     CyclicBehaviour receiver = new CyclicBehaviour() { // Disabled intersection
         @Override
@@ -188,6 +219,73 @@ public class IntersectionController extends Agent implements IController {
                                     e.printStackTrace();
                                 }
                             }
+
+                            if (mesaj_receptionat.getConversationId() == "DefectRequest") { // Data from Defected Controllers
+                                int defectedControllerID = Integer.parseInt(mesaj_receptionat.getSender().getLocalName().substring(mesaj_receptionat.getSender().getLocalName().length() - 1));
+                                try {
+                                    IntersectionSensing IS = (IntersectionSensing) mesaj_receptionat.getContentObject();
+
+
+
+                                    Iterator it = getAID().getAllAddresses();
+                                    String adresa = (String) it.next();
+                                    String platforma = getAID().getName().split("@")[1];
+
+                                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                                    AID r = new AID("IntersectionActing" + defectedControllerID + "@" + platforma, AID.ISGUID);
+                                    r.addAddresses(adresa);
+
+                                    messageToSend.setConversationId("ActingNormalCycle");
+
+                                    if (graphicEngine.controllerPairedState) {
+                                        if (IS.getMaxDensity()[0] > IS.getMaxDensity()[1]) {
+                                            intersectionActing.setLaneDirection(true, false);
+                                            // EventLogEntries.add("Controller-ul cu ID-ul " + thisID + " a schimbat directia de mers pe Nord-Sud");
+                                        } else {
+                                            intersectionActing.setLaneDirection(false, true);
+                                            // EventLogEntries.add("Controller-ul cu ID-ul " + thisID + " a schimbat directia de mers pe Vest-Est");
+                                        }
+                                    } else { // SINGLE LANE !!
+                                        int maxLaneDensityID = 0;
+                                        for (int k = 1; k < 4; k++) {
+                                            if (IS.getDensity(maxLaneDensityID) <= IS.getDensity(k)) {
+                                                maxLaneDensityID = k;
+                                            }
+                                        }
+                                        intersectionActing.setLaneByTrafficLightID(maxLaneDensityID);
+                                    }
+
+                                    try {
+                                        messageToSend.setContentObject(intersectionActing);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
+
+                                messageToSend.addReceiver(r);
+                                myAgent.send(messageToSend);
+
+
+
+
+                                } catch (UnreadableException e) {
+                                    e.printStackTrace();
+                                }
+
+                                try {
+                                    Thread.sleep(200);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+
+                                if(!sendedMessage) {
+                                    System.out.println("Controllerul " + thisID + " a trimis date catre actuatorul " + defectedControllerID + "\n");
+                                    sendedMessage = true;
+                                }
+
+                            }
+
+
 
                             if (mesaj_receptionat.getConversationId() == "UpdateSetPoint") { // Data from Nucleus
                                 try {
@@ -218,7 +316,15 @@ public class IntersectionController extends Agent implements IController {
                                 try {
                                     serviceControllerAID = (AID) mesaj_receptionat.getContentObject();
                                     int serviceControllerID = Integer.parseInt(serviceControllerAID.getLocalName().substring(serviceControllerAID.getLocalName().length() - 1));
-                                    EventLogEntries.add("Controller-ului defect cu ID-ul " + thisID + " i s-au asociat atributiile controllerului " + serviceControllerID);
+                                    if(!receivedControllerID) {
+
+                                        if(tStart > -1){
+                                            EventLogEntries.add("TS: " + String.valueOf((float)((System.currentTimeMillis() - tStart)/1000)) + " Controlerul intersectiei " + Helper.getIntersectionCoordinate(thisID) +" i s-au asociat sarcinile \ncontrolerului intersectiei " + Helper.getIntersectionCoordinate(serviceControllerID));
+                                            System.out.println("TS: " + String.valueOf((float)((System.currentTimeMillis() - tStart)/1000)) + " Controlerul intersectiei " + Helper.getIntersectionCoordinate(thisID) +" i s-au asociat sarcinile controlerului intersectiei " + Helper.getIntersectionCoordinate(serviceControllerID));
+                                        }
+                                        receivedControllerID = true;
+                                    }
+                                    ActiveIntersectionControllers[thisID] = true;
                                 } catch (UnreadableException e) {
                                     e.printStackTrace();
                                 }
@@ -242,6 +348,8 @@ public class IntersectionController extends Agent implements IController {
             }
         }
     };
+
+    boolean receivedControllerID = false;
 
     CyclicBehaviour sendNucleusData = new CyclicBehaviour() {
         @Override
@@ -326,7 +434,7 @@ public class IntersectionController extends Agent implements IController {
 
             addBehaviour(sendNucleusData);
 
-            addBehaviour(normalCycle);
+            addBehaviour(senderBehaviour);
 
             addBehaviour(centralizedCycle);
 

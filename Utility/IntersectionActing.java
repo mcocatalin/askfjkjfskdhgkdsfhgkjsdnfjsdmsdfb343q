@@ -29,7 +29,8 @@ public class IntersectionActing implements Serializable {
 
         if(ID == 3)
             this.setIntersectionState(false,false,false,true , false);
-
+        if(ID == -1)
+            this.setIntersectionState(false,false,false,false , false);
     }
 
     public void setLaneDirection(boolean UpDown, boolean RightLeft){

@@ -11,6 +11,8 @@ import jade.lang.acl.UnreadableException;
 
 import java.util.Random;
 
+import static GEngine.graphicEngine.ActiveIntersectionControllers;
+
 /**
  * Created by Catalin on 5/29/2017.
  */
@@ -20,13 +22,14 @@ public class ActingAgent extends Agent implements IActing {
     boolean state = (new Random()).nextInt(1) != 1; // Alternate between South-Nord and East-West
     int index = (new Random()).nextInt(4);
 
-    CyclicBehaviour normalCycle = new CyclicBehaviour() {
+    CyclicBehaviour receiverBehaviour = new CyclicBehaviour() {
         @Override
         public void action() {
             ACLMessage mesaj_receptionat = myAgent.receive();
                     if (mesaj_receptionat != null) {
                         if (CoreAgent.automaticMode) {
-                            int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1)); // Send Feedback to IntersectionController
+                            int senderID = Integer.parseInt(mesaj_receptionat.getSender().getLocalName().substring(mesaj_receptionat.getSender().getLocalName().length() - 1)); // Send Feedback to IntersectionController
+                            int thisID = Integer.parseInt(myAgent.getAID().getLocalName().substring(myAgent.getAID().getLocalName().length() - 1));
                             if (mesaj_receptionat.getConversationId() == "ActingNormalCycle") {
                                 try {
                                     intersectionActing = (IntersectionActing) mesaj_receptionat.getContentObject();
@@ -36,6 +39,13 @@ public class ActingAgent extends Agent implements IActing {
                                 actingHandler act = new actingHandler("Intersection", thisID, intersectionActing, true);
 
                                 if (graphicEngine.request.size() != 0) {
+                                    if(!ActiveIntersectionControllers[thisID])
+                                    {
+                                        for (int i = 0; i < graphicEngine.request.size(); i++){
+                                            if(graphicEngine.request.get(i).getComponentID() == thisID)
+                                                graphicEngine.request.remove(i);
+                                        }
+                                    }
                                     boolean equals = false;
                                     for (int i = 0; i < graphicEngine.request.size(); i++) {
 
@@ -85,9 +95,9 @@ CyclicBehaviour centralizedControl =  new CyclicBehaviour() {
                                 break;
                         }
                         if (!equals)
-                            graphicEngine.request.add(0, act);
+                            graphicEngine.request.add( act);
                     } else
-                        graphicEngine.request.add(0, act);
+                        graphicEngine.request.add( act);
                 }
             }
         }
@@ -152,7 +162,7 @@ CyclicBehaviour manualCycle = new CyclicBehaviour() {
 
         addBehaviour(manualCycle);
 
-        addBehaviour(normalCycle);
+        addBehaviour(receiverBehaviour);
 
         addBehaviour(centralizedControl);
     }

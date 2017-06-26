@@ -130,6 +130,7 @@ public class IntersectionSensing implements Serializable { // Has information ab
         laneDensity[3] = leftDensity;
     }
 
+    // Gets the total vehicle density oof vehicles for lane index
     public int getDensity(int index){
 
         int dens = 0;

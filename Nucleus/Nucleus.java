@@ -16,8 +16,8 @@ import jade.wrapper.ContainerController;
 
 import java.io.IOException;
 
-import static GEngine.graphicEngine.ActiveIntersectionControllers;
-import static GEngine.graphicEngine.EventLogEntries;
+import static GEngine.graphicEngine.*;
+import static Nucleus.CoreAgent.LocationGraph;
 
 /**
  * Created by Catalin on 5/14/2017.
@@ -42,6 +42,7 @@ public class Nucleus extends Agent {
 
     ContainerController home;
     private AgentController rmaNucleus;
+
 
     Behaviour discoverAgents = new Behaviour() {
         @Override
@@ -199,38 +200,80 @@ public class Nucleus extends Agent {
         }
     };
 
-    CyclicBehaviour sendCoreData = new CyclicBehaviour() { // Send data to CoreAgent to check setpoint
+    CyclicBehaviour negociateBehaviour = new CyclicBehaviour() { // Send data to CoreAgent to check setpoint
         @Override
         public void action() {
             if (detectedWorld) {
                 if (defectRequest) {
+
                     int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
 
-                    Iterator it = getAID().getAllAddresses();
-                    String adresa = (String) it.next();
-                    String platforma = getAID().getName().split("@")[1];
+                    if (!uncontrolledNegociation) {
 
-                    ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
-                    AID r = new AID("CoreAgent" + "@" + platforma, AID.ISGUID);
-                    r.addAddresses(adresa);
+                        Iterator it = getAID().getAllAddresses();
+                        String adresa = (String) it.next();
+                        String platforma = getAID().getName().split("@")[1];
 
-                    messageToSend.setConversationId("Defect");
+                        ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
+                        AID r = new AID("CoreAgent" + "@" + platforma, AID.ISGUID);
+                        r.addAddresses(adresa);
 
-                    try {
-                        AID defectedAID = new AID("IntersectionController" + thisID + "@" + platforma, AID.ISGUID);
-                        messageToSend.setContentObject(defectedAID); // send AID of Defect Controller
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        messageToSend.setConversationId("Defect");
+
+                        try {
+                            AID defectedAID = new AID("IntersectionController" + thisID + "@" + platforma, AID.ISGUID);
+                            messageToSend.setContentObject(defectedAID); // send AID of Defect Controller
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        messageToSend.addReceiver(r);
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        myAgent.send(messageToSend);
+
+                        defectRequest = false; // sent Defect Request, waiting for answer
                     }
-                    messageToSend.addReceiver(r);
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    myAgent.send(messageToSend);
+                    else{
 
-                    defectRequest=false; // sent Defect Request, waiting for answer
+                        Iterator it = getAID().getAllAddresses();
+                        String platforma = getAID().getName().split("@")[1];
+                        int serviceControllerPriority = 0;
+                        int serviceControllerID=-1;
+
+                        if (LocationGraph.get(thisID).isUpNeighbour() != null) {
+                            serviceController = new AID("IntersectionController" + LocationGraph.get(thisID).isUpNeighbour().getComponentID() + "@" + platforma, AID.ISGUID);
+                            serviceControllerPriority = LocationGraph.get(thisID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(thisID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[1];
+                            serviceControllerID = LocationGraph.get(thisID).isUpNeighbour().getComponentID();
+                        }
+                        else if (LocationGraph.get(thisID).isLeftNeighbour() != null) {
+                            serviceController = new AID("IntersectionController" + LocationGraph.get(thisID).isLeftNeighbour().getComponentID() + "@" + platforma, AID.ISGUID);
+                            serviceControllerPriority = LocationGraph.get(thisID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(thisID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[1];
+                            serviceControllerID = LocationGraph.get(thisID).isUpNeighbour().getComponentID();
+                        }
+                        else if (LocationGraph.get(thisID).isRightNeighbour() != null) {
+                            serviceController = new AID("IntersectionController" + LocationGraph.get(thisID).isRightNeighbour().getComponentID() + "@" + platforma, AID.ISGUID);
+                            serviceControllerPriority = LocationGraph.get(thisID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(thisID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[1];
+                            serviceControllerID = LocationGraph.get(thisID).isUpNeighbour().getComponentID();
+                        }
+                        else if (LocationGraph.get(thisID).isDownNeighbour() != null) {
+                            serviceController = new AID("IntersectionController" + LocationGraph.get(thisID).isDownNeighbour().getComponentID() + "@" + platforma, AID.ISGUID);
+                            serviceControllerPriority = LocationGraph.get(thisID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(thisID).isUpNeighbour().getIntersectionSensing().getMaxDensity()[1];
+                            serviceControllerID = LocationGraph.get(thisID).isUpNeighbour().getComponentID();
+                        }
+
+                        int defectedControllerPriority = LocationGraph.get(thisID).getIntersectionSensing().getMaxDensity()[0] + LocationGraph.get(thisID).getIntersectionSensing().getMaxDensity()[1];
+
+                            try {
+                                Thread.sleep((serviceControllerPriority + defectedControllerPriority)*1000 );
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                        System.out.println("Timpul de procesare al nucleului de service "  +serviceControllerID+" este de " + serviceControllerPriority + defectedControllerPriority);
+                    }
                 }
             }
 
@@ -375,7 +418,7 @@ public class Nucleus extends Agent {
 
         addBehaviour(sendControllerData);
 
-        addBehaviour(sendCoreData);
+        addBehaviour(negociateBehaviour);
 
         addBehaviour(centralizedControl);
 
