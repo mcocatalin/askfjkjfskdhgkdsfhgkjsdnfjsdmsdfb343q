@@ -47,7 +47,7 @@ public class Helper {
 //
 //            try (BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
 
-                System.out.println( time + " " + "ID: " + ID + " Cycle interval: " +state1 + " " + " intersection state: " + state2 + " "+ UpLaneIntersectionValue + " " + RightIntersectionValue + " " + DownLaneIntersectionValue + " " + LeftLaneIntersectionValue);
+                System.out.println( time + " " + "ID: " + ID+1 + " Cycle interval: " +state1 + " " + " intersection state: " + state2 + " "+ UpLaneIntersectionValue + " " + RightIntersectionValue + " " + DownLaneIntersectionValue + " " + LeftLaneIntersectionValue);
 //                bufferedWriter.newLine();
 //
 //                //bufferedWriter.write("Eroare_temperatura = " + (referinta_temperatura - temperatura) + " eroare umiditate = " + (referinta_umiditate - umiditate) + "\n" + "Comenzi: racire = " + racire + "; incalzire = " + incalzire + "; umidificator = " + umidificator + "; ventilator = " + (ventilator + surplus_comanda_ventilator) + "\n\n");
@@ -185,6 +185,15 @@ public class Helper {
         }
     };
     public static TimerTask tmtskNormal[] = new TimerTask[numberOfIntersections];
+
+    public static boolean normalPhaseTick = false;
+
+    public static TimerTask tmtskNormalPhase = new TimerTask() {
+        @Override
+        public void run() {
+            normalPhaseTick = true;
+        }
+    };
 
     public static TimerTask decrementTask[] = new TimerTask[4];
 

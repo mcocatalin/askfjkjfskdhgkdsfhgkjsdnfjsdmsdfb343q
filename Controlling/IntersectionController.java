@@ -353,7 +353,7 @@ public class IntersectionController extends Agent implements IController {
 
     CyclicBehaviour sendNucleusData = new CyclicBehaviour() {
         @Override
-        public void action() { // Send data to Nucleus to decide behaviour
+        public void action() {
 
             int thisID = Integer.parseInt(this.myAgent.getAID().getLocalName().substring(this.myAgent.getAID().getLocalName().length() - 1));
             Iterator it = getAID().getAllAddresses();
@@ -363,7 +363,7 @@ public class IntersectionController extends Agent implements IController {
             ACLMessage messageToSend = new ACLMessage(ACLMessage.INFORM);
             AID r = new AID("IntersectionNucleus" + thisID + "@" + platforma, AID.ISGUID);
             r.addAddresses(adresa);
-            if(detectedWorld) {
+            if(detectedWorld) { // World intersection graph
                 if(myAgent.getCurQueueSize()>0) {
                     for (int i = 0; i < myAgent.getCurQueueSize(); i++) {
                         if (intersectionSensing != null) {
@@ -375,21 +375,8 @@ public class IntersectionController extends Agent implements IController {
                                 } catch (IOException e) {
                                 e.printStackTrace();
                                 }
-
-//                                                        messageToSend.setConversationId("StatusUpdate"); // No status update needed in nucleus!!!
-//
-//                                                        try {
-//                                                            messageToSend.setContentObject(intersectionSensing.getMaxDensity());
-//                                                        } catch (IOException e) {
-//                                                            e.printStackTrace();
-//                                                        }
                             } else {
                                 messageToSend.setConversationId("Defect");
-                                //                            try {
-                                //                                messageToSend.setContentObject(true);
-                                //                            } catch (IOException e) {
-                                //                                e.printStackTrace();
-                                //                            }
                             }
                         }
                     }
@@ -408,12 +395,8 @@ public class IntersectionController extends Agent implements IController {
                     EventLogEntries.add(this.myAgent.getLocalName() + " a trimis worldDetect");
                 }
             }
-
-
             messageToSend.addReceiver(r);
             myAgent.send(messageToSend);
-
-            //block();
 
             try {
                 Thread.sleep(10);
